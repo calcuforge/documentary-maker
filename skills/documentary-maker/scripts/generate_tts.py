@@ -20,6 +20,7 @@ import yaml
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
+DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
 import comfyui as comfyui_runner  # noqa: E402
@@ -27,7 +28,7 @@ import estimate_timing  # noqa: E402
 
 
 def load_project_prefs(project_name):
-    ppath = os.path.join(SKILL_DIR, "projects", project_name, "project_prefs.yaml")
+    ppath = os.path.join(DOC_ROOT, "projects", project_name, "project_prefs.yaml")
     if not os.path.isfile(ppath):
         cli_envelope.emit_usage_error(
             f"Project '{project_name}' not found (no prefs at {ppath}).",
@@ -212,7 +213,7 @@ def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
     prefs = load_project_prefs(args.project)
-    video_dir = os.path.join(SKILL_DIR, "projects", args.project, "videos", args.video)
+    video_dir = os.path.join(DOC_ROOT, "projects", args.project, "videos", args.video)
     if not os.path.isdir(video_dir):
         cli_envelope.emit_usage_error(
             f"Video dir not found: {video_dir}", fmt=args.format)

@@ -90,9 +90,9 @@ content:
   target_duration_seconds: 360
 
 paths:
-  # Relative to documentary-maker root (where this SKILL.md lives).
-  remotion_template: ../remotion-video-template
-  comfyui_scheduler: ../comfyui-scheduler
+  # Relative to skill root (skills/documentary-maker/). Going up 2 levels = documentary-maker/.
+  remotion_template: ../../remotion-video-template
+  comfyui_scheduler: ../../comfyui-scheduler
 
 triggers:
   # Keyword → category map. Used by the skill description for trigger routing.

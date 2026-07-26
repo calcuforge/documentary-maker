@@ -95,7 +95,7 @@ def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    template_rel = args.template_path or "../remotion-video-template"
+    template_rel = args.template_path or "../../remotion-video-template"
     checks = [
         _check_cmd("ffmpeg", "ffmpeg"),
         _check_cmd("ffprobe", "ffprobe"),

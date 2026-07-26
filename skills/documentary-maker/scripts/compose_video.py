@@ -24,13 +24,14 @@ import yaml
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
+DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
 import themes as themes_mod  # noqa: E402
 
 
 def _template_path(prefs):
-    rel = prefs.get("paths", {}).get("remotion_template", "../remotion-video-template")
+    rel = prefs.get("paths", {}).get("remotion_template", "../../remotion-video-template")
     return os.path.normpath(os.path.join(SKILL_DIR, rel))
 
 
@@ -465,7 +466,7 @@ def build_parser():
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
-    prefs_path = os.path.join(SKILL_DIR, "projects", args.project, "project_prefs.yaml")
+    prefs_path = os.path.join(DOC_ROOT, "projects", args.project, "project_prefs.yaml")
     if not os.path.isfile(prefs_path):
         cli_envelope.emit_usage_error(
             f"Project prefs not found: {prefs_path}", fmt=args.format)
@@ -478,7 +479,7 @@ def main(argv=None):
         if theme_data:
             prefs = themes_mod.resolve_theme(category, prefs_path)
 
-    video_dir = os.path.join(SKILL_DIR, "projects", args.project, "videos", args.video)
+    video_dir = os.path.join(DOC_ROOT, "projects", args.project, "videos", args.video)
     if not os.path.isdir(video_dir):
         cli_envelope.emit_usage_error(
             f"Video dir not found: {video_dir}", fmt=args.format)

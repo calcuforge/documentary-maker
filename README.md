@@ -11,11 +11,15 @@ A Claude Code skill that produces narration-driven documentary videos — histor
 - **YAML config.** Project prefs in `project_prefs.yaml` with inline comments. No JSON configs.
 - **Two TTS backends.** ComfyUI `index_tts` (default; clones a reference voice) OR any OpenAI-compatible `/v1/audio/speech` HTTP server.
 
+Skill code lives under `skills/documentary-maker/`. All commands are run from the skill root.
+
 ## Quick start
 
 ```bash
+SKILL_DIR=skills/documentary-maker
+
 # 1. Check prerequisites
-python3 scripts/check_prereqs.py
+python3 "$SKILL_DIR/scripts/check_prereqs.py"
 
 # 2. Install comfyui-scheduler if not already
 cd ../comfyui-scheduler && pip install -e . && cd -
@@ -25,7 +29,7 @@ comfyui-scheduler node add --id node1 --url http://127.0.0.1:8188
 comfyui-scheduler workflow import-all
 
 # 4. Create a project
-python3 scripts/cli.py project create \
+python3 "$SKILL_DIR/scripts/cli.py project create \
   --name aviation-disaster-horizontal \
   --category aviation-disaster \
   --orientation horizontal \
@@ -35,38 +39,38 @@ python3 scripts/cli.py project create \
   --mode auto
 
 # 5. Edit project_prefs.yaml to set tts.voice_file
-python3 scripts/cli.py project set \
+python3 "$SKILL_DIR/scripts/cli.py project set \
   --name aviation-disaster-horizontal \
   --key tts.voice_file --value /abs/path/to/reference_voice.mp3
 
 # 6. Create a video scaffold
-python3 scripts/cli.py project video \
+python3 "$SKILL_DIR/scripts/cli.py project video \
   --name aviation-disaster-horizontal --video swissair-111
 
 # 7. Write topic_definition.md, topic_research.md, chapters.yaml,
 #    narration_script.yaml into the video dir (Step 1-4 of the workflow).
-#    See references/workflow-script.md for the schema.
+#    See skills/documentary-maker/references/workflow-script.md for the schema.
 
 # 8. Plan + generate assets (Step 5)
 VDIR="projects/aviation-disaster-horizontal/videos/swissair-111"
-python3 scripts/cli.py assets init --video-dir "$VDIR"
-python3 scripts/cli.py assets add --video-dir "$VDIR" \
+python3 "$SKILL_DIR/scripts/cli.py assets init --video-dir "$VDIR"
+python3 "$SKILL_DIR/scripts/cli.py assets add --video-dir "$VDIR" \
   --id hero_bg --section hero --type image --role background \
   --source t2i --status planned \
   --prompt "..." --workflow z_image_fp16 --upscale-target 1080p
-python3 scripts/cli.py comfyui run -w z_image_fp16 \
+python3 "$SKILL_DIR/scripts/cli.py comfyui run -w z_image_fp16 \
   --inputs '{"prompt":"...","width":1280,"height":720}' \
   --dest-dir "$VDIR/assets"
-python3 scripts/cli.py assets update --video-dir "$VDIR" --id hero_bg \
+python3 "$SKILL_DIR/scripts/cli.py assets update --video-dir "$VDIR" --id hero_bg \
   --status resolved --path hero_bg.png
 
 # 9. TTS + SRT + timing.json (Step 6)
-python3 scripts/cli.py tts run \
+python3 "$SKILL_DIR/scripts/cli.py tts run \
   --project aviation-disaster-horizontal --video swissair-111
 
 # 10. Upscale (Step 7) — skip if quality tier + 1080p target
 # 11. Generate composition (Step 8)
-python3 scripts/cli.py compose \
+python3 "$SKILL_DIR/scripts/cli.py compose \
   --project aviation-disaster-horizontal --video swissair-111
 
 # 12. Render (Step 9)
@@ -77,20 +81,18 @@ cd "$TEMPLATE" && npx remotion render \
   --public-dir "$PWD/../documentary-maker/$VDIR" --video-bitrate 16M
 
 # 13. Mix BGM (Step 10) + Verify (Step 11)
-# See references/workflow-production.md and references/workflow-finish.md
+# See skills/documentary-maker/references/workflow-production.md + workflow-finish.md
 ```
 
 ## Directory structure
 
-See [references/project-layout.md](references/project-layout.md) for the full tree. Key points:
+See `skills/documentary-maker/references/project-layout.md` for the full tree. Key points:
 
-- `documentary-maker/projects/{project-name}/project_prefs.yaml` — project-level config
-- `documentary-maker/projects/{project-name}/videos/{video-name}/` — per-video files
-- `documentary-maker/themes/*.yaml` — theme presets
-- `documentary-maker/scripts/*.py` — CLI suite
-- `documentary-maker/references/*.md` — load-on-demand docs
-- `../remotion-video-template/` — shared Remotion template (referenced, not copied)
-- `../comfyui-scheduler/` — ComfyUI workflow runner (installed via pip)
+- `documentary-maker/projects/{project-name}/project_prefs.yaml` — project-level config (user data)
+- `documentary-maker/projects/{project-name}/videos/{video-name}/` — per-video files (user data)
+- `documentary-maker/skills/documentary-maker/` — skill code (SKILL.md, scripts/, themes/, references/, assets/)
+- `remotion-video-template/` — shared Remotion template (referenced, not copied)
+- `comfyui-scheduler/` — ComfyUI workflow runner (installed via pip)
 
 ## Dependencies
 
@@ -107,15 +109,15 @@ Load on demand — do NOT read all at once:
 
 | File | When |
 | --- | --- |
-| [references/workflow-script.md](references/workflow-script.md) | Steps 1-4 |
-| [references/workflow-assets.md](references/workflow-assets.md) | Step 5 — AIGC pipelines |
-| [references/workflow-production.md](references/workflow-production.md) | Steps 6-10 — TTS, render, BGM |
-| [references/workflow-finish.md](references/workflow-finish.md) | Step 11 — verify + metadata |
-| [references/themes.md](references/themes.md) | Theme catalog |
-| [references/project-layout.md](references/project-layout.md) | Directory structure |
-| [references/audio-sync.md](references/audio-sync.md) | Char-count timing |
-| [references/design-guide.md](references/design-guide.md) | Component selection |
-| [references/troubleshooting.md](references/troubleshooting.md) | Errors |
+| [skills/documentary-maker/references/workflow-script.md](skills/documentary-maker/references/workflow-script.md) | Steps 1-4 |
+| [skills/documentary-maker/references/workflow-assets.md](skills/documentary-maker/references/workflow-assets.md) | Step 5 — AIGC pipelines |
+| [skills/documentary-maker/references/workflow-production.md](skills/documentary-maker/references/workflow-production.md) | Steps 6-10 — TTS, render, BGM |
+| [skills/documentary-maker/references/workflow-finish.md](skills/documentary-maker/references/workflow-finish.md) | Step 11 — verify + metadata |
+| [skills/documentary-maker/references/themes.md](skills/documentary-maker/references/themes.md) | Theme catalog |
+| [skills/documentary-maker/references/project-layout.md](skills/documentary-maker/references/project-layout.md) | Directory structure |
+| [skills/documentary-maker/references/audio-sync.md](skills/documentary-maker/references/audio-sync.md) | Char-count timing |
+| [skills/documentary-maker/references/design-guide.md](skills/documentary-maker/references/design-guide.md) | Component selection |
+| [skills/documentary-maker/references/troubleshooting.md](skills/documentary-maker/references/troubleshooting.md) | Errors |
 
 ## Status
 

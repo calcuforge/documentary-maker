@@ -26,7 +26,9 @@ import yaml
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
-PROJECTS_DIR = os.path.join(SKILL_DIR, "projects")
+# documentary-maker root is two levels up from skill dir (skills/documentary-maker/)
+DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
+PROJECTS_DIR = os.path.join(DOC_ROOT, "projects")
 TEMPLATE_PATH = os.path.join(SKILL_DIR, "project_prefs.template.yaml")
 
 sys.path.insert(0, SCRIPT_DIR)
