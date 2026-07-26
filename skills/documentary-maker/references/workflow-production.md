@@ -78,28 +78,52 @@ For each resolved image and video asset, decide whether to upscale:
 
 Vertical videos are 1080p only in v1.
 
+### Batch ordering (same rule as Step 5)
+
+Follow the same batch strategy from [workflow-assets.md#5b-prime-batch-execution-strategy](workflow-assets.md#5b-prime-batch-execution-strategy). Upscale jobs split into two sequential batches:
+
+| Batch | Workflow | Input |
+| --- | --- | --- |
+| 7 | `nvidia_rtx_video_upscale` | All resolved video assets that need upscaling |
+| 8 | `nvidia_rtx_image_upscale` | All resolved image assets that need upscaling |
+
+**Video upscale always runs before image upscale** — video upscale is heavier and ties up the GPU longer. Finishing images last means the agent can start Step 8 (composition generation) while CPU-bound image upscale finishes.
+
 ### Image upscale (nvidia_rtx_image_upscale)
 
 Magnification = target_long_side / source_long_side. For 1280×720 → 1920×1080, magnification = 1920/1280 = 1.5.
 
+Within a batch, all image upscale calls are independent (different input files, same workflow). The agent MUST issue them in parallel:
+
 ```bash
+# Batch 8 — two images in parallel (single message, multiple Bash calls)
 python3 "$SKILL_DIR/scripts/cli.py" comfyui run \
-  --workflow-id nvidia_rtx_image_upscale \
-  --inputs "{\"image_file\":\"$VDIR/assets/hero_bg.png\",\"magnification\":1.5}" \
+  -w nvidia_rtx_image_upscale \
+  -i '{"image_file":".../assets/hero_bg.png","magnification":1.5}' \
   --dest-dir "$VDIR/assets"
 
-# Move the upscaled output back over the original (or keep as *_4k.png)
+python3 "$SKILL_DIR/scripts/cli.py" comfyui run \
+  -w nvidia_rtx_image_upscale \
+  -i '{"image_file":".../assets/timeline_bg.png","magnification":1.5}' \
+  --dest-dir "$VDIR/assets"
+```
+
+After all upscale jobs in one batch finish, update the manifest entries:
+
+```bash
 python3 "$SKILL_DIR/scripts/cli.py" assets update \
   --video-dir "$VDIR" --id hero_bg --upscaled
+python3 "$SKILL_DIR/scripts/cli.py" assets update \
+  --video-dir "$VDIR" --id timeline_bg --upscaled
 ```
 
 ### Video upscale (nvidia_rtx_video_upscale)
 
-Same pattern; video workflows accept `image_file`/`video_file` depending on the workflow.
+Same pattern; video workflows accept `file` input. Batch 7 runs before batch 8.
 
 ### Skip-upscale optimization
 
-For quality tier + 1080p target on images: skip Step 7 entirely for images. Mark the manifest entry `upscaled: true` to indicate "at target" without running the upscale workflow.
+For quality tier + 1080p target on images: skip batch 8 entirely for images. Mark the manifest entry `upscaled: true` without running the workflow.
 
 ---
 

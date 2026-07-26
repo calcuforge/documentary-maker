@@ -96,34 +96,41 @@ comfyui-scheduler run -w wan2.2_svi2pro_vbvr_int8 -i '{
 
 ### Generate + register in one go
 
+**Registration comes first.** Register all planned assets with `assets add --status planned` BEFORE generating. Then generate in batched groups — never mix workflow types in one batch.
+
 ```bash
 SKILL_DIR=...
 PROJECT=aviation-disaster-horizontal
 VIDEO=swissair-111
-VDIR="$SKILL_DIR/projects/$PROJECT/videos/$VIDEO"
+VDIR="$SKILL_DIR/../projects/$PROJECT/videos/$VIDEO"
 
 # 1. Initialize manifest (once per video)
 python3 "$SKILL_DIR/scripts/cli.py" assets init --video-dir "$VDIR"
 
-# 2. Register the plan (status=planned, source=t2i)
+# 2. Register ALL planned assets first
 python3 "$SKILL_DIR/scripts/cli.py" assets add \
   --video-dir "$VDIR" \
   --id hero_bg --section hero --type image --role background \
   --source t2i --status planned \
   --prompt "Photorealistic MD-11 cockpit interior, dim blue emergency lighting,
-           instrument panels, view from behind pilot seat, dramatic atmosphere,
-           wide angle, no text, no watermark" \
+           instrument panels, wide angle, no text, no watermark" \
   --workflow z_image_fp16 --upscale-target 1080p
 
-# 3. Generate via comfyui wrapper (downloads output into assets/)
-python3 "$SKILL_DIR/scripts/cli.py" comfyui run \
-  --workflow-id z_image_fp16 \
-  --inputs '{"prompt":"...","width":1280,"height":720}' \
-  --dest-dir "$VDIR/assets"
+python3 "$SKILL_DIR/scripts/cli.py" assets add \
+  --video-dir "$VDIR" \
+  --id timeline_bg --section timeline --type image --role background \
+  --source t2i --status planned \
+  --prompt "Aerial view of Atlantic Ocean at dusk with search lights, dramatic sky" \
+  --workflow z_image_fp16 --upscale-target 1080p
 
-# 4. Find the downloaded file and register its path
-python3 "$SKILL_DIR/scripts/cli.py" assets update \
-  --video-dir "$VDIR" --id hero_bg --status resolved --path hero_bg.png
+python3 "$SKILL_DIR/scripts/cli.py" assets add \
+  --video-dir "$VDIR" \
+  --id wreck_broll --section impact --type video --role broll \
+  --source t2v --status planned \
+  --prompt "Slow pan over aircraft wreckage on ocean floor, dark blue water" \
+  --workflow ltx2.3_t2v_int8 --upscale-target 1080p
+
+# 3. Generate assets in batched groups (see 5b. batch strategy below)
 ```
 
 ### User-supplied files
@@ -139,7 +146,89 @@ python3 "$SKILL_DIR/scripts/cli.py" assets add \
 
 The file is copied into `assets/timeline_chart.png` and the manifest path set automatically.
 
-## 5c. Validate
+## 5b-prime. Batch Execution Strategy
+
+When multiple assets are planned across sections, batch out calls by workflow type to avoid overloading the ComfyUI server with mixed pipeline workloads. **Same workflow → parallel calls in one batch. Different workflows → sequential batches.**
+
+### Batch execution order (fixed)
+
+| Batch | Workflow(s) | Example command |
+| --- | --- | --- |
+| 1 | All `t2i` (`z_image_fp16`) | `comfyui-scheduler run -w z_image_fp16 -i '{...}'` |
+| 2 | All `i2i` (`qwen_image_edit_2511_int8_step4`) | `comfyui-scheduler run -w qwen_image_edit_2511_int8_step4 -i '{...}'` |
+| 3 | All `t2v` (`ltx2.3_t2v_int8`) | `comfyui-scheduler run -w ltx2.3_t2v_int8 -i '{...}'` |
+| 4 | All `i2v` (`ltx2.3_i2v_int8`) | `comfyui-scheduler run -w ltx2.3_i2v_int8 -i '{...}'` |
+| 5 | All `flf2v` (`ltx2.3_flf2v_int8`) | `comfyui-scheduler run -w ltx2.3_flf2v_int8 -i '{...}'` |
+| 6 | All `multi_scene_i2v` (`wan2.2_svi2pro_vbvr_int8`) | `comfyui-scheduler run -w wan2.2_svi2pro_vbvr_int8 -i '{...}'` |
+| 7 | All `nvidia_rtx_video_upscale` | (Step 7 — see workflow-production.md) |
+| 8 | All `nvidia_rtx_image_upscale` | (Step 7 — see workflow-production.md) |
+
+**Skip batches with no assets.** Only the batches that have at least one planned asset run.
+
+### Parallel execution within a batch
+
+Every call inside a batch is **independent** — they differ only in prompt/seed/input_file, not workflow ID. The agent MUST issue them as parallel Bash commands (multiple tool calls in one message). Example for batch 1 — two t2i jobs:
+
+```bash
+# All three commands in one message — they are independent, same workflow.
+
+# Job A:
+python3 "$SKILL_DIR/scripts/cli.py" comfyui run \
+  -w z_image_fp16 \
+  -i '{"prompt":"MD-11 cockpit interior, blue emergency lighting, wide angle","width":1280,"height":720}' \
+  --dest-dir "$VDIR/assets"
+
+# Job B:
+python3 "$SKILL_DIR/scripts/cli.py" comfyui run \
+  -w z_image_fp16 \
+  -i '{"prompt":"Aerial view of Atlantic Ocean at dusk, search lights","width":1280,"height":720}' \
+  --dest-dir "$VDIR/assets"
+```
+
+### After each batch
+
+After a batch completes, for each job, find the downloaded file in `$VDIR/assets/` and update the manifest from `planned` → `resolved`:
+
+```bash
+python3 "$SKILL_DIR/scripts/cli.py" assets update \
+  --video-dir "$VDIR" --id hero_bg --status resolved --path hero_bg.png
+python3 "$SKILL_DIR/scripts/cli.py" assets update \
+  --video-dir "$VDIR" --id timeline_bg --status resolved --path timeline_bg.png
+```
+
+Then proceed to the next batch. **Never start the next batch before all jobs in the current batch finish and their manifest entries are resolved** — downstream batches (e.g. i2v) may depend on files produced by upstream batches (e.g. t2i).
+
+### Dependency chain
+
+```
+t2i ──────→ i2v  (i2v needs t2i output as first frame)
+t2i ──────→ flf2v (needs first + last frame images)
+t2i ──────→ upscale (upscale needs generated image)
+
+t2v: no upstream dependency (text-only input)
+```
+
+When a downstream batch needs an upstream output, wait for the upstream batch to fully complete before starting the downstream batch.
+
+### ComfyUI server capacity
+
+The `comfyui-scheduler` CLI auto-selects the least-busy node. Parallel calls within a batch leverage multi-GPU setups. If you only have one GPU / one node, parallel calls queue on the server side — they will still complete, just sequentially.
+
+### Manual mode gate (batch)
+
+In Manual Mode, show the user a summary of all planned batches before generating anything:
+
+```
+Planned AIGC: 2 t2i, 1 t2v, 2 upscale.
+  Batch 1 (t2i × 2):  hero_bg, timeline_bg
+  Batch 3 (t2v × 1):  wreck_broll
+  Batch 7 (video_upscale × 1): wreck_broll → 1080p
+  Batch 8 (image_upscale × 2): hero_bg, timeline_bg → 1080p
+
+Proceed? Reply 'continue' or adjust prompts first.
+```
+
+After each batch, report number of succeeded/failed jobs before starting the next batch. Generates only after explicit "continue".
 
 ```bash
 python3 "$SKILL_DIR/scripts/cli.py" assets validate --video-dir "$VDIR"

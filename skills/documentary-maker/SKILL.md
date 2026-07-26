@@ -94,6 +94,7 @@ At Step 1 start, create one task per step in your agent tracker. Mark `in_progre
 | **Verify gate** | `verify_output.py` exit 0 (or 2 with reviewed warnings) before declaring done. |
 | **`--public-dir`** | Every remotion command uses `--public-dir projects/{p}/videos/{v}/`. All outputs land in that dir. |
 | **YAML config** | Project + video metadata in YAML. JSON only for `timing.json` and `assets/manifest.json` (consumed by Remotion at runtime via staticFile). |
+| **ComfyUI batch ordering** | When generating multiple assets, group by workflow type. Run same-workflow jobs in parallel within each batch. Batches execute sequentially: all t2i → all i2v → all flf2v → all video upscale → all image upscale. Never mix different workflow IDs in one batch. See [references/workflow-assets.md](references/workflow-assets.md#52-batch-execution-strategy). |
 
 ## Per-Video Layout
 
