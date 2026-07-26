@@ -1,0 +1,41 @@
+# themes/aviation-disaster.yaml
+# Partial override merged on top of project_prefs.theme / content.
+# Explicit fields in project_prefs.theme win over these.
+
+theme:
+  primary_color: "#b8c5d6"       # cool steel
+  background_color: "#0e1419"    # deep cockpit black
+  text_color: "#e6e8eb"
+  accent_color: "#c9303c"        # emergency red
+  transition_type: fade
+  transition_duration: 18
+
+content:
+  tone: serious
+
+# Hint: which component to pick for each section name pattern.
+# Composition generator keys off the section `name` to choose a layout
+# when narration_script.yaml doesn't override it.
+component_suggestions:
+  hero: FullBleedLayout
+  overview: IconCard
+  timeline: Timeline
+  event_sequence: Timeline
+  cause_chain: FlowChart
+  cause_analysis: FlowChart
+  impact: DataBar
+  aftermath: Timeline
+  quote: QuoteBlock
+  summary: StatHighlight
+
+# Narrative arc hint for chapter design (Step 3).
+# Suggested section order — the chapter designer follows this unless the topic
+# clearly demands otherwise.
+narrative_arc:
+  - hook
+  - background
+  - event_timeline
+  - cause_analysis
+  - impact
+  - aftermath
+  - conclusion

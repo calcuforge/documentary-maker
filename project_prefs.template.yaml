@@ -1,0 +1,103 @@
+# project_prefs.yaml — project-level defaults for documentary-maker.
+# Copied to projects/<name>/project_prefs.yaml on first `project create`.
+# Per-video overrides go in videos/<video-name>/video_info.yaml.
+
+project:
+  # Logical id, lowercase-hyphen. Should match the projects/<name>/ folder name.
+  name: aviation-disaster-horizontal
+  # Category maps to themes/<category>.yaml. Built-in: aviation-disaster | history | crime | natural-disaster.
+  category: aviation-disaster
+  # horizontal (16:9) | vertical (9:16).
+  orientation: horizontal
+  # auto — pipeline runs end-to-end. manual — each AI product waits for user confirmation.
+  creation_mode: auto
+  # Narration language: zh-CN | en-US.
+  language: zh-CN
+
+video:
+  # 1080p (1920x1080 horizontal, 1080x1920 vertical) | 4k (3840x2160 / 2160x3840).
+  # Vertical is limited to 1080p in v1.
+  resolution: 1080p
+  fps: 30
+  # Composition id is resolved automatically:
+  #   horizontal + 1080p → MainVideo
+  #   horizontal + 4k    → MainVideo4K
+  #   vertical           → MainVideoVertical
+
+ai:
+  # speed:   image at 1280x720, video at 854x480, then upscale to target.
+  # quality: image at 1920x1080 (skip image upscale if target 1080p), video at 1280x720, upscale to target.
+  quality_tier: speed
+  # null = random per run. Pin a seed for reproducibility.
+  seed: null
+  # Global negative prompt appended to every image/video workflow.
+  negative_prompt: "lowres, watermark, text, deformed, blurry, extra fingers"
+
+workflows:
+  # ComfyUI workflow ids (must be imported into comfyui-scheduler's database).
+  # Defaults match comfyui-scheduler/data/default_workflows/meta/.
+  text_to_image: z_image_fp16
+  image_to_image: qwen_image_edit_2511_int8_step4
+  text_to_video: ltx2.3_t2v_int8
+  image_to_video: ltx2.3_i2v_int8
+  first_last_frame_to_video: ltx2.3_flf2v_int8
+  multi_scene_i2v: wan2.2_svi2pro_vbvr_int8
+  image_upscale: nvidia_rtx_image_upscale
+  video_upscale: nvidia_rtx_video_upscale
+  tts: index_tts_2
+
+tts:
+  # comfyui_indextts (default) | http_server (OpenAI-compatible /v1/audio/speech).
+  backend: comfyui_indextts
+  # Required for index_tts — absolute path to a reference voice audio file.
+  voice_file: null
+  # OpenAI-compatible HTTP TTS server (only used when backend: http_server).
+  http:
+    url: http://127.0.0.1:8000/v1/audio/speech
+    api_key: null          # bearer token; null = no Authorization header
+    model: tts-1
+    voice: alloy
+    response_format: wav   # wav | mp3 | flac
+
+bgm:
+  # 0 to 1.0. Default 0.12 = ~-18 dB, sits clearly below boosted narration.
+  volume: 0.12
+  # Absolute path to a looping BGM mp3, or null for no BGM.
+  track: null
+  loop: true
+
+theme:
+  # These override the matching fields in themes/<category>.yaml.
+  # Explicit fields here win; everything else falls back to the theme preset.
+  primary_color: "#1a2a3a"
+  background_color: "#0e1419"
+  text_color: "#e6e8eb"
+  accent_color: "#d4b483"
+  transition_type: fade   # fade | slide | wipe | none
+  transition_duration: 18 # frames @ fps
+  # Hint list — composition generator prefers these components when picking a layout.
+  preferred_components:
+    - Timeline
+    - DiagramReveal
+    - DataBar
+    - QuoteBlock
+    - MediaSection
+
+content:
+  tone: serious           # serious | narrative | analytical
+  section_count: 7        # target chapter count; chapter design may deviate ±1
+  # Used by the char-estimate fallback if TTS audio is unavailable.
+  target_duration_seconds: 360
+
+paths:
+  # Relative to documentary-maker root (where this SKILL.md lives).
+  remotion_template: ../remotion-video-template
+  comfyui_scheduler: ../comfyui-scheduler
+
+triggers:
+  # Keyword → category map. Used by the skill description for trigger routing.
+  keywords:
+    aviation-disaster: ["空难", "航空事故", "空难纪录片", "aviation disaster"]
+    history: ["历史纪录片", "历史事件", "history documentary"]
+    crime: ["案件纪实", "真实犯罪", "crime documentary"]
+    natural-disaster: ["自然灾害", "地震", "海啸", "natural disaster"]

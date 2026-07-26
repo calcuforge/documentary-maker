@@ -1,0 +1,33 @@
+# themes/history.yaml
+# Warm, archival tone for historical documentaries.
+
+theme:
+  primary_color: "#d4b483"       # parchment
+  background_color: "#1a1410"     # aged paper darkened
+  text_color: "#f0e6d2"
+  accent_color: "#8b4513"         # saddle brown
+  transition_type: fade
+  transition_duration: 20
+
+content:
+  tone: narrative
+
+component_suggestions:
+  hero: FullBleedLayout
+  overview: IconCard
+  timeline: Timeline
+  dynasty: Timeline
+  cause_analysis: FlowChart
+  impact: DataBar
+  quote: QuoteBlock
+  biography: SplitLayout
+  summary: StatHighlight
+
+narrative_arc:
+  - hook
+  - context
+  - rise
+  - climax
+  - turning_point
+  - legacy
+  - conclusion

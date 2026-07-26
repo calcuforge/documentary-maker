@@ -1,0 +1,34 @@
+# themes/crime.yaml
+# Dark, suspenseful tone for true-crime documentaries.
+
+theme:
+  primary_color: "#a8b5c0"       # cold steel
+  background_color: "#0c0f14"     # noir black
+  text_color: "#dde3e8"
+  accent_color: "#c9303c"         # blood red
+  transition_type: fade
+  transition_duration: 16
+
+content:
+  tone: analytical
+
+component_suggestions:
+  hero: FullBleedLayout
+  overview: IconCard
+  timeline: Timeline
+  investigation: FlowChart
+  evidence_chain: FlowChart
+  motive: SplitLayout
+  impact: DataBar
+  quote: QuoteBlock
+  verdict: StatHighlight
+  summary: StatHighlight
+
+narrative_arc:
+  - hook
+  - crime_scene
+  - background
+  - investigation
+  - trial
+  - aftermath
+  - conclusion

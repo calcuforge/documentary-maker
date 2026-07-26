@@ -1,0 +1,34 @@
+# themes/natural-disaster.yaml
+# Naturalistic, slightly desaturated tone.
+
+theme:
+  primary_color: "#8ba98a"       # muted green
+  background_color: "#14171a"
+  text_color: "#e8e9eb"
+  accent_color: "#d97742"         # safety orange
+  transition_type: fade
+  transition_duration: 18
+
+content:
+  tone: serious
+
+component_suggestions:
+  hero: FullBleedLayout
+  overview: IconCard
+  timeline: Timeline
+  impact: DataBar
+  statistics: MetricsRow
+  cause_analysis: FlowChart
+  response: StepProgress
+  quote: QuoteBlock
+  summary: StatHighlight
+
+narrative_arc:
+  - hook
+  - context
+  - event_timeline
+  - impact
+  - cause_analysis
+  - response
+  - aftermath
+  - conclusion
