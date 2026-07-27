@@ -146,12 +146,18 @@ def main(argv=None):
 
     cmd = [sys.executable, script_path] + forwarded
     try:
-        result = subprocess.run(cmd, encoding="utf-8")
+        result = subprocess.run(cmd, encoding="utf-8", timeout=1800)
         return result.returncode
     except FileNotFoundError:
         cli_envelope.emit_error(
             "prereqs_failed",
             f"Python could not run {script_path}",
+            fmt=args.format, exit_code=1,
+        )
+    except subprocess.TimeoutExpired:
+        cli_envelope.emit_error(
+            "timeout",
+            f"Command timed out after 30min: {' '.join(cmd)}",
             fmt=args.format, exit_code=1,
         )
 

@@ -23,7 +23,7 @@ sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
 
 
-def _run_subprocess(argv, fmt, timeout=None):
+def _run_subprocess(argv, fmt, timeout=900):
     try:
         result = subprocess.run(
             argv, capture_output=True, text=True, timeout=timeout,

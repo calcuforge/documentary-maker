@@ -107,7 +107,7 @@ def synth_comfyui(sections, prefs, video_dir, fmt):
     else:
         subprocess.run(
             ["ffmpeg", "-y", "-i", audio_path, final_path],
-            check=True, capture_output=True,
+            check=True, capture_output=True, timeout=300,
         )
         os.remove(audio_path)
     return final_path
