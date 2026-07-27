@@ -12,6 +12,11 @@ theme:
 content:
   tone: analytical
 
+voice_design:
+  prompt: "冷静理性的男性纪录片旁白，语速中等偏慢，声线平稳不带感情，适合讲述案件调查和证据分析，具有侦探式的客观感"
+  speed: 0.95
+  workflow: ominivoice_voice_design
+
 component_suggestions:
   hero: FullBleedLayout
   overview: IconCard

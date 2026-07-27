@@ -152,8 +152,11 @@ When multiple assets are planned across sections, batch out calls by workflow ty
 
 ### Batch execution order (fixed)
 
+Batch 0 (voice design) runs once per project, before any video's asset generation. Batches 1-8 run per video.
+
 | Batch | Workflow(s) | Example command |
 | --- | --- | --- |
+| 0 | `voice_design` (`ominivoice_voice_design` or `qwen3_tts_voice_design`) | `comfyui-scheduler run -w ominivoice_voice_design -i '{...}'` |
 | 1 | All `t2i` (`z_image_fp16`) | `comfyui-scheduler run -w z_image_fp16 -i '{...}'` |
 | 2 | All `i2i` (`qwen_image_edit_2511_int8_step4`) | `comfyui-scheduler run -w qwen_image_edit_2511_int8_step4 -i '{...}'` |
 | 3 | All `t2v` (`ltx2.3_t2v_int8`) | `comfyui-scheduler run -w ltx2.3_t2v_int8 -i '{...}'` |
@@ -201,9 +204,10 @@ Then proceed to the next batch. **Never start the next batch before all jobs in 
 ### Dependency chain
 
 ```
-t2i ──────→ i2v  (i2v needs t2i output as first frame)
-t2i ──────→ flf2v (needs first + last frame images)
-t2i ──────→ upscale (upscale needs generated image)
+voice_design ──→ TTS    (TTS needs voice_reference.wav as speaker reference)
+t2i ──────────→ i2v     (i2v needs t2i output as first frame)
+t2i ──────────→ flf2v   (needs first + last frame images)
+t2i ──────────→ upscale (upscale needs generated image)
 
 t2v: no upstream dependency (text-only input)
 ```

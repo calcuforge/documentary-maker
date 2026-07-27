@@ -13,6 +13,15 @@ theme:
 content:
   tone: serious
 
+# Voice design — narrator voice persona for this theme.
+# Prompt is sent to the voice_design ComfyUI workflow (ominivoice / qwen3_tts).
+# The output voice_reference.wav is stored at the project level and shared
+# across all videos in that project.
+voice_design:
+  prompt: "沉稳严肃的男性纪录片旁白，语速适中偏慢，声音低沉有力，适合讲述航空事故调查过程，不带情绪波动但具有权威感"
+  speed: 0.9
+  workflow: ominivoice_voice_design   # or qwen3_tts_voice_design
+
 # Hint: which component to pick for each section name pattern.
 # Composition generator keys off the section `name` to choose a layout
 # when narration_script.yaml doesn't override it.

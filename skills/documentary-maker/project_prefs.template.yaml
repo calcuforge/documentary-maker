@@ -36,6 +36,7 @@ ai:
 workflows:
   # ComfyUI workflow ids (must be imported into comfyui-scheduler's database).
   # Defaults match comfyui-scheduler/data/default_workflows/meta/.
+  voice_design: ominivoice_voice_design   # or qwen3_tts_voice_design
   text_to_image: z_image_fp16
   image_to_image: qwen_image_edit_2511_int8_step4
   text_to_video: ltx2.3_t2v_int8
@@ -47,17 +48,17 @@ workflows:
   tts: index_tts_2
 
 tts:
-  # comfyui_indextts (default) | http_server (OpenAI-compatible /v1/audio/speech).
+  # comfyui_indextts (default) | http_server.
   backend: comfyui_indextts
-  # Required for index_tts — absolute path to a reference voice audio file.
-  voice_file: null
-  # OpenAI-compatible HTTP TTS server (only used when backend: http_server).
+  # Reference voice audio for TTS. Generated once per project by voice_design (Step 0),
+  # stored at project-level projects/{name}/voice_reference.wav, shared across all videos.
+  voice_file: null          # auto-resolved to projects/{name}/voice_reference.wav if null
+  # External HTTP TTS server — multipart/form-data POST.
+  # Only used when backend: http_server. ${BACKEND_PROXY_ENDPOINT} is resolved
+  # from the BACKEND_PROXY_ENDPOINT env var; set it in your shell before running.
   http:
-    url: http://127.0.0.1:8000/v1/audio/speech
-    api_key: null          # bearer token; null = no Authorization header
-    model: tts-1
-    voice: alloy
-    response_format: wav   # wav | mp3 | flac
+    url: ${BACKEND_PROXY_ENDPOINT}/v1/audio/speech
+    speed: 1.0              # speech speed multiplier (0.5–2.0)
 
 bgm:
   # 0 to 1.0. Default 0.12 = ~-18 dB, sits clearly below boosted narration.

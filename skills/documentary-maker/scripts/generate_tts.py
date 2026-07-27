@@ -162,26 +162,38 @@ def _run_workflow_and_capture(workflow_id, inputs, dest_dir, fmt):
 
 def synth_http(sections, prefs, video_dir, fmt):
     cfg = prefs.get("tts", {}).get("http", {})
-    url = cfg.get("url")
-    if not url:
+    url_raw = cfg.get("url", "")
+    if not url_raw:
         cli_envelope.emit_usage_error(
             "tts.http.url is required when backend=http_server.", fmt=fmt)
-    headers = {"Content-Type": "application/json"}
-    if cfg.get("api_key"):
-        headers["Authorization"] = f"Bearer {cfg['api_key']}"
+    # Resolve ${BACKEND_PROXY_ENDPOINT} from env var.
+    url = os.path.expandvars(url_raw)
+    if "${BACKEND_PROXY_ENDPOINT}" in url or not url.startswith("http"):
+        cli_envelope.emit_usage_error(
+            f"tts.http.url could not be resolved: {url_raw}. "
+            "Set the BACKEND_PROXY_ENDPOINT env var.",
+            fmt=fmt)
+
     content = concat_narration(sections)
     if not content.strip():
         cli_envelope.emit_usage_error(
             "Narration is empty. Add narration text to narration_script.yaml.",
             fmt=fmt)
-    payload = {
-        "model": cfg.get("model", "tts-1"),
-        "input": content,
-        "voice": cfg.get("voice", "alloy"),
-        "response_format": cfg.get("response_format", "wav"),
-    }
+
+    # Resolve voice_file: project prefs tts.voice_file → project-level voice_reference.wav
+    voice_file = prefs.get("tts", {}).get("voice_file")
+    if not voice_file or not os.path.isfile(voice_file):
+        cli_envelope.emit_usage_error(
+            f"tts.voice_file not found or does not exist: {voice_file}. "
+            "Run voice_design (Step 0) first, or set tts.voice_file manually.",
+            fmt=fmt)
+
+    speed = cfg.get("speed", 1.0)
+    data = {"input": content, "speed": str(speed)}
+    files = {"voice_file": (os.path.basename(voice_file),
+                             open(voice_file, "rb"), "audio/wav")}
     try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=900)
+        resp = requests.post(url, data=data, files=files, timeout=900)
         resp.raise_for_status()
     except Exception as exc:
         cli_envelope.emit_error(
@@ -213,6 +225,13 @@ def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
     prefs = load_project_prefs(args.project)
+    # Auto-resolve voice_file: if null, fall back to project-level voice_reference.wav
+    vf = prefs.get("tts", {}).get("voice_file")
+    if not vf:
+        default_vf = os.path.normpath(
+            os.path.join(DOC_ROOT, "projects", args.project, "voice_reference.wav"))
+        if os.path.isfile(default_vf):
+            prefs.setdefault("tts", {})["voice_file"] = default_vf
     video_dir = os.path.join(DOC_ROOT, "projects", args.project, "videos", args.video)
     if not os.path.isdir(video_dir):
         cli_envelope.emit_usage_error(

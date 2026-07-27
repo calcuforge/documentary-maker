@@ -12,6 +12,11 @@ theme:
 content:
   tone: narrative
 
+voice_design:
+  prompt: "温润深厚的男性纪录片旁白，语速适中，声音有历史厚重感和叙事感，适合讲述历史事件和人物传记，娓娓道来"
+  speed: 1.0
+  workflow: ominivoice_voice_design
+
 component_suggestions:
   hero: FullBleedLayout
   overview: IconCard

@@ -18,6 +18,7 @@ documentary-maker/
 └── projects/                       # created on demand
     └── {project-name}/
         ├── project_prefs.yaml      # copied from template, edited
+        ├── voice_reference.wav     # Step 0 — one per project, shared by all videos
         └── videos/
             └── {video-name}/
                 ├── topic_definition.md
