@@ -94,7 +94,7 @@ The agent writes this file at the end of Step 11 by reading `timing.json` (for c
 After the verify gate passes:
 
 ```
-✅ Documentary complete.
+✅ Video complete.
 
 Project: aviation-disaster-horizontal
 Video:   swissair-111

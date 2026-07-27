@@ -1,15 +1,17 @@
 # explainer-video-maker
 
-A Claude Code skill that produces narration-driven documentary videos — history, aviation disaster, true crime, natural disaster — from a topic. Pipeline: research → script → AIGC visuals → TTS → Remotion → FFmpeg.
+A Claude Code skill that produces narration-driven explainer videos — animal science, life science, history documentaries, aviation disasters, true crime, tech news, daily briefings, current affairs, knowledge sharing, natural disasters, and more. Pipeline: research → script → AIGC visuals → TTS → Remotion → FFmpeg.
 
 ## What it is
 
+- **Narration-driven.** The script is the foundation. Every section gets a visual design (Remotion component + optional AIGC asset) matched to its content type.
+- **10 categories.** `animal-science` | `life-science` | `history` | `aviation-disaster` | `crime` | `natural-disaster` | `tech-news` | `daily-news` | `current-affairs` | `knowledge-sharing`. Each has a theme preset with colors, tone, voice persona, and chapter design hints.
 - **Platform-agnostic.** No CTA, no thumbnails, no platform-bound publish_info. The final video is a plain MP4 plus a `video_info.yaml` metadata file for downstream cover-image / shorts / publishing tasks.
 - **AIGC-heavy.** Images and b-roll come from ComfyUI workflows orchestrated by `comfyui-scheduler`. Text-only sections are fine too.
 - **Project-based.** A project groups videos sharing the same config (category + orientation + resolution + language + quality tier + creation mode). One project = many videos.
 - **Reuses `remotion-video-template`.** Per-video `Video.tsx`/`entry.tsx` import components from the shared template — no copy.
 - **YAML config.** Project prefs in `project_prefs.yaml` with inline comments. No JSON configs.
-- **Two TTS backends.** ComfyUI `index_tts` (default; clones a reference voice) OR any OpenAI-compatible `/v1/audio/speech` HTTP server.
+- **Two TTS backends.** ComfyUI `index_tts` (default; clones a reference voice from Step 0 voice design) OR HTTP multipart TTS server.
 
 Skill code lives under `skills/explainer-video-maker/`. All commands are run from the skill root.
 

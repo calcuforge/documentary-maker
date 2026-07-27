@@ -1,0 +1,38 @@
+# themes/life-science.yaml
+# Warm, everyday-science tone for life-science and "how things work" videos.
+
+theme:
+  primary_color: "#4a90d9"       # sky blue
+  background_color: "#f5f7fa"     # warm white
+  text_color: "#1a1a2e"
+  accent_color: "#e8724a"         # warm orange
+  transition_type: slide
+  transition_duration: 16
+
+content:
+  tone: casual
+
+voice_design:
+  prompt: "亲切活泼的生活科普旁白，语速中等偏快，声音温暖有亲和力，适合解答日常生活中的科学问题，像朋友聊天一样自然"
+  speed: 1.05
+  workflow: ominivoice_voice_design
+
+component_suggestions:
+  hero: FullBleedLayout
+  overview: IconCard
+  question: SplitLayout
+  explanation: FlowChart
+  demonstration: StepProgress
+  comparison: ComparisonCard
+  data: DataBar
+  quote: QuoteBlock
+  summary: StatHighlight
+
+narrative_arc:
+  - hook
+  - question
+  - exploration
+  - explanation
+  - examples
+  - takeaway
+  - conclusion

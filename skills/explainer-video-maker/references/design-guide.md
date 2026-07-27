@@ -84,16 +84,16 @@ The generated `Video.tsx` already does this. Don't override it.
 
 ## Section rhythm
 
-For a 6-minute documentary (~360s), aim for:
+For a 6-minute explainer (~360s), aim for:
 
-| Section count | Avg duration |
-| --- | --- |
-| 5 sections | 72s each — too long, viewers lose focus |
-| 7 sections | 51s each — sweet spot |
-| 10 sections | 36s each — kinetic, fast-paced |
-| 15 sections | 24s each — too fragmented |
+| Section count | Avg duration | Best for |
+| --- | --- | --- |
+| 5 sections | 72s each | Deep-dive tutorials, long-form history |
+| 7 sections | 51s each | Sweet spot — most explainer videos |
+| 10 sections | 36s each | News briefings, fast-paced tech news |
+| 15 sections | 24s each | Daily headlines (too much for educational) |
 
-`project_prefs.content.section_count` defaults to 7. Aviation-disaster and crime topics benefit from 8-9 sections (more timeline detail); short historical vignettes can fit in 5-6.
+`project_prefs.content.section_count` defaults to 7. Documentary topics (aviation-disaster, crime) benefit from 8-9 sections; news briefings (daily-news) work well at 5-7; knowledge-sharing fits 6-8.
 
 ## Density per section
 
@@ -106,21 +106,25 @@ For a 6-minute documentary (~360s), aim for:
 
 Pick by content load: a section with 8 timeline items should use `Timeline` with small text and tight spacing; a section with one big statistic should use `StatHighlight` with hero-size text.
 
-## Documentaries-specific tips
+## Content-type tips
 
-- **Maps and locations** — for aviation disasters / wars / natural disasters, use `DiagramReveal` with positioned nodes to show geography. No dedicated map component in the template yet.
-- **Photo evidence** — `AssetImage` (inline role) inside `MediaSection` for archival photos with caption.
-- **Footage** — `AssetVideo` for b-roll, keep ≤10s per clip to maintain pace.
-- **Quote attribution** — for famous quotes, include speaker + year. Use `QuoteBlock` with `attribution="Steve Jobs, 1996"`.
-- **Sensitive content** — for casualty stats, use `StatHighlight` with a `description` field citing the source ("Source: official accident report, 1999"). Avoid sensationalized framing.
+- **Maps and locations** — for documentaries, disasters, historical events, use `DiagramReveal` with positioned nodes to show geography. No dedicated map component in the template yet.
+- **Photo / footage** — `AssetImage` (inline role) inside `MediaSection` for photos with caption. `AssetVideo` for b-roll, keep ≤10s per clip.
+- **Quote attribution** — `QuoteBlock` with `attribution` field (speaker + year/context).
+- **Sensitive / data-heavy content** — use `StatHighlight` with a `description` field citing sources. Avoid sensationalized framing.
+- **Animal / nature behavior** — `FlowChart` for behavioral sequences, `ComparisonCard` for species comparison, `MediaSection` for habitat photos.
+- **Tech demos / processes** — `StepProgress` for numbered steps, `DiagramReveal` for architecture, `ComparisonCard` for before/after.
+- **News stories** — `Timeline` for unfolding events, `MetricsRow` for key numbers, `FlowChart` for causal chains.
+- **Knowledge / concepts** — `SplitLayout` (concept left, visual right), `FeatureGrid` for examples, `FlowChart` for how-it-works.
 
 ## Color palette per theme
 
-Each theme's `primary_color` + `accent_color` pair is tuned for emotional tone:
+Each theme's `primary_color` + `accent_color` pair is tuned for emotional tone and content type. Full palette in [themes.md](themes.md). Key pairs:
 
-- aviation-disaster: cool steel + emergency red — cold, urgent, technical
-- history: parchment + saddle brown — warm, archival, contemplative
-- crime: cold steel + blood red — dark, analytical, suspenseful
-- natural-disaster: muted green + safety orange — naturalistic, alert
+| Theme group | Feeling |
+| --- | --- |
+| Documentary (aviation, history, crime, disaster) | Dark, serious, archival |
+| Science & knowledge (animal, life, knowledge-sharing) | Bright, warm, approachable |
+| News (tech, daily, current-affairs) | Clean, bold, modern |
 
-Don't fight the palette. If a section needs a different mood, swap the component (e.g. QuoteBlock on a somber line) rather than overriding the color.
+Don't fight the palette. If a section needs a different mood, swap the component rather than overriding the color.

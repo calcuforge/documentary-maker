@@ -2,14 +2,32 @@
 
 ## Built-in themes
 
-Located in `explainer-video-maker/themes/*.yaml`. Each theme is a partial override merged onto `project_prefs.yaml`'s `theme:` / `content:` blocks plus a `component_suggestions:` map (section-name → suggested component) and a `narrative_arc:` list hint for chapter design.
+Located in `explainer-video-maker/themes/*.yaml`. Each theme is a partial override merged onto `project_prefs.yaml`'s `theme:` / `content:` blocks plus a `component_suggestions:` map (section-name → suggested component) and a `narrative_arc:` list hint for chapter design. All themes include a `voice_design:` block defining the narrator persona.
 
-| Theme | primaryColor | accentColor | tone | narrative arc |
+### Documentary & disaster
+
+| Theme | primaryColor | accentColor | tone | voice persona |
 | --- | --- | --- | --- | --- |
-| `aviation-disaster` | `#b8c5d6` cool steel | `#c9303c` emergency red | serious | hook → background → event_timeline → cause_analysis → impact → aftermath → conclusion |
-| `history` | `#d4b483` parchment | `#8b4513` saddle brown | narrative | hook → context → rise → climax → turning_point → legacy → conclusion |
-| `crime` | `#a8b5c0` cold steel | `#c9303c` blood red | analytical | hook → crime_scene → background → investigation → trial → aftermath → conclusion |
-| `natural-disaster` | `#8ba98a` muted green | `#d97742` safety orange | serious | hook → context → event_timeline → impact → cause_analysis → response → aftermath → conclusion |
+| `aviation-disaster` | `#b8c5d6` cool steel | `#c9303c` emergency red | serious | 沉稳严肃, authoritative |
+| `history` | `#d4b483` parchment | `#8b4513` saddle brown | narrative | 温润深厚, historical gravitas |
+| `crime` | `#a8b5c0` cold steel | `#c9303c` blood red | analytical | 冷静理性, detective-objective |
+| `natural-disaster` | `#8ba98a` muted green | `#d97742` safety orange | serious | 沉稳坚定, firm but empathetic |
+
+### Science & knowledge
+
+| Theme | primaryColor | accentColor | tone | voice persona |
+| --- | --- | --- | --- | --- |
+| `animal-science` | `#2d8c4a` forest green | `#e8a840` warm amber | educational | 温和亲切, curious and bright |
+| `life-science` | `#4a90d9` sky blue | `#e8724a` warm orange | casual | 亲切活泼, warm and approachable |
+| `knowledge-sharing` | `#6c5ce7` deep purple | `#fd7e14` warm amber | educational | 亲切自然, scholarly but engaging |
+
+### News & current events
+
+| Theme | primaryColor | accentColor | tone | voice persona |
+| --- | --- | --- | --- | --- |
+| `tech-news` | `#5dade2` electric blue | `#00d4aa` neon teal | analytical | 干练专业, crisp and modern |
+| `daily-news` | `#2c3e50` newspaper navy | `#c0392b` headline red | news-brief | 清晰稳重, anchor-broadcast |
+| `current-affairs` | `#1a1a2e` editorial dark | `#c0392b` editorial red | serious | 沉稳有力, authoritative analyst |
 
 ## How themes apply
 
@@ -69,12 +87,18 @@ To use a theme's color entirely, delete the explicit `theme.*` field from `proje
 
 | Topic pattern | Recommended theme |
 | --- | --- |
-| Aviation accident, air crash | aviation-disaster |
-| Earthquake, tsunami, flood, wildfire | natural-disaster |
-| Murder, heist, fraud, true crime | crime |
+| Wildlife, ocean life, animal behavior | animal-science |
+| Everyday science, how things work, fun facts | life-science |
+| General knowledge, "did you know", explainer | knowledge-sharing |
 | War, dynasty, historical event, biography | history |
+| Aviation accident, air crash, shipwreck | aviation-disaster |
+| Murder, heist, fraud, cold case | crime |
+| Earthquake, tsunami, flood, wildfire | natural-disaster |
+| New product, AI breakthrough, tech trends | tech-news |
+| Today's headlines, news roundup | daily-news |
+| Social commentary, political analysis, hot topics | current-affairs |
 
-For topics that genuinely cross categories (e.g. a disaster caused by criminal negligence), pick the dominant framing — the user's first sentence usually signals it. If unclear, ask.
+For topics that cross categories, pick the dominant framing — the user's first sentence usually signals it. If unclear, ask.
 
 ## Custom per-video overrides
 

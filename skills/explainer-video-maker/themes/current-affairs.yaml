@@ -1,0 +1,37 @@
+# themes/current-affairs.yaml
+# Bold, authoritative tone for current affairs and social commentary videos.
+
+theme:
+  primary_color: "#1a1a2e"       # editorial dark
+  background_color: "#f2f2f5"     # soft white
+  text_color: "#1a1a2e"
+  accent_color: "#c0392b"         # editorial red
+  transition_type: wipe
+  transition_duration: 14
+
+content:
+  tone: serious
+
+voice_design:
+  prompt: "沉稳有力的时事评论员，语速适中，声音厚重有权威感，适合分析社会热点和时事动态，客观冷静但不失温度"
+  speed: 0.95
+  workflow: ominivoice_voice_design
+
+component_suggestions:
+  hero: FullBleedLayout
+  overview: IconCard
+  background: Timeline
+  analysis: FlowChart
+  perspectives: ComparisonCard
+  impact: DataBar
+  quote: QuoteBlock
+  summary: StatHighlight
+
+narrative_arc:
+  - hook
+  - context
+  - key_development
+  - analysis
+  - impact
+  - outlook
+  - conclusion

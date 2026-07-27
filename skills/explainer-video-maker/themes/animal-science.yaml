@@ -1,0 +1,38 @@
+# themes/animal-science.yaml
+# Bright, natural tone for wildlife and animal science videos.
+
+theme:
+  primary_color: "#2d8c4a"       # forest green
+  background_color: "#0d1f12"     # deep green-black
+  text_color: "#e8f0e2"
+  accent_color: "#e8a840"         # warm amber
+  transition_type: fade
+  transition_duration: 18
+
+content:
+  tone: educational
+
+voice_design:
+  prompt: "温和亲切的自然纪录片旁白，语速适中，声音明亮有活力，适合讲述动物行为和自然生态知识，富有好奇心和感染力"
+  speed: 1.0
+  workflow: ominivoice_voice_design
+
+component_suggestions:
+  hero: FullBleedLayout
+  overview: IconCard
+  habitat: MediaSection
+  behavior: FlowChart
+  species: ComparisonCard
+  migration: Timeline
+  statistics: DataBar
+  quote: QuoteBlock
+  summary: StatHighlight
+
+narrative_arc:
+  - hook
+  - species_intro
+  - habitat
+  - behavior
+  - survival
+  - conservation
+  - conclusion

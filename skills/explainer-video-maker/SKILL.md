@@ -1,6 +1,6 @@
 ---
 name: explainer-video-maker
-description: Use when the user wants to produce a narration-driven documentary video — history, aviation disaster, true crime, or natural disaster. Trigger on phrases like "制作历史纪录片", "帮我做一个空难纪录片", "案件纪录片", "地震纪录片", "aviation disaster documentary", "history documentary", "crime documentary". Produces 1080p/4K horizontal or vertical video via research → script → AIGC visuals → TTS → Remotion → FFmpeg. Reuses the shared `remotion-video-template`; AIGC visuals come from ComfyUI workflows via `comfyui-scheduler`. Also trigger when the user wants to regenerate, re-render, or iterate on a documentary this skill already produced (reuse the existing `projects/{project}/videos/{name}/` directory). Do NOT trigger for generic video editing, podcasts, talking-head explainer videos, trimming, or platform-bound publishing tasks (use video-podcast-maker for those).
+description: Use when the user wants to produce a narration-driven explainer video — animal science, life science, history documentary, aviation disaster, true crime, tech news, daily briefing, current affairs, knowledge sharing, or natural disaster. Trigger on phrases like "动物科普", "生活科普", "为什么...", "历史纪录片", "空难纪录片", "案件纪实", "科技新闻", "今日新闻", "时事热点", "涨知识", "knowledge video", "explainer video", "animal documentary". Produces 1080p/4K horizontal or vertical video via research → script → AIGC visuals → TTS → Remotion → FFmpeg. Reuses the shared `remotion-video-template`; AIGC visuals come from ComfyUI workflows via `comfyui-scheduler`. Also trigger when the user wants to regenerate, re-render, or iterate on a video this skill already produced (reuse the existing `projects/{project}/videos/{name}/` directory). Do NOT trigger for generic video editing, podcasts, talking-head videos, trimming, or platform-bound publishing tasks (use video-podcast-maker for those).
 argument-hint: "[topic]"
 effort: high
 author: calcuforge
@@ -21,7 +21,7 @@ metadata:
 
 # Explainer Video Maker
 
-Narration-driven documentary pipeline. Research → script → AIGC visuals → TTS → Remotion → FFmpeg. Output is platform-agnostic — no CTA, no thumbnails, no publish-info. A `video_info.yaml` records metadata for downstream cover-image / shorts generation later.
+Narration-driven explainer video pipeline. Research → script → AIGC visuals → TTS → Remotion → FFmpeg. Covers animal science, life science, history documentaries, disaster stories, true crime, tech news, daily briefings, current affairs, knowledge sharing, and more. Output is platform-agnostic — no CTA, no thumbnails, no publish-info. A `video_info.yaml` records metadata for downstream cover-image / shorts generation later.
 
 ## Differences from `video-podcast-maker`
 
@@ -29,10 +29,11 @@ Narration-driven documentary pipeline. Research → script → AIGC visuals → 
 | --- | --- | --- |
 | Template | ships its own Remotion template | reuses shared `remotion-video-template` (no copy) |
 | Visuals | mostly Remotion components + stock | AIGC-heavy (ComfyUI t2i / i2v / flf2v / upscale) |
+| Content types | topic explainers, podcasts | 10 categories: animal/life science, history, disasters, crime, tech news, daily briefing, current affairs, knowledge sharing |
 | Platform | bilibili / youtube / xiaohongshu / etc. | platform-agnostic — saves `video_info.yaml` instead |
 | Preview | Remotion Studio gate before render | no browser preview (Step 9 renders directly) |
 | Config | JSON | YAML with comments |
-| TTS | ttsCN multi-backend | `comfyui index_tts` (default) OR OpenAI-compatible HTTP server |
+| TTS | ttsCN multi-backend | `comfyui index_tts` (default) OR HTTP multipart TTS server |
 
 ## Bootstrap
 
@@ -56,7 +57,7 @@ Before any video is produced, generate a reference voice audio file for the proj
    ```bash
    python3 "$SKILL_DIR/scripts/cli.py" comfyui run \
      -w ominivoice_voice_design \
-     -i '{"prompt":"沉稳严肃的纪录片旁白，声音低沉有力..."}' \
+     -i '{"prompt":"沉稳专业的解说旁白，声音清晰有力..."}' \
      --dest-dir "$SKILL_DIR/../projects/$P/"
    ```
 
@@ -82,10 +83,16 @@ Before any video is produced, generate a reference voice audio file for the proj
 
 Trigger keyword → category mapping (see `project_prefs.template.yaml` `triggers.keywords`):
 
+- "动物科普" / "动物世界" → `animal-science`
+- "为什么..." / "怎么回事" / "生活科普" / "冷知识" → `life-science`
+- "历史纪录片" / "历史事件" → `history`
 - "空难" / "航空事故" → `aviation-disaster`
-- "历史纪录片" → `history`
-- "案件纪实" / "真实犯罪" → `crime`
+- "案件纪实" / "真实犯罪" / "悬案" → `crime`
 - "自然灾害" / "地震" / "海啸" → `natural-disaster`
+- "科技新闻" / "新技术" / "AI" → `tech-news`
+- "今日新闻" / "新闻简报" / "每日资讯" → `daily-news`
+- "时事热点" / "社会热点" / "时事评论" → `current-affairs`
+- "知识分享" / "科普" / "涨知识" / "你知道吗" → `knowledge-sharing`
 
 ## Workflow
 
@@ -124,7 +131,7 @@ At Step 1 start, create one task per step in your agent tracker. Mark `in_progre
 | **`--public-dir`** | Every remotion command uses `--public-dir projects/{p}/videos/{v}/`. All outputs land in that dir. |
 | **Voice design** | One `voice_reference.wav` per project, generated by Step 0. All videos in the project share it. Re-generate only on user request. |
 | **YAML config** | Project + video metadata in YAML. JSON only for `timing.json` and `assets/manifest.json` (consumed by Remotion at runtime via staticFile). |
-| **ComfyUI batch ordering** | When generating multiple assets, group by workflow type. Run same-workflow jobs in parallel within each batch. Batches execute sequentially: all t2i → all i2v → all flf2v → all video upscale → all image upscale. Never mix different workflow IDs in one batch. See [references/workflow-assets.md](references/workflow-assets.md#52-batch-execution-strategy). |
+| **ComfyUI batch ordering** | When generating multiple assets, group by workflow type. Run same-workflow jobs in parallel within each batch. Batches execute sequentially: voice_design → t2i → i2i → t2v → i2v → flf2v → multi_scene_i2v → video_upscale → image_upscale. Never mix different workflow IDs in one batch. See [references/workflow-assets.md](references/workflow-assets.md#5b-prime-batch-execution-strategy). |
 
 ## Per-Video Layout
 

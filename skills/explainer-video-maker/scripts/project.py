@@ -74,7 +74,10 @@ def build_parser():
     p_create = sub.add_parser("create", help="Create a new project.")
     p_create.add_argument("--name", required=True)
     p_create.add_argument("--category", default=None,
-                          choices=["aviation-disaster", "history", "crime", "natural-disaster"])
+                          choices=["animal-science", "life-science", "history",
+                                   "aviation-disaster", "crime", "natural-disaster",
+                                   "tech-news", "daily-news", "current-affairs",
+                                   "knowledge-sharing"])
     p_create.add_argument("--orientation", default=None, choices=["horizontal", "vertical"])
     p_create.add_argument("--resolution", default=None, choices=["1080p", "4k"])
     p_create.add_argument("--quality", default=None, choices=["speed", "quality"])

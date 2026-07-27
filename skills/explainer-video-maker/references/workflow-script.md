@@ -6,7 +6,7 @@
 
 Detect at workflow start:
 
-- "Make a documentary about..." / no special instructions → **Auto Mode** (default). Pipeline runs end-to-end.
+- "Make a video about..." / no special instructions → **Auto Mode** (default). Pipeline runs end-to-end.
 - "I want to control each step" / "interactive" / "let me review" → **Manual Mode**. Each AI product (script, narration, assets, TTS, composition) waits for explicit confirmation before next step.
 
 In Auto Mode, the only mandatory stop is Step 11 (`verify_output.py` exit 0/2). In Manual Mode, pause after every step that produces an AI artifact.

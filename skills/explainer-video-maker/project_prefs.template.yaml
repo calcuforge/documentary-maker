@@ -4,9 +4,11 @@
 
 project:
   # Logical id, lowercase-hyphen. Should match the projects/<name>/ folder name.
-  name: aviation-disaster-horizontal
-  # Category maps to themes/<category>.yaml. Built-in: aviation-disaster | history | crime | natural-disaster.
-  category: aviation-disaster
+  name: my-project
+  # Category maps to themes/<category>.yaml. Built-in:
+  #   animal-science | life-science | history | aviation-disaster | crime |
+  #   natural-disaster | tech-news | daily-news | current-affairs | knowledge-sharing
+  category: knowledge-sharing
   # horizontal (16:9) | vertical (9:16).
   orientation: horizontal
   # auto — pipeline runs end-to-end. manual — each AI product waits for user confirmation.
@@ -70,23 +72,23 @@ bgm:
 theme:
   # These override the matching fields in themes/<category>.yaml.
   # Explicit fields here win; everything else falls back to the theme preset.
-  primary_color: "#1a2a3a"
-  background_color: "#0e1419"
-  text_color: "#e6e8eb"
-  accent_color: "#d4b483"
+  primary_color: "#4f6ef7"
+  background_color: "#ffffff"
+  text_color: "#1a1a1a"
+  accent_color: "#FF6B6B"
   transition_type: fade   # fade | slide | wipe | none
   transition_duration: 18 # frames @ fps
   # Hint list — composition generator prefers these components when picking a layout.
   preferred_components:
     - Timeline
-    - DiagramReveal
+    - FlowChart
     - DataBar
-    - QuoteBlock
     - MediaSection
+    - DiagramReveal
 
 content:
-  tone: serious           # serious | narrative | analytical
-  section_count: 7        # target chapter count; chapter design may deviate ±1
+  tone: educational        # educational | casual | serious | narrative | analytical | news-brief
+  section_count: 7         # target chapter count; chapter design may deviate ±1
   # Used by the char-estimate fallback if TTS audio is unavailable.
   target_duration_seconds: 360
 
@@ -98,7 +100,13 @@ paths:
 triggers:
   # Keyword → category map. Used by the skill description for trigger routing.
   keywords:
-    aviation-disaster: ["空难", "航空事故", "空难纪录片", "aviation disaster"]
-    history: ["历史纪录片", "历史事件", "history documentary"]
-    crime: ["案件纪实", "真实犯罪", "crime documentary"]
-    natural-disaster: ["自然灾害", "地震", "海啸", "natural disaster"]
+    animal-science: ["动物科普", "动物世界", "野生动物", "海洋生物", "动物纪录片", "animal documentary"]
+    life-science: ["生活科普", "为什么", "怎么回事", "冷知识", "日常科普", "how it works", "生活中的科学"]
+    history: ["历史纪录片", "历史事件", "古代", "朝代", "history documentary"]
+    aviation-disaster: ["空难", "航空事故", "空难纪录片", "飞机失事", "aviation disaster"]
+    crime: ["案件纪实", "真实犯罪", "悬案", "凶案", "crime documentary", "案件纪录片"]
+    natural-disaster: ["自然灾害", "地震", "海啸", "台风", "洪水", "natural disaster"]
+    tech-news: ["科技新闻", "新技术", "AI新闻", "科技前沿", "tech news", "科技资讯"]
+    daily-news: ["今日新闻", "资讯日报", "每日资讯", "新闻简报", "daily news", "新闻速览"]
+    current-affairs: ["时事新闻", "时事评论", "热点事件", "社会热点", "current affairs"]
+    knowledge-sharing: ["知识分享", "科普视频", "你知道吗", "涨知识", "冷知识", "knowledge", "explainer"]
