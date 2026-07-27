@@ -120,6 +120,8 @@ Use the theme's `component_suggestions` map to pick a default component per sect
 
 **Output:** `narration_script.yaml`
 
+Each section is driven by **three layers**: narration (master clock), data materials (charts/stats), and text materials (quotes/bullets/callouts). The `visual:` block picks a primary component; the `data:` and `text:` blocks add supporting visuals that render alongside it.
+
 Schema:
 
 ```yaml
@@ -128,11 +130,9 @@ Schema:
   narration: |
     1998年9月2日，瑞士航空111号班机从纽约肯尼迪机场起飞，
     目的地是日内瓦。这架MD-11客机上载有229人。
-    谁也没有想到，这架飞机即将在大西洋上空，
-    写下航空安全史上重要的一页。
   visual:
     component: FullBleedLayout
-    asset_id: hero_bg            # optional — must exist in assets/manifest.json
+    asset_id: hero_bg
     props:
       title: 瑞士航空111号班机
       subtitle: "1998.09.02 · 大西洋"
@@ -151,33 +151,114 @@ Schema:
         - { label: 01:14, description: 机组请求返航 }
         - { label: 01:31, description: 飞机失联 }
 
-- name: cause_chain
-  label: 事故链条
+- name: impact
+  label: 事故数据
   narration: |
-    调查发现，事故源于驾驶舱 ceiling 上方的电弧...
+    Swissair 111不是孤立事件。1990年代全球航空事故率居高不下，
+    每一次事故都在推动安全标准更新。
   visual:
-    component: FlowChart
-    props:
-      title: 事故链条
-      steps:
-        - { label: 电弧, description: 安装错误的电线产生电弧 }
-        - { label: 起火, description: 旁边易燃材料被点燃 }
-        - { label: 蔓延, description: 火势蔓延至驾驶舱顶 }
-        - { label: 失控, description: 仪表和操纵系统损坏 }
-
-- name: summary
-  label: 反思
-  narration: |
-    瑞士航空111号班机的悲剧，直接推动了全球航空 wiring
-    安全规范的修订...
-  visual:
-    component: StatHighlight
-    props:
+    component: FullBleedLayout
+  # Data materials: structured statistics rendered as chart components.
+  data:
+    - type: stat                   # single big number
       value: "229"
       unit: 人
       label: 全部遇难
-      description: 此次事故的遇难者人数
+      description: "1998年9月2日，大西洋上空"
+    - type: bar_chart              # bar chart
+      title: 全球航空致命事故率（每百万架次）
+      items:
+        - { label: "1970s", value: 4.8 }
+        - { label: "1980s", value: 2.2 }
+        - { label: "1990s", value: 1.3 }
+        - { label: "2000s", value: 0.7 }
+        - { label: "2010s", value: 0.3 }
+    - type: metrics                # KPI row
+      title: 1998年航空安全数据
+      metrics:
+        - { value: "16", label: 致命事故, icon: "alert-triangle" }
+        - { value: "1244", label: 遇难人数, icon: "users" }
+        - { value: "83%", label: 人为因素占比, icon: "user" }
+        - { value: "6%", label: 机械故障, icon: "settings" }
+  # Text materials: quotes, key facts, bullet lists rendered as text components.
+  text:
+    - type: quote                  # pull quote
+      quote: "这起事故直接推动了全球航空布线安全规范的修订。"
+      attribution: "加拿大运输安全委员会 (TSB), 1999年最终报告"
+    - type: key_points             # icon bullet list
+      title: 事故三大诱因
+      items:
+        - { icon: "zap", title: Kapton电线电弧, description: "安装错误的电线在高空低气压下产生电弧" }
+        - { icon: "flame", title: MPET易燃材料, description: "隔热层被电弧点燃，火势迅速蔓延" }
+        - { icon: "alert-triangle", title: 关键系统损坏, description: "火势导致驾驶舱仪表和操纵系统失效" }
+
+- name: analysis
+  label: 专家观点
+  narration: |
+    航空安全专家指出，SR111事故暴露了机上易燃材料认证
+    体系的漏洞...
+  text:
+    - type: quote
+      quote: "当时的适航标准根本没想到要测试电线在低气压下的电弧风险。"
+      attribution: "航空工程师, 调查报告听证会"
+    - type: callout                # single highlighted fact
+      icon: "info"
+      text: "FAA在事故后3年内强制要求所有商用飞机更换Kapton绝缘材料。"
 ```
+
+### Visual design: the three layers
+
+Each section gets three composable visual layers. The narration audio plays over all of them. The `visual:` component is the **primary layout** — it owns the background, the title, and the overall structure. `data:` and `text:` items are **secondary** — they render inside or alongside the primary component.
+
+| Layer | Drives | Sources | Rendered by |
+| --- | --- | --- | --- |
+| `visual:` (primary) | Composition + AIGC asset | `asset_id` (Step 5 manifest), `props` | SectionComponent switch |
+| `data:` (secondary) | Pre-processed statistics, charts | Agent research (Step 2), official reports | `StatHighlight`, `DataBar`, `MetricsRow` |
+| `text:` (secondary) | Pre-processed quotes, facts, arguments | Agent research (Step 2), interviews, documents | `QuoteBlock`, `FeatureGrid`, `IconCard` |
+
+Data and text items should be **prepared during Step 4** using facts gathered in Step 2 research. The agent writes the `data:` and `text:` blocks alongside the narration — they are NOT auto-generated. Each data/text item gets a `type` field that maps to a specific Remotion component (see [design-guide.md](design-guide.md#data-type--component-mapping)).
+
+### Visual composition guidance (`visual_composition`)
+
+Each theme preset includes a `visual_composition:` block — a **non-binding suggestion** that tells the agent how to allocate the four visual source types across sections. It does NOT enforce ratios; it guides judgment when the agent designs each section's `visual:`, `data:`, and `text:` blocks.
+
+| Source | `visual_composition` key | When to use |
+| --- | --- | --- |
+| AI合成 (images/video) | `aigc` | No real photos available; need conceptual scenes; ComfyUI t2i/i2v |
+| 素材搜索 (stock/web) | `stock` | Real photos exist online; agent web search for images; user-supplied files |
+| 数据图表组件 | `data_charts` | Statistics, trends, KPIs — rendered by `data[]` items (DataBar, StatHighlight, MetricsRow, Timeline) |
+| 文本资料组件 | `text_components` | Quotes, arguments, bullet points — rendered by `text[]` items (QuoteBlock, IconCard, FeatureGrid) |
+
+Levels: `high` (primary visual source for this category), `medium` (supporting), `low` (occasional), `none` (skip).
+
+**Example — aviation-disaster:** `aigc: high, stock: low, data_charts: medium, text_components: low`
+→ Most sections use AI-generated imagery. A few sections add data charts (casualty stats, accident rates). Occasional text quotes from investigation reports. Very little stock media hunting.
+
+**Example — tech-news:** `aigc: low, stock: medium, data_charts: medium, text_components: high`
+→ Most sections use text components (specs, features, comparisons). Some stock photos of products. Moderate use of data charts. AI-generated images only for futuristic concepts.
+
+The agent reads `visual_composition` from the resolved theme, then designs each section's layers accordingly. Full per-theme values in [design-guide.md](design-guide.md#visual-composition-per-theme).
+
+### Data item types
+
+| `type` | What it shows | Remotion component | Props |
+| --- | --- | --- | --- |
+| `stat` | One big number with label | `StatHighlight` | `value`, `unit`, `label`, `description` |
+| `bar_chart` | Horizontal bar chart | `DataBar` | `title`, `items: [{label, value}]` |
+| `metrics` | 4-up KPI dashboard | `MetricsRow` | `title`, `metrics: [{value, label, icon}]` |
+| `steps` | Numbered process steps | `StepProgress` | `title`, `steps: [{label, description}]` |
+| `flow` | Causal chain / process | `FlowChart` | `title`, `steps: [{label, description, icon}]` |
+| `timeline` | Chronological events | `Timeline` | `title`, `items: [{label, description}]` |
+| `comparison` | A vs B side-by-side | `ComparisonCard` | `title`, `left: {title, items}`, `right: {title, items}` |
+
+### Text item types
+
+| `type` | What it shows | Remotion component | Props |
+| --- | --- | --- | --- |
+| `quote` | Pull quote with attribution | `QuoteBlock` | `quote`, `attribution` |
+| `key_points` | Icon-bulleted feature list | `FeatureGrid` or `IconCard` | `title`, `items: [{icon, title, description}]` |
+| `callout` | Single highlighted fact/callout | `IconCard` (single) | `icon`, `title` (or `text`) |
+| `diagram` | Node-edge diagram | `DiagramReveal` | `title`, `nodes: [{id, label}]`, `edges: [{from, to}]` |
 
 ### Narration rules (anti-slop)
 

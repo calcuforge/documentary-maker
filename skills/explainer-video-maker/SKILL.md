@@ -28,7 +28,7 @@ Narration-driven explainer video pipeline. Research → script → AIGC visuals 
 | Aspect | video-podcast-maker | explainer-video-maker |
 | --- | --- | --- |
 | Template | ships its own Remotion template | reuses shared `remotion-video-template` (no copy) |
-| Visuals | mostly Remotion components + stock | AIGC-heavy (ComfyUI t2i / i2v / flf2v / upscale) |
+| Visuals | mostly Remotion components + stock | Three-layer: AIGC (ComfyUI) + data charts (DataBar/StatHighlight/MetricsRow) + text (QuoteBlock/IconCard/FeatureGrid) |
 | Content types | topic explainers, podcasts | 10 categories: animal/life science, history, disasters, crime, tech news, daily briefing, current affairs, knowledge sharing |
 | Platform | bilibili / youtube / xiaohongshu / etc. | platform-agnostic — saves `video_info.yaml` instead |
 | Preview | Remotion Studio gate before render | no browser preview (Step 9 renders directly) |
@@ -172,7 +172,9 @@ All scripts are reachable through one dispatcher:
 python3 ${SKILL_DIR}/scripts/cli.py --help
 ```
 
-Resources: `project`, `assets`, `tts`, `verify`, `themes`, `prereqs`, `compose`, `audit`, `schema`.
+Resources: `project`, `assets`, `tts`, `verify`, `themes`, `prereqs`, `research`, `compose`, `audit`, `schema`.
+
+Each theme preset carries a `visual_composition:` block (non-binding guidance on how to balance AIGC vs stock vs data-chart vs text-component sources per category). See [references/design-guide.md](references/design-guide.md#visual-composition-per-theme) for the full table.
 
 ## User Preferences
 

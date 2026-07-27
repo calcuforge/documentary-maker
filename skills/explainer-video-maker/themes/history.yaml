@@ -49,3 +49,9 @@ research_providers:
   feeds: []
 - provider: custom_script
   enabled: false
+visual_composition:
+  aigc: high
+  stock: medium
+  data_charts: medium
+  text_components: medium
+  note: 历史场景以AI生成为主还原画面，古画、文物照片等素材可搜索获取，辅以时间线图表和历史文献引用

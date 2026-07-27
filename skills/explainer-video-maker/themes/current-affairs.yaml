@@ -53,3 +53,9 @@ research_providers:
   description: 时事热点聚合脚本
   script_hint: use requests+feedparser to fetch news RSS feeds, cluster by keyword
     similarity, extract hot topics and related article links
+visual_composition:
+  aigc: low
+  stock: high
+  data_charts: high
+  text_components: high
+  note: 时事评论以文本组件展示各方观点和核心论点，数据图表支撑分析，搜索事件相关图片作为画面背景

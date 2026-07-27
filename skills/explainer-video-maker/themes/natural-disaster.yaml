@@ -50,3 +50,9 @@ research_providers:
   feeds: []
 - provider: custom_script
   enabled: false
+visual_composition:
+  aigc: medium
+  stock: medium
+  data_charts: high
+  text_components: low
+  note: 自然灾害有较多新闻图片和卫星影像可搜索，AI合成补充特定场景，以数据图表为主展示灾情统计

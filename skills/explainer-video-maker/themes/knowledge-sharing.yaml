@@ -49,3 +49,9 @@ research_providers:
   feeds: []
 - provider: custom_script
   enabled: false
+visual_composition:
+  aigc: medium
+  stock: medium
+  data_charts: high
+  text_components: medium
+  note: 知识分享视频画面平衡，AI合成用于概念可视化，数据图表展示关键数字，文本组件呈现核心观点

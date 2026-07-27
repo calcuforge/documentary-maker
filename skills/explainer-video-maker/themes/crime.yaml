@@ -50,3 +50,9 @@ research_providers:
   feeds: []
 - provider: custom_script
   enabled: false
+visual_composition:
+  aigc: high
+  stock: low
+  data_charts: medium
+  text_components: medium
+  note: 案件细节图片稀少，以AI合成场景为主，辅以案件时间线图表、证据链条和目击者证词引用

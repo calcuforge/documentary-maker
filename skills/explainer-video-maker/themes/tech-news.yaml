@@ -55,3 +55,9 @@ research_providers:
   description: 科技新闻聚合脚本
   script_hint: use requests+feedparser to fetch RSS feeds, filter entries by keyword
     relevance, extract title/summary/link/pubDate, sort by date desc
+visual_composition:
+  aigc: low
+  stock: medium
+  data_charts: medium
+  text_components: high
+  note: 科技资讯以文本组件为主展示技术细节和产品信息，可搜索产品图和发布会照片作为素材，AI合成用于未来概念图

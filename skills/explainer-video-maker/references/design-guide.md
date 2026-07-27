@@ -2,22 +2,61 @@
 
 ## Component selection by content type
 
+Each section in `narration_script.yaml` gets three composable layers. The `visual:` block picks the primary layout. `data:` and `text:` arrays add supporting charts, stats, quotes, and bullet points that render inside the same section.
+
+### Visual components (primary layer — `visual.component`)
+
 | Content type | Recommended component | Why |
 | --- | --- | --- |
 | Opening title / hook | `FullBleedLayout` + `MovingGradient` | Full-bleed impact, sets the tone |
 | Chronological events | `Timeline` | SVG nodes + connectors draw progressively |
 | Causal / process steps | `FlowChart` | Arrows show causation |
-| System architecture | `DiagramReveal` | Nodes + edges, multiple layout styles |
+| System architecture | `DiagramReveal` | Nodes + edges |
 | Comparison / before-after | `ComparisonCard` | Two-column with highlight |
-| Single big stat / impact number | `StatHighlight` | One large number, label, source |
-| Multiple KPIs | `MetricsRow` | 4-up dashboard |
-| Bar chart / survey | `DataBar` | Animated bar fills |
-| Tutorial steps / response | `StepProgress` | Numbered steps |
-| Pull quote / testimony | `QuoteBlock` | Large quote + attribution |
-| Feature list / grid | `FeatureGrid` / `IconCard` | Staggered entrance |
 | Photo / footage frame | `MediaSection` / `AssetImage` (inline) | Caption + image |
 | Background image (full bleed) | `AssetImage` (background role) | Ken Burns effect + scrim |
 | B-roll video | `AssetVideo` | Offscreen video playback |
+| Generic / flexible | `FullBleedLayout` or `PaddedLayout` | Use when data+text items are the main content |
+
+### Data types (secondary layer — `data[]`)
+
+Each entry has a `type` field that maps to a Remotion component. Data items render below the main visual with a vertical gap.
+
+| `type` | Component | Example props |
+| --- | --- | --- |
+| `stat` | `StatHighlight` | `value`, `unit`, `label`, `description` |
+| `bar_chart` | `DataBar` | `title`, `items: [{label, value}]` |
+| `metrics` | `MetricsRow` | `title`, `metrics: [{value, label, icon}]` |
+| `steps` | `StepProgress` | `title`, `steps: [{label, description}]` |
+| `flow` | `FlowChart` | `title`, `steps: [{label, description, icon}]` |
+| `timeline` | `Timeline` | `title`, `items: [{label, description}]` |
+| `comparison` | `ComparisonCard` | `left: {title, items}`, `right: {title, items}` |
+
+### Text types (secondary layer — `text[]`)
+
+| `type` | Component | Example props |
+| --- | --- | --- |
+| `quote` | `QuoteBlock` | `quote`, `attribution` |
+| `key_points` | `IconCard` list | `title`, `items: [{icon, title, description}]` |
+| `callout` | `IconCard` (single) | `icon`, `text` |
+| `diagram` | `DiagramReveal` | `nodes: [{id, label}]`, `edges: [{from, to}]` |
+
+### Visual composition per theme
+
+The theme's `visual_composition:` block suggests how to balance the four visual source types. This is a **non-binding guide** — the agent uses it when designing each section's layers in Step 4. The goal is to match the category's content characteristics: documentary categories lean on AIGC (photos are rare), news categories lean on text components (articles are the content), science categories balance all four.
+
+| Theme | AI合成 | 素材搜索 | 数据图表 | 文本组件 | Rationale |
+| --- | --- | --- | --- | --- | --- |
+| `aviation-disaster` | high | low | medium | low | 事故画面稀少，以AI生成为主 |
+| `history` | high | medium | medium | medium | AI还原历史场景，辅以文物图片和文献 |
+| `crime` | high | low | medium | medium | 案件细节图片稀少，辅以证据链图表 |
+| `natural-disaster` | medium | medium | high | low | 新闻图片可获取，数据图表为主 |
+| `animal-science` | medium | high | medium | low | 野生动物图片丰富，AI用于罕见行为 |
+| `life-science` | low | medium | medium | high | 文本解释为主，AI合成示意图 |
+| `knowledge-sharing` | medium | medium | high | medium | 概念可视化+数据+核心观点平衡 |
+| `tech-news` | low | medium | medium | high | 文本展示技术细节，AI用于概念图 |
+| `daily-news` | low | high | medium | high | 新闻配图可获取，AI合成几乎不用 |
+| `current-affairs` | low | high | high | high | 观点+数据+事件图片三者并重 |
 
 ## Component → props cheat sheet
 

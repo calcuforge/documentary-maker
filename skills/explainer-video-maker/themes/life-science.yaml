@@ -49,3 +49,9 @@ research_providers:
   feeds: []
 - provider: custom_script
   enabled: false
+visual_composition:
+  aigc: low
+  stock: medium
+  data_charts: medium
+  text_components: high
+  note: 生活科普以文本解释为主，大量使用文本组件（要点列表、问答、引用），辅以数据图表和少量AI合成示意图

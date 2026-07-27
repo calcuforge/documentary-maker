@@ -49,3 +49,9 @@ research_providers:
   feeds: []
 - provider: custom_script
   enabled: false
+visual_composition:
+  aigc: medium
+  stock: high
+  data_charts: medium
+  text_components: low
+  note: 野生动物有丰富的可搜索图片素材，AI合成用于还原罕见行为或已灭绝物种，辅以栖息地地图和行为数据图表
