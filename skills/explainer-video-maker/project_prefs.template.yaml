@@ -1,4 +1,4 @@
-# project_prefs.yaml — project-level defaults for documentary-maker.
+# project_prefs.yaml — project-level defaults for explainer-video-maker.
 # Copied to projects/<name>/project_prefs.yaml on first `project create`.
 # Per-video overrides go in videos/<video-name>/video_info.yaml.
 
@@ -91,7 +91,7 @@ content:
   target_duration_seconds: 360
 
 paths:
-  # Relative to skill root (skills/documentary-maker/). Going up 2 levels = documentary-maker/.
+  # Relative to skill root (skills/explainer-video-maker/). Going up 2 levels = explainer-video-maker/.
   remotion_template: ../../remotion-video-template
   comfyui_scheduler: ../../comfyui-scheduler
 

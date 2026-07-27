@@ -3,7 +3,7 @@
 ## Directory tree
 
 ```
-documentary-maker/
+explainer-video-maker/
 ├── SKILL.md
 ├── README.md
 ├── project_prefs.template.yaml     # template; copied per project
@@ -47,7 +47,7 @@ Every remotion command uses `--public-dir projects/{project}/videos/{video}/`. T
 
 ```bash
 TEMPLATE_PATH="<abs>/remotion-video-template"
-VDIR="<abs>/documentary-maker/projects/$P/videos/$V"
+VDIR="<abs>/explainer-video-maker/projects/$P/videos/$V"
 
 cd "$TEMPLATE_PATH" && npx remotion render \
   "$VDIR/entry.tsx" MainVideo \
@@ -88,7 +88,7 @@ Create a new project when any of these config axes differs. Use `cli.py project 
 
 ## Shared remotion-video-template
 
-Located at `../remotion-video-template/` relative to documentary-maker root (override in `project_prefs.paths.remotion_template`). The template's `src/components/` is the canonical source for all React components. Per-video `Video.tsx` imports from it via an absolute path embedded at generation time by `scripts/compose_video.py`.
+Located at `../remotion-video-template/` relative to explainer-video-maker root (override in `project_prefs.paths.remotion_template`). The template's `src/components/` is the canonical source for all React components. Per-video `Video.tsx` imports from it via an absolute path embedded at generation time by `scripts/compose_video.py`.
 
 Never copy `remotion-video-template/`. Never symlink it. Use the absolute path import mechanism.
 

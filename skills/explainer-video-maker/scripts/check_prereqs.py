@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify all documentary-maker prerequisites are present.
+"""Verify all explainer-video-maker prerequisites are present.
 
 Checks:
     - python3 (implicit — we're running)
@@ -82,7 +82,7 @@ def _check_comfyui_nodes():
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(description="Check documentary-maker prerequisites.")
+    parser = argparse.ArgumentParser(description="Check explainer-video-maker prerequisites.")
     cli_envelope.add_format_arg(parser)
     parser.add_argument(
         "--template-path", default=None,

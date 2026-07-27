@@ -1,4 +1,4 @@
-"""Shared JSON envelope + exit-code conventions for documentary-maker CLI scripts.
+"""Shared JSON envelope + exit-code conventions for explainer-video-maker CLI scripts.
 
 Envelope shape:
     { "status": "ok" | "warning" | "error",

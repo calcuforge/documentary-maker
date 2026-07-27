@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Top-level dispatcher for documentary-maker.
+"""Top-level dispatcher for explainer-video-maker.
 
 Forwards to individual scripts via subprocess so each script's argparse
 stays self-contained. Mirrors the video-podcast-maker `cli.py` pattern.
@@ -84,7 +84,7 @@ SCRIPTS_WITHOUT_SUBCOMMAND = {"compose_video.py", "verify_output.py", "check_pre
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        description="documentary-maker CLI dispatcher.",
+        description="explainer-video-maker CLI dispatcher.",
         epilog="Run `cli.py <resource> --help` for per-resource details. "
                "Or `cli.py schema` to list all known methods.",
     )

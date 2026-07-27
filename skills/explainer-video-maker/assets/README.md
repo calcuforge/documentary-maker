@@ -1,6 +1,6 @@
 # assets/
 
-Shared BGM tracks, fonts, and other media reusable across documentary-maker projects. This directory is for **project-wide** shared assets only — per-video assets live under `projects/{project}/videos/{video}/assets/`.
+Shared BGM tracks, fonts, and other media reusable across explainer-video-maker projects. This directory is for **project-wide** shared assets only — per-video assets live under `projects/{project}/videos/{video}/assets/`.
 
 ## BGM tracks
 

@@ -2,7 +2,7 @@
 
 ## Built-in themes
 
-Located in `documentary-maker/themes/*.yaml`. Each theme is a partial override merged onto `project_prefs.yaml`'s `theme:` / `content:` blocks plus a `component_suggestions:` map (section-name → suggested component) and a `narrative_arc:` list hint for chapter design.
+Located in `explainer-video-maker/themes/*.yaml`. Each theme is a partial override merged onto `project_prefs.yaml`'s `theme:` / `content:` blocks plus a `component_suggestions:` map (section-name → suggested component) and a `narrative_arc:` list hint for chapter design.
 
 | Theme | primaryColor | accentColor | tone | narrative arc |
 | --- | --- | --- | --- | --- |

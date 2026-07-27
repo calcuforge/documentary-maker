@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Project CRUD for documentary-maker.
+"""Project CRUD for explainer-video-maker.
 
-A "project" is a directory under documentary-maker/projects/{name}/ that
+A "project" is a directory under explainer-video-maker/projects/{name}/ that
 contains a `project_prefs.yaml` and a `videos/` subfolder for per-video work.
 
 Commands:
@@ -26,7 +26,7 @@ import yaml
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
-# documentary-maker root is two levels up from skill dir (skills/documentary-maker/)
+# explainer-video-maker root is two levels up from skill dir (skills/explainer-video-maker/)
 DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 PROJECTS_DIR = os.path.join(DOC_ROOT, "projects")
 TEMPLATE_PATH = os.path.join(SKILL_DIR, "project_prefs.template.yaml")

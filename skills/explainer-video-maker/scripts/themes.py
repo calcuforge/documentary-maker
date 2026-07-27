@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Theme registry.
 
-Themes are YAML partials in documentary-maker/themes/*.yaml. Each theme
+Themes are YAML partials in explainer-video-maker/themes/*.yaml. Each theme
 overrides `theme:` and `content:` blocks plus a `component_suggestions:` map
 and a `narrative_arc:` list hint for chapter design.
 

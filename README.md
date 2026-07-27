@@ -1,4 +1,4 @@
-# documentary-maker
+# explainer-video-maker
 
 A Claude Code skill that produces narration-driven documentary videos — history, aviation disaster, true crime, natural disaster — from a topic. Pipeline: research → script → AIGC visuals → TTS → Remotion → FFmpeg.
 
@@ -11,12 +11,12 @@ A Claude Code skill that produces narration-driven documentary videos — histor
 - **YAML config.** Project prefs in `project_prefs.yaml` with inline comments. No JSON configs.
 - **Two TTS backends.** ComfyUI `index_tts` (default; clones a reference voice) OR any OpenAI-compatible `/v1/audio/speech` HTTP server.
 
-Skill code lives under `skills/documentary-maker/`. All commands are run from the skill root.
+Skill code lives under `skills/explainer-video-maker/`. All commands are run from the skill root.
 
 ## Quick start
 
 ```bash
-SKILL_DIR=skills/documentary-maker
+SKILL_DIR=skills/explainer-video-maker
 
 # 1. Check prerequisites
 python3 "$SKILL_DIR/scripts/check_prereqs.py"
@@ -49,7 +49,7 @@ python3 "$SKILL_DIR/scripts/cli.py project video \
 
 # 7. Write topic_definition.md, topic_research.md, chapters.yaml,
 #    narration_script.yaml into the video dir (Step 1-4 of the workflow).
-#    See skills/documentary-maker/references/workflow-script.md for the schema.
+#    See skills/explainer-video-maker/references/workflow-script.md for the schema.
 
 # 8. Plan + generate assets (Step 5)
 VDIR="projects/aviation-disaster-horizontal/videos/swissair-111"
@@ -76,21 +76,21 @@ python3 "$SKILL_DIR/scripts/cli.py compose \
 # 12. Render (Step 9)
 TEMPLATE="../remotion-video-template"
 cd "$TEMPLATE" && npx remotion render \
-  "$PWD/../documentary-maker/$VDIR/entry.tsx" MainVideo \
-  "$PWD/../documentary-maker/$VDIR/output.mp4" \
-  --public-dir "$PWD/../documentary-maker/$VDIR" --video-bitrate 16M
+  "$PWD/../explainer-video-maker/$VDIR/entry.tsx" MainVideo \
+  "$PWD/../explainer-video-maker/$VDIR/output.mp4" \
+  --public-dir "$PWD/../explainer-video-maker/$VDIR" --video-bitrate 16M
 
 # 13. Mix BGM (Step 10) + Verify (Step 11)
-# See skills/documentary-maker/references/workflow-production.md + workflow-finish.md
+# See skills/explainer-video-maker/references/workflow-production.md + workflow-finish.md
 ```
 
 ## Directory structure
 
-See `skills/documentary-maker/references/project-layout.md` for the full tree. Key points:
+See `skills/explainer-video-maker/references/project-layout.md` for the full tree. Key points:
 
-- `documentary-maker/projects/{project-name}/project_prefs.yaml` — project-level config (user data)
-- `documentary-maker/projects/{project-name}/videos/{video-name}/` — per-video files (user data)
-- `documentary-maker/skills/documentary-maker/` — skill code (SKILL.md, scripts/, themes/, references/, assets/)
+- `explainer-video-maker/projects/{project-name}/project_prefs.yaml` — project-level config (user data)
+- `explainer-video-maker/projects/{project-name}/videos/{video-name}/` — per-video files (user data)
+- `explainer-video-maker/skills/explainer-video-maker/` — skill code (SKILL.md, scripts/, themes/, references/, assets/)
 - `remotion-video-template/` — shared Remotion template (referenced, not copied)
 - `comfyui-scheduler/` — ComfyUI workflow runner (installed via pip)
 
@@ -109,15 +109,15 @@ Load on demand — do NOT read all at once:
 
 | File | When |
 | --- | --- |
-| [skills/documentary-maker/references/workflow-script.md](skills/documentary-maker/references/workflow-script.md) | Steps 1-4 |
-| [skills/documentary-maker/references/workflow-assets.md](skills/documentary-maker/references/workflow-assets.md) | Step 5 — AIGC pipelines |
-| [skills/documentary-maker/references/workflow-production.md](skills/documentary-maker/references/workflow-production.md) | Steps 6-10 — TTS, render, BGM |
-| [skills/documentary-maker/references/workflow-finish.md](skills/documentary-maker/references/workflow-finish.md) | Step 11 — verify + metadata |
-| [skills/documentary-maker/references/themes.md](skills/documentary-maker/references/themes.md) | Theme catalog |
-| [skills/documentary-maker/references/project-layout.md](skills/documentary-maker/references/project-layout.md) | Directory structure |
-| [skills/documentary-maker/references/audio-sync.md](skills/documentary-maker/references/audio-sync.md) | Char-count timing |
-| [skills/documentary-maker/references/design-guide.md](skills/documentary-maker/references/design-guide.md) | Component selection |
-| [skills/documentary-maker/references/troubleshooting.md](skills/documentary-maker/references/troubleshooting.md) | Errors |
+| [skills/explainer-video-maker/references/workflow-script.md](skills/explainer-video-maker/references/workflow-script.md) | Steps 1-4 |
+| [skills/explainer-video-maker/references/workflow-assets.md](skills/explainer-video-maker/references/workflow-assets.md) | Step 5 — AIGC pipelines |
+| [skills/explainer-video-maker/references/workflow-production.md](skills/explainer-video-maker/references/workflow-production.md) | Steps 6-10 — TTS, render, BGM |
+| [skills/explainer-video-maker/references/workflow-finish.md](skills/explainer-video-maker/references/workflow-finish.md) | Step 11 — verify + metadata |
+| [skills/explainer-video-maker/references/themes.md](skills/explainer-video-maker/references/themes.md) | Theme catalog |
+| [skills/explainer-video-maker/references/project-layout.md](skills/explainer-video-maker/references/project-layout.md) | Directory structure |
+| [skills/explainer-video-maker/references/audio-sync.md](skills/explainer-video-maker/references/audio-sync.md) | Char-count timing |
+| [skills/explainer-video-maker/references/design-guide.md](skills/explainer-video-maker/references/design-guide.md) | Component selection |
+| [skills/explainer-video-maker/references/troubleshooting.md](skills/explainer-video-maker/references/troubleshooting.md) | Errors |
 
 ## Status
 

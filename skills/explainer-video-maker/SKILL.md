@@ -1,5 +1,5 @@
 ---
-name: documentary-maker
+name: explainer-video-maker
 description: Use when the user wants to produce a narration-driven documentary video — history, aviation disaster, true crime, or natural disaster. Trigger on phrases like "制作历史纪录片", "帮我做一个空难纪录片", "案件纪录片", "地震纪录片", "aviation disaster documentary", "history documentary", "crime documentary". Produces 1080p/4K horizontal or vertical video via research → script → AIGC visuals → TTS → Remotion → FFmpeg. Reuses the shared `remotion-video-template`; AIGC visuals come from ComfyUI workflows via `comfyui-scheduler`. Also trigger when the user wants to regenerate, re-render, or iterate on a documentary this skill already produced (reuse the existing `projects/{project}/videos/{name}/` directory). Do NOT trigger for generic video editing, podcasts, talking-head explainer videos, trimming, or platform-bound publishing tasks (use video-podcast-maker for those).
 argument-hint: "[topic]"
 effort: high
@@ -19,13 +19,13 @@ metadata:
   emoji: "🎞️"
 ---
 
-# Documentary Maker
+# Explainer Video Maker
 
 Narration-driven documentary pipeline. Research → script → AIGC visuals → TTS → Remotion → FFmpeg. Output is platform-agnostic — no CTA, no thumbnails, no publish-info. A `video_info.yaml` records metadata for downstream cover-image / shorts generation later.
 
 ## Differences from `video-podcast-maker`
 
-| Aspect | video-podcast-maker | documentary-maker |
+| Aspect | video-podcast-maker | explainer-video-maker |
 | --- | --- | --- |
 | Template | ships its own Remotion template | reuses shared `remotion-video-template` (no copy) |
 | Visuals | mostly Remotion components + stock | AIGC-heavy (ComfyUI t2i / i2v / flf2v / upscale) |

@@ -36,7 +36,7 @@ comfyui-scheduler status
 fail: remotion-video-template: NOT FOUND at ...
 ```
 
-Fix: edit `project_prefs.paths.remotion_template` to point at the right location (relative to documentary-maker root), or pass `--template-path` to `check_prereqs.py`.
+Fix: edit `project_prefs.paths.remotion_template` to point at the right location (relative to explainer-video-maker root), or pass `--template-path` to `check_prereqs.py`.
 
 ### `node_modules` missing in template
 
