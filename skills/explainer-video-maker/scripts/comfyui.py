@@ -6,7 +6,7 @@ into the per-video `assets/` directory. Returns a list of local file paths.
 
 Commands:
     run --workflow-id <id> --inputs '<json>' --dest-dir <dir>
-        [--output-node TITLE] [--node NODE]
+        [--output-node TITLE]
     status
 """
 import argparse
@@ -54,7 +54,7 @@ def _download_file(url, dest_dir, kind="image"):
     return dest, None
 
 
-def run_workflow(workflow_id, inputs, dest_dir, output_node=None, node=None, fmt="text"):
+def run_workflow(workflow_id, inputs, dest_dir, output_node=None, fmt="text"):
     if not shutil_which("comfyui-scheduler"):
         cli_envelope.emit_error(
             "prereqs_failed",
@@ -68,8 +68,6 @@ def run_workflow(workflow_id, inputs, dest_dir, output_node=None, node=None, fmt
     ]
     if output_node:
         argv += ["--output-node", output_node]
-    if node:
-        argv += ["-n", node]
     result = _run_subprocess(argv, fmt)
     if result.returncode != 0:
         cli_envelope.emit_error(
@@ -134,7 +132,6 @@ def build_parser():
     p_run.add_argument("--dest-dir", required=True,
                        help="Directory to download output files into.")
     p_run.add_argument("--output-node", default=None)
-    p_run.add_argument("--node", "-n", default=None)
 
     sub.add_parser("status", help="Show comfyui-scheduler node status.")
 
@@ -159,7 +156,7 @@ def main(argv=None):
                 fmt=args.format,
             )
         run_workflow(args.workflow_id, inputs_obj, args.dest_dir,
-                     output_node=args.output_node, node=args.node, fmt=args.format)
+                     output_node=args.output_node, fmt=args.format)
 
 
 if __name__ == "__main__":
