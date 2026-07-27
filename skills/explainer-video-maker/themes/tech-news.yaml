@@ -30,3 +30,28 @@ narrative_arc:
 - comparison
 - outlook
 - conclusion
+research_providers:
+- provider: rss
+  enabled: true
+  description: 科技新闻RSS源
+  feeds:
+  - https://hnrss.org/frontpage
+  - https://news.google.com/rss/search?q=technology+AI&hl=zh-CN
+  - https://feeds.feedburner.com/TheHackersNews
+  max_entries: 15
+- provider: agent_search
+  enabled: true
+  description: 搜索科技新闻背景
+  queries:
+  - '{topic} 最新动态'
+  - '{topic} 技术原理'
+  - '{topic} 行业影响'
+  - '{topic} 对比分析'
+- provider: web_fetch
+  enabled: false
+  urls: []
+- provider: custom_script
+  enabled: true
+  description: 科技新闻聚合脚本
+  script_hint: use requests+feedparser to fetch RSS feeds, filter entries by keyword
+    relevance, extract title/summary/link/pubDate, sort by date desc

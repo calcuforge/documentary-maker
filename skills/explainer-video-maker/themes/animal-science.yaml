@@ -30,3 +30,22 @@ narrative_arc:
 - survival
 - conservation
 - conclusion
+research_providers:
+- provider: agent_search
+  enabled: true
+  description: 搜索动物学知识
+  queries:
+  - '{topic} 动物行为'
+  - '{topic} 栖息地'
+  - '{topic} Wikipedia'
+  - '{topic} 科学研究'
+  - '{topic} 纪录片'
+- provider: web_fetch
+  enabled: true
+  description: Wikipedia、National Geographic
+  urls: []
+- provider: rss
+  enabled: false
+  feeds: []
+- provider: custom_script
+  enabled: false

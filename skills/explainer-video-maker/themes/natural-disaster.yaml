@@ -31,3 +31,22 @@ narrative_arc:
 - response
 - aftermath
 - conclusion
+research_providers:
+- provider: agent_search
+  enabled: true
+  description: 搜索灾害数据
+  queries:
+  - '{topic} 灾害详情'
+  - '{topic} 伤亡统计'
+  - '{topic} 救援行动'
+  - '{topic} 科学分析'
+  - '{topic} Wikipedia'
+- provider: web_fetch
+  enabled: true
+  description: Wikipedia、USGS/机构数据
+  urls: []
+- provider: rss
+  enabled: false
+  feeds: []
+- provider: custom_script
+  enabled: false

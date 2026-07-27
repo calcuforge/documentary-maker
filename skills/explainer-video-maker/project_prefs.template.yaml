@@ -92,6 +92,11 @@ content:
   # Used by the char-estimate fallback if TTS audio is unavailable.
   target_duration_seconds: 360
 
+research:
+  # Override theme-level research_providers. Set to null to use theme defaults.
+  # Set to a provider list to fully override. See references/workflow-script.md#step-2-research-topic.
+  providers: null           # null = use theme's research_providers
+
 paths:
   # Relative to skill root (skills/explainer-video-maker/). Going up 2 levels = explainer-video-maker/.
   remotion_template: ../../remotion-video-template

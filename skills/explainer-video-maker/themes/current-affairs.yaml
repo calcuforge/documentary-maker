@@ -29,3 +29,27 @@ narrative_arc:
 - impact
 - outlook
 - conclusion
+research_providers:
+- provider: rss
+  enabled: true
+  description: 时事新闻RSS源
+  feeds:
+  - https://news.google.com/rss?hl=zh-CN
+  - https://news.google.com/rss/search?q=时事热点&hl=zh-CN
+  max_entries: 15
+- provider: agent_search
+  enabled: true
+  description: 搜索时事背景和分析
+  queries:
+  - '{topic} 事件经过'
+  - '{topic} 各方观点'
+  - '{topic} 影响分析'
+  - '{topic} 专家评论'
+- provider: web_fetch
+  enabled: false
+  urls: []
+- provider: custom_script
+  enabled: true
+  description: 时事热点聚合脚本
+  script_hint: use requests+feedparser to fetch news RSS feeds, cluster by keyword
+    similarity, extract hot topics and related article links

@@ -35,16 +35,42 @@ Write a short brief (200-300 words) explaining the angle, scope, and why this to
 
 **Output:** `topic_research.md`
 
-Use your agent's web search and fetch capabilities. Goal: factual accuracy. For historical/disaster/crime topics:
-- Cross-reference at least 3 sources.
-- Capture dates, names, locations, statistics, direct quotes (with attribution).
-- Note conflicting accounts.
-- Save source URLs at the bottom — `video_info.yaml` (Step 11) reads them.
+Research is driven by **providers** configured in the theme preset (`research_providers`). Generate a research plan, then execute each provider in order.
 
-Be especially careful with:
-- Numbers (casualties, financial impact, timeline) — pin to authoritative sources.
-- Direct quotes — confirm the speaker, date, and context.
-- Sensitive content (crime victims, disaster casualties) — factual, not sensationalized.
+### 2a. Generate the research plan
+
+```bash
+python3 "$SKILL_DIR/scripts/cli.py" research plan --project $P --video $V
+```
+
+This emits a JSON plan with one step per enabled provider. Each step has an `action` description telling the agent exactly what to do. Provider types:
+
+| Provider | What the agent does |
+| --- | --- |
+| `agent_search` | Web search using the agent's native search tool. Runs each `queries` entry, reads top 3-5 results, extracts facts. |
+| `web_fetch` | Directly fetches each URL in `urls`. Extracts structured facts from Wikipedia infoboxes, official reports, databases. |
+| `rss` | Fetches each RSS feed URL, parses `<item>` entries, compiles headlines + summaries + links. |
+| `custom_script` | Agent writes a Python script (requests + feedparser + bs4) to retrieve structured data. The `script_hint` describes what it should do. Save in `videos/{v}/scripts/`, run, capture output. |
+
+### 2b. Execute the plan
+
+Run each provider step **in order**. Same-type providers within one step can be parallelized (e.g. multiple `web_fetch` URLs in parallel).
+
+After all providers complete, merge findings into `topic_research.md`:
+- Factual summary (dates, names, statistics, events, quotes) — cross-reference at least 3 sources.
+- For news-type videos: top headlines + lead paragraph per story.
+- For documentary-type videos: timeline of events, cause/effect chains, key figures.
+- Source URLs at the bottom — `video_info.yaml` (Step 11) reads them.
+
+### 2c. Provider configuration
+
+Themes configure providers in `research_providers:`. Examples:
+
+**Documentary (aviation-disaster):** `agent_search` + `web_fetch` enabled. Pre-written search queries target accident reports, Wikipedia, NTSB.
+**News (tech-news):** `rss` + `agent_search` + `custom_script` enabled. RSS feeds pull headlines; agent_search fills background; custom_script aggregates and filters.
+**Knowledge-sharing:** `agent_search` + `web_fetch` enabled. Broad search queries + Wikipedia for foundational facts.
+
+Project-level overrides in `project_prefs.yaml` under `research.providers:` win over theme defaults.
 
 ---
 

@@ -30,3 +30,22 @@ narrative_arc:
 - turning_point
 - legacy
 - conclusion
+research_providers:
+- provider: agent_search
+  enabled: true
+  description: 搜索历史事件资料
+  queries:
+  - '{topic} 历史背景'
+  - '{topic} Wikipedia'
+  - '{topic} 详细经过'
+  - '{topic} 影响与遗产'
+  - '{topic} 学术研究'
+- provider: web_fetch
+  enabled: true
+  description: Wikipedia、学术网站基础事实
+  urls: []
+- provider: rss
+  enabled: false
+  feeds: []
+- provider: custom_script
+  enabled: false

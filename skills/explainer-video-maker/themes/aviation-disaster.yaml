@@ -31,3 +31,22 @@ narrative_arc:
 - impact
 - aftermath
 - conclusion
+research_providers:
+- provider: agent_search
+  enabled: true
+  description: 搜索事故调查报告、数据统计
+  queries:
+  - '{topic} 事故调查报告'
+  - '{topic} NTSB final report'
+  - '{topic} Wikipedia'
+  - 航空安全 统计数据
+  - '{topic} 原因分析'
+- provider: web_fetch
+  enabled: true
+  description: Wikipedia、官方报告基础事实
+  urls: []
+- provider: rss
+  enabled: false
+  feeds: []
+- provider: custom_script
+  enabled: false

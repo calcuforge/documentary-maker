@@ -54,6 +54,8 @@ METHODS = {
     "themes.show":      ("themes.py",       "Show one theme preset."),
     "themes.resolve":   ("themes.py",       "Deep-merge theme onto project prefs."),
 
+    "research.plan":    ("research.py",     "Generate a research plan from provider config."),
+
     "compose":          ("compose_video.py", "Generate per-video Remotion composition files."),
     "audit.beats":      ("audit_beat_sync.py", "Audit section timing drift."),
     "verify":           ("verify_output.py", "End-of-pipeline acceptance gate."),
@@ -71,6 +73,7 @@ RESOURCE_TO_SCRIPT = {
     "tts": "generate_tts.py",
     "comfyui": "comfyui.py",
     "themes": "themes.py",
+    "research": "research.py",
     "compose": "compose_video.py",
     "audit": "audit_beat_sync.py",  # action: beats
     "verify": "verify_output.py",

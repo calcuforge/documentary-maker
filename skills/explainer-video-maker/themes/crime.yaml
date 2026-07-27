@@ -31,3 +31,22 @@ narrative_arc:
 - trial
 - aftermath
 - conclusion
+research_providers:
+- provider: agent_search
+  enabled: true
+  description: 搜索案件资料
+  queries:
+  - '{topic} 案件详情'
+  - '{topic} 调查过程'
+  - '{topic} 判决结果'
+  - '{topic} 新闻报道'
+  - '{topic} Wikipedia'
+- provider: web_fetch
+  enabled: true
+  description: Wikipedia、新闻报道基础事实
+  urls: []
+- provider: rss
+  enabled: false
+  feeds: []
+- provider: custom_script
+  enabled: false

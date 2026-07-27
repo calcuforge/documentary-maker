@@ -30,3 +30,22 @@ narrative_arc:
 - examples
 - takeaway
 - conclusion
+research_providers:
+- provider: agent_search
+  enabled: true
+  description: 搜索知识内容
+  queries:
+  - '{topic} 详解'
+  - '{topic} 历史'
+  - '{topic} 原理'
+  - '{topic} 趣闻'
+  - '{topic} Wikipedia'
+- provider: web_fetch
+  enabled: true
+  description: Wikipedia、知识网站
+  urls: []
+- provider: rss
+  enabled: false
+  feeds: []
+- provider: custom_script
+  enabled: false

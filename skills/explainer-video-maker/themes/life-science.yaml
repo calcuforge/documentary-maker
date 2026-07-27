@@ -30,3 +30,22 @@ narrative_arc:
 - examples
 - takeaway
 - conclusion
+research_providers:
+- provider: agent_search
+  enabled: true
+  description: 搜索生活科学原理
+  queries:
+  - '{topic} 原理'
+  - '{topic} 为什么'
+  - '{topic} 科学解释'
+  - '{topic} 科普'
+  - '{topic} how it works'
+- provider: web_fetch
+  enabled: true
+  description: 科普网站、Wikipedia
+  urls: []
+- provider: rss
+  enabled: false
+  feeds: []
+- provider: custom_script
+  enabled: false

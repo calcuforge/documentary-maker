@@ -29,3 +29,26 @@ narrative_arc:
 - deeper_story
 - wrap_up
 - sign_off
+research_providers:
+- provider: rss
+  enabled: true
+  description: 新闻RSS源
+  feeds:
+  - https://news.google.com/rss?hl=zh-CN
+  - https://news.google.com/rss/search?q=要闻&hl=zh-CN
+  max_entries: 20
+- provider: agent_search
+  enabled: true
+  description: 搜索新闻背景和细节
+  queries:
+  - '{topic} 详情'
+  - '{topic} 最新进展'
+  - '{topic} 各方反应'
+- provider: web_fetch
+  enabled: false
+  urls: []
+- provider: custom_script
+  enabled: true
+  description: 新闻聚合脚本
+  script_hint: use requests+feedparser to fetch multiple RSS feeds, deduplicate and
+    merge, sort by pubDate, extract top 20 headlines

@@ -102,7 +102,7 @@ At Step 1 start, create one task per step in your agent tracker. Mark `in_progre
 | --- | ------ | -------- |
 | 0 | Voice design (once per project) | `projects/{p}/voice_reference.wav` |
 | 1 | Define topic direction | `topic_definition.md` |
-| 2 | Research topic (web search/fetch) | `topic_research.md` |
+| 2 | Research topic (provider-driven: agent_search, web_fetch, rss, custom_script) | `topic_research.md` |
 | 3 | Design chapters | `chapters.yaml` |
 | 4 | Narration script + per-section visual design | `narration_script.yaml` |
 | 5 | Asset plan & AIGC generation | `assets/manifest.json` |
@@ -112,6 +112,19 @@ At Step 1 start, create one task per step in your agent tracker. Mark `in_progre
 | 9 | Render | `output.mp4` |
 | 10 | Mix BGM | `video_with_bgm.mp4` |
 | 11 | Verify + save metadata | `final_video.mp4`, `video_info.yaml` |
+
+### Step 2: Research Providers
+
+Research is abstracted into four **provider types**, configured per theme in `research_providers:`. Generate a plan via `cli.py research plan --project $P --video $V`, then execute each provider in order. Same-type providers in one step can be parallelized.
+
+| Provider | What the agent does |
+| --- | --- |
+| `agent_search` | Web search using the agent's native search tool. Runs each query in `queries`, reads top 3-5 results, cross-references facts. |
+| `web_fetch` | Directly fetches each URL in `urls`. Extracts structured facts from Wikipedia infoboxes, official reports, databases. |
+| `rss` | Fetches RSS feed URLs, parses `<item>` entries (title, link, description, pubDate), compiles headlines and summaries. |
+| `custom_script` | **Agent writes a Python script** to retrieve structured data. Use `requests` + `feedparser` + `beautifulsoup4` (no other deps). Save to `videos/{v}/scripts/`, run via `python`, capture stdout. Delete after use unless the user asks to keep it. The `script_hint` in the plan describes what the script should do (e.g. RSS aggregator, news clusterer, data crawler). |
+
+After all providers, merge findings into `topic_research.md`. See [references/workflow-script.md](references/workflow-script.md#step-2-research-topic) for the full provider spec, config examples, and output format.
 
 **Mandatory stops**:
 - **Manual mode** — every step from 1 to 8 may pause for user review.
