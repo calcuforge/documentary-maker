@@ -1,6 +1,6 @@
 ---
 name: explainer-video-maker
-description: Use when the user wants to produce a narration-driven explainer video — animal science, life science, history documentary, aviation disaster, true crime, tech news, daily briefing, current affairs, knowledge sharing, or natural disaster. Trigger on phrases like "动物科普", "生活科普", "为什么...", "历史纪录片", "空难纪录片", "案件纪实", "科技新闻", "今日新闻", "时事热点", "涨知识", "knowledge video", "explainer video", "animal documentary". Produces 1080p/4K horizontal or vertical video via research → script → AIGC visuals → TTS → Remotion → FFmpeg. Reuses the shared `remotion-video-template`; AIGC visuals come from ComfyUI workflows via `comfyui-scheduler`. Also trigger when the user wants to regenerate, re-render, or iterate on a video this skill already produced (reuse the existing `projects/{project}/videos/{name}/` directory). Do NOT trigger for generic video editing, podcasts, talking-head videos, trimming, or platform-bound publishing tasks (use video-podcast-maker for those).
+description: 旁白驱动的解说视频制作。覆盖动物科普、历史纪录、空难纪录、案件纪实、科技新闻、时事新闻、知识分享等10种分类。AI画面+数据图表+文本组件三层驱动。复用remotion-video-template和comfyui-scheduler。触发词：动物科普、空难纪录片、案件纪实、科技新闻。
 argument-hint: "[topic]"
 effort: high
 author: calcuforge
