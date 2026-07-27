@@ -50,14 +50,14 @@ Prereqs check validates: `python3`, `ffmpeg`, `ffprobe`, `node`, `npx`, `comfyui
 
 Before any video is produced, generate a reference voice audio file for the project. Each project gets **exactly one** `voice_reference.wav` shared across all its videos.
 
-1. Resolve the voice design prompt from the theme preset (`voice_design.prompt`) — each theme defines its own narrator persona.
+1. Resolve the voice design attributes from the theme preset (`voice_design.voice_instruct`, `voice_design.content`, `voice_design.speed`) — each theme defines its own narrator persona using comma-separated attribute values (e.g. `男，中年，低音调`). Valid values are listed in [comfyui-scheduler/doc/workflow.md](../../comfyui-scheduler/doc/workflow.md#ominivoice_voice_design).
 2. Choose a workflow: `project_prefs.workflows.voice_design` (default `ominivoice_voice_design`, or `qwen3_tts_voice_design`).
 3. Run the voice design workflow:
 
    ```bash
    python3 "$SKILL_DIR/scripts/cli.py" comfyui run \
      -w ominivoice_voice_design \
-     -i '{"prompt":"沉稳专业的解说旁白，声音清晰有力..."}' \
+     -i '{"voice_instruct":"男，中年，低音调","content":"这是一段参考语音样本。","speed":0.9}' \
      --dest-dir "$SKILL_DIR/../projects/$P/"
    ```
 

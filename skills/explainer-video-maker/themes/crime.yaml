@@ -1,22 +1,17 @@
-# themes/crime.yaml
-# Dark, suspenseful tone for true-crime documentaries.
-
 theme:
-  primary_color: "#a8b5c0"       # cold steel
-  background_color: "#0c0f14"     # noir black
-  text_color: "#dde3e8"
-  accent_color: "#c9303c"         # blood red
+  primary_color: '#a8b5c0'
+  background_color: '#0c0f14'
+  text_color: '#dde3e8'
+  accent_color: '#c9303c'
   transition_type: fade
   transition_duration: 16
-
 content:
   tone: analytical
-
 voice_design:
-  prompt: "冷静理性的男性纪录片旁白，语速中等偏慢，声线平稳不带感情，适合讲述案件调查和证据分析，具有侦探式的客观感"
+  voice_instruct: 男，青年，中音调
+  content: 2013年7月1日，一名年轻女子在回家途中失踪，这起案件揭开了长达三年的调查序幕。
   speed: 0.95
   workflow: ominivoice_voice_design
-
 component_suggestions:
   hero: FullBleedLayout
   overview: IconCard
@@ -28,12 +23,11 @@ component_suggestions:
   quote: QuoteBlock
   verdict: StatHighlight
   summary: StatHighlight
-
 narrative_arc:
-  - hook
-  - crime_scene
-  - background
-  - investigation
-  - trial
-  - aftermath
-  - conclusion
+- hook
+- crime_scene
+- background
+- investigation
+- trial
+- aftermath
+- conclusion

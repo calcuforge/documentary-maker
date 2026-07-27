@@ -1,22 +1,17 @@
-# themes/natural-disaster.yaml
-# Naturalistic, slightly desaturated tone.
-
 theme:
-  primary_color: "#8ba98a"       # muted green
-  background_color: "#14171a"
-  text_color: "#e8e9eb"
-  accent_color: "#d97742"         # safety orange
+  primary_color: '#8ba98a'
+  background_color: '#14171a'
+  text_color: '#e8e9eb'
+  accent_color: '#d97742'
   transition_type: fade
   transition_duration: 18
-
 content:
   tone: serious
-
 voice_design:
-  prompt: "沉稳但富有同理心的男性纪录片旁白，语速中等，声音有力且坚定，适合讲述自然灾害的破坏与人类救援行动，严肃但不冷漠"
+  voice_instruct: 男，中年，中音调
+  content: 2008年5月12日14时28分，四川省汶川县发生里氏8.0级地震，震源深度14公里。
   speed: 1.0
   workflow: ominivoice_voice_design
-
 component_suggestions:
   hero: FullBleedLayout
   overview: IconCard
@@ -27,13 +22,12 @@ component_suggestions:
   response: StepProgress
   quote: QuoteBlock
   summary: StatHighlight
-
 narrative_arc:
-  - hook
-  - context
-  - event_timeline
-  - impact
-  - cause_analysis
-  - response
-  - aftermath
-  - conclusion
+- hook
+- context
+- event_timeline
+- impact
+- cause_analysis
+- response
+- aftermath
+- conclusion

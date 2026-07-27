@@ -1,22 +1,17 @@
-# themes/tech-news.yaml
-# Dark tech-blue tone for technology news and innovation videos.
-
 theme:
-  primary_color: "#5dade2"       # electric blue
-  background_color: "#0b1219"     # deep tech black
-  text_color: "#e1e8f0"
-  accent_color: "#00d4aa"         # neon teal
+  primary_color: '#5dade2'
+  background_color: '#0b1219'
+  text_color: '#e1e8f0'
+  accent_color: '#00d4aa'
   transition_type: wipe
   transition_duration: 14
-
 content:
   tone: analytical
-
 voice_design:
-  prompt: "干练专业的科技新闻旁白，语速中等偏快，声音干脆利落，适合报道技术进展和产品发布，具有现代感和科技感"
+  voice_instruct: 男，青年，中音调
+  content: 今天凌晨，OpenAI发布了最新的多模态模型，引发了AI行业的热烈讨论。
   speed: 1.1
   workflow: ominivoice_voice_design
-
 component_suggestions:
   hero: FullBleedLayout
   overview: MetricsRow
@@ -27,12 +22,11 @@ component_suggestions:
   comparison: ComparisonCard
   data: DataBar
   summary: StatHighlight
-
 narrative_arc:
-  - hook
-  - announcement
-  - technology
-  - impact
-  - comparison
-  - outlook
-  - conclusion
+- hook
+- announcement
+- technology
+- impact
+- comparison
+- outlook
+- conclusion

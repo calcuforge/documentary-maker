@@ -1,22 +1,17 @@
-# themes/history.yaml
-# Warm, archival tone for historical documentaries.
-
 theme:
-  primary_color: "#d4b483"       # parchment
-  background_color: "#1a1410"     # aged paper darkened
-  text_color: "#f0e6d2"
-  accent_color: "#8b4513"         # saddle brown
+  primary_color: '#d4b483'
+  background_color: '#1a1410'
+  text_color: '#f0e6d2'
+  accent_color: '#8b4513'
   transition_type: fade
   transition_duration: 20
-
 content:
   tone: narrative
-
 voice_design:
-  prompt: "温润深厚的男性纪录片旁白，语速适中，声音有历史厚重感和叙事感，适合讲述历史事件和人物传记，娓娓道来"
+  voice_instruct: 男，中年，中音调
+  content: 公元618年，李渊在长安称帝，建立了中国历史上最为辉煌的王朝之一——唐朝。
   speed: 1.0
   workflow: ominivoice_voice_design
-
 component_suggestions:
   hero: FullBleedLayout
   overview: IconCard
@@ -27,12 +22,11 @@ component_suggestions:
   quote: QuoteBlock
   biography: SplitLayout
   summary: StatHighlight
-
 narrative_arc:
-  - hook
-  - context
-  - rise
-  - climax
-  - turning_point
-  - legacy
-  - conclusion
+- hook
+- context
+- rise
+- climax
+- turning_point
+- legacy
+- conclusion

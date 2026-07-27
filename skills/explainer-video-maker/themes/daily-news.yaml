@@ -1,22 +1,17 @@
-# themes/daily-news.yaml
-# Clean, newspaper-style tone for daily news briefing videos.
-
 theme:
-  primary_color: "#2c3e50"       # newspaper navy
-  background_color: "#fafbfc"     # newsprint white
-  text_color: "#1a1a2e"
-  accent_color: "#c0392b"         # headline red
+  primary_color: '#2c3e50'
+  background_color: '#fafbfc'
+  text_color: '#1a1a2e'
+  accent_color: '#c0392b'
   transition_type: slide
   transition_duration: 12
-
 content:
   tone: news-brief
-
 voice_design:
-  prompt: "清晰稳重的新闻播音员，语速中等偏快，声音干净有力，适合播报每日新闻简报和资讯汇总，像新闻主播一样客观专业"
+  voice_instruct: 男，中年，中音调
+  content: 各位好，今天是7月27日，以下是今天的要闻速览。
   speed: 1.15
   workflow: ominivoice_voice_design
-
 component_suggestions:
   hero: FullBleedLayout
   headlines: FeatureGrid
@@ -26,12 +21,11 @@ component_suggestions:
   timeline: Timeline
   quote: QuoteBlock
   summary: StatHighlight
-
 narrative_arc:
-  - intro
-  - headline_1
-  - headline_2
-  - headline_3
-  - deeper_story
-  - wrap_up
-  - sign_off
+- intro
+- headline_1
+- headline_2
+- headline_3
+- deeper_story
+- wrap_up
+- sign_off
