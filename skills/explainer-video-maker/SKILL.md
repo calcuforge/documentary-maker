@@ -204,6 +204,8 @@ At **Step 0** start, create one task per step (0–11) in your agent tracker. Ma
 
 Research is driven by **providers** configured in the theme's `research_providers:`. This step MUST be executed before any script writing — the research findings in `topic_research.md` are the factual foundation for the narration script.
 
+**Region auto-detection:** The research planner detects whether the environment is inside China (CN) by testing connectivity to google.com. In CN mode, queries are automatically localized (Wikipedia→百度百科, NTSB→中国民航局, BBC→央视网, etc.) and blocked URLs (google.com, wikipedia.org, twitter.com, youtube.com, etc.) are flagged with domestic alternatives. Override with `RESEARCH_REGION=cn` or `RESEARCH_REGION=global` env var.
+
 **2a. Generate the research plan:**
 
 ```bash

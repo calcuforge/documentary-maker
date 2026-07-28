@@ -35,8 +35,10 @@ import argparse
 import json
 import os
 import re
+import socket
 import sys
 
+import requests
 import yaml
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -108,15 +110,142 @@ def _extract_topic(video_dir, max_len=50):
             pass
 
     return ""
+
+
+def _resolve_providers(prefs):
     """Combine theme providers with project-level overrides if present."""
     category = prefs.get("project", {}).get("category", "knowledge-sharing")
     theme = _load_theme(category)
     theme_providers = theme.get("research_providers", [])
     project_overrides = prefs.get("research", {}).get("providers", None)
     if project_overrides is not None:
-        # Project explicitly overrides providers — use those.
         return project_overrides
     return theme_providers
+
+
+# ── region detection & source localization ────────────────────────────────────
+
+# Domain→replacement mapping for CN environment.  Queries containing the key are
+# rewritten with the value; URLs matching the key are replaced / flagged.
+_CN_QUERY_MAP = {
+    "Wikipedia": "百度百科",
+    "wikipedia": "百度百科",
+    "NTSB": "中国民航局",
+    "FAA": "中国民航局",
+    "Google Scholar": "百度学术",
+    "Google News": "百度资讯",
+    "BBC": "央视网",
+    "CNN": "新华网",
+    "Reuters": "新华社",
+    "National Geographic": "中国国家地理",
+    "site:en.wikipedia.org": "",
+    "site:zh.wikipedia.org": "",
+}
+
+_CN_URL_BLOCKED_DOMAINS = {
+    # Domain → suggested alternative (empty = no direct alternative)
+    "en.wikipedia.org": "baike.baidu.com",
+    "zh.wikipedia.org": "baike.baidu.com",
+    "google.com": "",
+    "bbc.com": "",
+    "bbc.co.uk": "",
+    "cnn.com": "",
+    "reuters.com": "",
+    "nytimes.com": "",
+    "wsj.com": "",
+    "theguardian.com": "",
+    "medium.com": "",
+    "reddit.com": "",
+    "twitter.com": "",
+    "x.com": "",
+    "facebook.com": "",
+    "youtube.com": "bilibili.com",
+    "instagram.com": "",
+}
+
+
+def _detect_region(timeout=3):
+    """Return ``"cn"`` if the environment appears to be inside China, else ``"global"``.
+
+    Resolution order:
+    1. ``RESEARCH_REGION`` env var (``cn`` / ``global``) — explicit override.
+    2. Connectivity test: try to reach google.com; if unreachable → ``cn``.
+    3. Default: ``global``.
+    """
+    env_val = os.environ.get("RESEARCH_REGION", "").strip().lower()
+    if env_val in ("cn", "china", "domestic"):
+        return "cn"
+    if env_val in ("global", "international", "us"):
+        return "global"
+
+    # Auto-detect: try a quick TCP connect to google.com:443
+    try:
+        s = socket.create_connection(("google.com", 443), timeout=timeout)
+        s.close()
+        return "global"
+    except (socket.error, OSError):
+        return "cn"
+
+
+def _localize_query(query):
+    """Rewrite a search query for the CN environment."""
+    for en, cn in _CN_QUERY_MAP.items():
+        if en in query:
+            if cn:
+                query = query.replace(en, cn)
+            else:
+                # Empty replacement = remove the keyword
+                query = query.replace(en, "").replace("  ", " ").strip()
+    return query
+
+
+def _localize_url(url):
+    """Return (url, blocked) — the (possibly rewritten) URL and whether it was blocked."""
+    from urllib.parse import urlparse
+    parsed = urlparse(url)
+    domain = parsed.netloc.lower()
+    # Strip www. prefix for matching
+    domain_plain = domain[4:] if domain.startswith("www.") else domain
+    if domain_plain in _CN_URL_BLOCKED_DOMAINS:
+        alt = _CN_URL_BLOCKED_DOMAINS[domain_plain]
+        if alt:
+            return (url.replace(domain, alt), True)
+        return (url, True)
+    return (url, False)
+
+
+def _localize_provider(provider_entry, region):
+    """Return a copy of *provider_entry* with queries/URLs localized for *region*."""
+    if region != "cn":
+        return provider_entry
+
+    import copy
+    entry = copy.deepcopy(provider_entry)
+    ptype = entry.get("provider", "")
+
+    if ptype == "agent_search":
+        queries = entry.get("queries", [])
+        entry["queries"] = [_localize_query(q) for q in queries]
+        entry["description"] = (entry.get("description", "") +
+                                " (CN: queries localized to domestic sources)")
+
+    elif ptype == "web_fetch":
+        urls = entry.get("urls", [])
+        localized = []
+        blocked = []
+        for u in urls:
+            loc, is_blocked = _localize_url(u)
+            if is_blocked:
+                blocked.append({"original": u, "localized": loc,
+                                "note": "Likely blocked in CN; agent should find a domestic alternative."})
+            localized.append(loc)
+        entry["urls"] = localized
+        if blocked:
+            entry["blocked_urls"] = blocked
+        entry["description"] = (entry.get("description", "") +
+                                " (CN: blocked URLs flagged; use domestic alternatives)")
+
+    return entry
 
 
 def _provider_plan(video_name, provider_entry, topic_hint=""):
@@ -217,6 +346,7 @@ def main(argv=None):
         )
         return
 
+    region = _detect_region()
     topic_hint = _extract_topic(video_dir)
 
     steps = []
@@ -225,7 +355,8 @@ def main(argv=None):
         if entry.get("enabled") is False:
             continue
         total_enabled += 1
-        step = _provider_plan(args.video, entry, topic_hint)
+        localized = _localize_provider(entry, region)
+        step = _provider_plan(args.video, localized, topic_hint)
         steps.append(step)
 
     if total_enabled == 0:
@@ -239,13 +370,14 @@ def main(argv=None):
     cli_envelope.emit_ok(
         data={
             "video_dir": video_dir,
+            "region": region,
             "topic_hint": topic_hint[:100],
             "providers_enabled": total_enabled,
             "plan": steps,
             "output_file": os.path.join(video_dir, "topic_research.md"),
         },
         message=(
-            f"Research plan: {total_enabled} provider(s) enabled. "
+            f"Research plan [{region}]: {total_enabled} provider(s) enabled. "
             "Execute each step and write findings to topic_research.md."
         ),
         fmt=args.format,
