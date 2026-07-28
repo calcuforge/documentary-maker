@@ -37,6 +37,7 @@ sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
 import script_schema  # noqa: E402
 import themes as themes_mod  # noqa: E402
+import workspace  # noqa: E402
 
 
 def _template_path(prefs):
@@ -642,10 +643,13 @@ def build_parser():
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
-    prefs_path = os.path.join(DOC_ROOT, "projects", args.project, "project_prefs.yaml")
+    prefs_path = workspace.prefs_path(args.project)
     if not os.path.isfile(prefs_path):
         cli_envelope.emit_usage_error(
-            f"Project prefs not found: {prefs_path}", fmt=args.format)
+            f"Project prefs not found: {prefs_path} "
+            f"(projects resolve under the workspace: {workspace.projects_dir()}; "
+            "run from the workspace root or set EXPLAINER_WORKSPACE)",
+            fmt=args.format)
     with open(prefs_path, "r", encoding="utf-8") as f:
         prefs = yaml.safe_load(f) or {}
     # Deep-merge theme onto prefs.
@@ -655,7 +659,7 @@ def main(argv=None):
         if theme_data:
             prefs = themes_mod.resolve_theme(category, prefs_path)
 
-    video_dir = os.path.join(DOC_ROOT, "projects", args.project, "videos", args.video)
+    video_dir = workspace.video_dir(args.project, args.video)
     if not os.path.isdir(video_dir):
         cli_envelope.emit_usage_error(
             f"Video dir not found: {video_dir}", fmt=args.format)

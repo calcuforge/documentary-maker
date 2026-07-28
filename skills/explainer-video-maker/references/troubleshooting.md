@@ -2,6 +2,22 @@
 
 ## Common errors
 
+### Project not found — wrong workspace
+
+```
+error: Project 'my-project' not found (no prefs at .../projects/my-project/project_prefs.yaml).
+```
+
+Scripts resolve `projects/` from the **current working directory** (or the `EXPLAINER_WORKSPACE` / `EXPLAINER_PROJECTS_DIR` env vars). If the path in the error points somewhere unexpected, you're running the command from the wrong directory:
+
+```bash
+pwd                                          # check where you are
+python3 "$SKILL_DIR/scripts/check_prereqs.py"  # reports the resolved workspace projects dir
+cd <workspace root>                          # then re-run the command
+```
+
+Projects must live under `<workspace>/projects/` — never inside the skill repo. If a project was accidentally created inside the skill installation, move it to the workspace `projects/` dir.
+
 ### `comfyui-scheduler` not on PATH
 
 ```

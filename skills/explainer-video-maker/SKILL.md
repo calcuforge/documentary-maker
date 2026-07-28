@@ -35,6 +35,23 @@ Narration-driven explainer video pipeline. Research → script → AIGC visuals 
 | Config | JSON | YAML with comments |
 | TTS | ttsCN multi-backend, chunked | **per-scene** `comfyui index_tts` (default) OR HTTP multipart TTS server, then merged |
 
+## Workspace
+
+**All project data lives under `<workspace>/projects/`** — the workspace is the directory you work from (the user's project folder), NEVER the skill installation directory. Scripts resolve the projects root in this order:
+
+1. `EXPLAINER_PROJECTS_DIR` env var (explicit projects directory)
+2. `EXPLAINER_WORKSPACE` env var (workspace root; projects go in `<root>/projects`)
+3. `<CWD>/projects` (the normal case)
+
+At workflow start: confirm the current working directory is the workspace root, create `projects/` once, and run every skill command from there afterwards. Shell state doesn't persist between commands, but the working directory does — so a stable CWD is what keeps project resolution consistent:
+
+```bash
+pwd                 # must be the workspace root — cd there first if not
+mkdir -p projects   # once per workspace
+```
+
+`check_prereqs.py` prints the resolved workspace projects dir so you can confirm placement before creating anything.
+
 ## Bootstrap
 
 Resolve `SKILL_DIR` to the directory containing this `SKILL.md`.
@@ -44,7 +61,7 @@ SKILL_DIR="${SKILL_DIR:-${CLAUDE_SKILL_DIR}}"
 python3 "${SKILL_DIR}/scripts/check_prereqs.py"
 ```
 
-Prereqs check validates: `python3`, `ffmpeg`, `ffprobe`, `node`, `npx`, `comfyui-scheduler` on PATH, `remotion-video-template/` exists at the configured path, at least one ComfyUI node registered (via `comfyui-scheduler status`).
+Prereqs check validates: workspace projects dir resolution, `python3`, `ffmpeg`, `ffprobe`, `node`, `npx`, `comfyui-scheduler` on PATH, `remotion-video-template/` exists at the configured path, at least one ComfyUI node registered (via `comfyui-scheduler status`).
 
 ## Step 0: Voice Design (once per project)
 
@@ -52,22 +69,22 @@ Before any video is produced, generate a reference voice audio file for the proj
 
 1. Resolve the voice design attributes from the theme preset (`voice_design.voice_instruct`, `voice_design.content`, `voice_design.speed`) — each theme defines its own narrator persona using comma-separated attribute values (e.g. `男，中年，低音调`). Valid values are listed in [comfyui-scheduler/doc/workflow.md](../../comfyui-scheduler/doc/workflow.md#ominivoice_voice_design).
 2. Choose a workflow: `project_prefs.workflows.voice_design` (default `ominivoice_voice_design`, or `qwen3_tts_voice_design`).
-3. Run the voice design workflow:
+3. Run the voice design workflow (from the workspace root — the download lands in the workspace's project dir):
 
    ```bash
    python3 "$SKILL_DIR/scripts/cli.py" comfyui run \
      -w ominivoice_voice_design \
      -i '{"voice_instruct":"男，中年，低音调","content":"这是一段参考语音样本。","speed":0.9}' \
-     --dest-dir "$SKILL_DIR/../projects/$P/"
+     --dest-dir "projects/$P/"
    ```
 
 4. Rename the downloaded audio file to `voice_reference.wav` in the project root.
-5. Set the path in project prefs so TTS steps auto-resolve it:
+5. Set the path in project prefs so TTS steps auto-resolve it (absolute path, evaluated from the workspace root):
 
    ```bash
    python3 "$SKILL_DIR/scripts/cli.py" project set \
      --name $P --key tts.voice_file \
-     --value "$SKILL_DIR/../projects/$P/voice_reference.wav"
+     --value "$(pwd)/projects/$P/voice_reference.wav"
    ```
 
 **Skip if** `projects/{p}/voice_reference.wav` already exists and `tts.voice_file` is set. Re-generate only if the user asks to change the voice persona.
@@ -143,6 +160,7 @@ After all providers, merge findings into `topic_research.md`. See [references/wo
 | --- | --- |
 | **Shared template** | All videos import from `remotion-video-template/src/components`. NEVER copy the template per video. Per-video `Video.tsx`/`entry.tsx` live in the video dir. |
 | **Project grouping** | Videos sharing config live under one `projects/{name}/`. `project_prefs.yaml` is the single source of project truth. |
+| **Workspace placement** | `projects/` lives in the **workspace** (resolved from CWD; env overrides `EXPLAINER_WORKSPACE` / `EXPLAINER_PROJECTS_DIR`). Run every skill command from the workspace root. NEVER create projects inside the skill repo/install dir. |
 | **Audio-master clock (scene level)** | Each scene's `scenes/{s}/timing.json.total_duration` equals `ffprobe scenes/{s}/narration.wav` exactly — per-scene TTS means the real scene audio sets the scene's total; no estimation at scene level. Shot durations distribute across the scene by `duration_hint_seconds` (even split without hints). The root `timing.json` aggregates scenes. See [references/audio-sync.md](references/audio-sync.md). |
 | **Scene is the render unit** | One Remotion render per scene (`scenes/{s}/scene.mp4`, narration + subtitles baked in). Scenes merge via `cli.py merge` (`ffmpeg -f concat -c copy`, lossless). Transitions run between shots inside a scene; scene joins are hard cuts. |
 | **Resolution** | 1080p (1920×1080 or 1080×1920) or 4K (3840×2160 or 2160×3840). Composition IDs: `MainVideo` / `MainVideo4K` / `MainVideoVertical`. |

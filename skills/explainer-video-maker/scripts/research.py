@@ -39,10 +39,9 @@ import sys
 import yaml
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SKILL_DIR = os.path.dirname(SCRIPT_DIR)
-DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
+import workspace  # noqa: E402
 
 
 PROVIDER_SCHEMA = {
@@ -59,7 +58,7 @@ def _load_theme(category):
 
 
 def _load_project_prefs(project_name):
-    ppath = os.path.join(DOC_ROOT, "projects", project_name, "project_prefs.yaml")
+    ppath = workspace.prefs_path(project_name)
     if not os.path.isfile(ppath):
         cli_envelope.emit_usage_error(f"Project '{project_name}' not found.", "text")
     with open(ppath, "r", encoding="utf-8") as f:
@@ -160,7 +159,7 @@ def main(argv=None):
         cli_envelope.emit_usage_error(f"Unknown action: {args.action}", fmt=args.format)
 
     prefs = _load_project_prefs(args.project)
-    video_dir = os.path.join(DOC_ROOT, "projects", args.project, "videos", args.video)
+    video_dir = workspace.video_dir(args.project, args.video)
     if not os.path.isdir(video_dir):
         cli_envelope.emit_usage_error(f"Video dir not found: {video_dir}", fmt=args.format)
 

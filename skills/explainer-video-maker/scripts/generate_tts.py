@@ -36,11 +36,11 @@ import yaml
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
-DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
 import estimate_timing  # noqa: E402
 import script_schema  # noqa: E402
+import workspace  # noqa: E402
 
 AUDIO_FORMAT_ARGS = ["-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le"]
 
@@ -51,7 +51,7 @@ SRT_TIME_RE = re.compile(
 # ── loading helpers ─────────────────────────────────────────────────────────
 
 def load_project_prefs(project_name, fmt):
-    ppath = os.path.join(DOC_ROOT, "projects", project_name, "project_prefs.yaml")
+    ppath = workspace.prefs_path(project_name)
     if not os.path.isfile(ppath):
         cli_envelope.emit_usage_error(
             f"Project '{project_name}' not found (no prefs at {ppath}).", fmt=fmt)
@@ -63,7 +63,7 @@ def resolve_voice_file(prefs, project_name, fmt):
     vf = prefs.get("tts", {}).get("voice_file")
     if not vf:
         default_vf = os.path.normpath(
-            os.path.join(DOC_ROOT, "projects", project_name, "voice_reference.wav"))
+            os.path.join(workspace.project_dir(project_name), "voice_reference.wav"))
         if os.path.isfile(default_vf):
             vf = default_vf
             prefs.setdefault("tts", {})["voice_file"] = vf
@@ -412,7 +412,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     fmt = args.format
     prefs = load_project_prefs(args.project, fmt)
-    video_dir = os.path.join(DOC_ROOT, "projects", args.project, "videos", args.video)
+    video_dir = workspace.video_dir(args.project, args.video)
     if not os.path.isdir(video_dir):
         cli_envelope.emit_usage_error(f"Video dir not found: {video_dir}", fmt=fmt)
 

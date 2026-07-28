@@ -25,11 +25,10 @@ import sys
 import yaml
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SKILL_DIR = os.path.dirname(SCRIPT_DIR)
-DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
 import script_schema  # noqa: E402
+import workspace  # noqa: E402
 
 
 def ffprobe_duration(path):
@@ -67,11 +66,11 @@ def build_parser():
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
-    vdir = os.path.join(DOC_ROOT, "projects", args.project, "videos", args.video)
+    vdir = workspace.video_dir(args.project, args.video)
     if not os.path.isdir(vdir):
         cli_envelope.emit_usage_error(f"Video dir not found: {vdir}", fmt=args.format)
 
-    prefs_path = os.path.join(DOC_ROOT, "projects", args.project, "project_prefs.yaml")
+    prefs_path = workspace.prefs_path(args.project)
     with open(prefs_path, "r", encoding="utf-8") as f:
         prefs = yaml.safe_load(f) or {}
     orientation = prefs.get("project", {}).get("orientation", "horizontal")

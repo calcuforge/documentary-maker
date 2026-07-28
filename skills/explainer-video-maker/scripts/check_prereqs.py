@@ -3,6 +3,7 @@
 
 Checks:
     - python3 (implicit — we're running)
+    - workspace projects dir resolution (reports where projects will live)
     - ffmpeg, ffprobe on PATH
     - node, npx on PATH
     - comfyui-scheduler command available
@@ -27,10 +28,18 @@ SKILL_DIR = os.path.dirname(SCRIPT_DIR)
 DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
+import workspace  # noqa: E402
 
 
 def _which(cmd):
     return shutil.which(cmd) is not None
+
+
+def _check_workspace():
+    pdir = workspace.projects_dir()
+    if os.path.isdir(pdir):
+        return ("ok", f"workspace projects dir: {pdir}")
+    return ("ok", f"workspace projects dir: {pdir} (will be created on first `project create`)")
 
 
 def _check_cmd(cmd, label, required=True):
@@ -104,6 +113,7 @@ def main(argv=None):
 
     template_rel = args.template_path or "../remotion-video-template"
     checks = [
+        _check_workspace(),
         _check_cmd("ffmpeg", "ffmpeg"),
         _check_cmd("ffprobe", "ffprobe"),
         _check_cmd("node", "node"),

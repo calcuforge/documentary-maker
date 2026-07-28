@@ -1,22 +1,31 @@
 # Project Layout
 
-## Directory tree
+## Workspace vs. skill directories
+
+Project data lives in the **workspace** (the directory the agent works from), never inside the skill installation. The projects root resolves as: `EXPLAINER_PROJECTS_DIR` env → `EXPLAINER_WORKSPACE` env (+ `/projects`) → `<CWD>/projects`. All skill commands run from the workspace root.
 
 ```
-explainer-video-maker/
-├── SKILL.md
-├── README.md
-├── project_prefs.template.yaml     # template; copied per project
-├── scripts/                        # CLI suite
-├── references/                     # docs (load on demand)
-├── themes/                         # theme presets
-│   ├── aviation-disaster.yaml
-│   ├── history.yaml
-│   ├── crime.yaml
-│   └── natural-disaster.yaml
-├── assets/                         # shared BGM, fonts (user-supplied)
-└── projects/                       # created on demand
-    └── {project-name}/
+<workspace>/                        # the agent's working directory
+├── projects/                       # created on demand — ALL project data
+│   └── {project-name}/
+│       └── ...
+└── (user's other files)
+
+explainer-video-maker/              # skill installation (code only, no project data)
+├── skills/explainer-video-maker/
+│   ├── SKILL.md
+│   ├── project_prefs.template.yaml # template; copied per project
+│   ├── scripts/                    # CLI suite
+│   ├── references/                 # docs (load on demand)
+│   ├── themes/                     # theme presets (aviation-disaster, history, ...)
+│   └── assets/                     # shared BGM, fonts (user-supplied)
+```
+
+## Per-project tree
+
+```
+<workspace>/projects/
+└── {project-name}/
         ├── project_prefs.yaml      # copied from template, edited
         ├── voice_reference.wav     # Step 0 — one per project, shared by all videos
         └── videos/

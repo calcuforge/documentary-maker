@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Project CRUD for explainer-video-maker.
 
-A "project" is a directory under explainer-video-maker/projects/{name}/ that
-contains a `project_prefs.yaml` and a `videos/` subfolder for per-video work.
+A "project" is a directory under <workspace>/projects/{name}/ that contains a
+`project_prefs.yaml` and a `videos/` subfolder for per-video work. The
+workspace is resolved by scripts/workspace.py (CWD-based; env overrides
+EXPLAINER_WORKSPACE / EXPLAINER_PROJECTS_DIR) — projects never live inside
+the skill installation.
 
 Commands:
     project create --name <name> [--category <cat>] [--orientation h|v]
@@ -26,19 +29,17 @@ import yaml
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
-# explainer-video-maker root is two levels up from skill dir (skills/explainer-video-maker/)
-DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
-PROJECTS_DIR = os.path.join(DOC_ROOT, "projects")
 TEMPLATE_PATH = os.path.join(SKILL_DIR, "project_prefs.template.yaml")
 
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
+import workspace  # noqa: E402
 
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 
 
 def _project_dir(name):
-    return os.path.join(PROJECTS_DIR, name)
+    return workspace.project_dir(name)
 
 
 def _prefs_path(name):
@@ -139,10 +140,14 @@ def cmd_create(args):
 
 
 def cmd_list(args):
-    if not os.path.isdir(PROJECTS_DIR):
-        cli_envelope.emit_ok(data={"projects": []}, fmt=args.format)
+    projects_root = workspace.projects_dir()
+    if not os.path.isdir(projects_root):
+        cli_envelope.emit_ok(
+            data={"projects": [], "projects_dir": projects_root},
+            message=f"No projects yet in workspace ({projects_root}).",
+            fmt=args.format)
     projects = []
-    for name in sorted(os.listdir(PROJECTS_DIR)):
+    for name in sorted(os.listdir(projects_root)):
         pdir = _project_dir(name)
         if os.path.isdir(pdir) and os.path.isfile(_prefs_path(name)):
             prefs = _load_yaml(_prefs_path(name))
@@ -160,7 +165,9 @@ def cmd_list(args):
                 "resolution": prefs.get("video", {}).get("resolution"),
                 "video_count": video_count,
             })
-    cli_envelope.emit_ok(data={"projects": projects}, fmt=args.format)
+    cli_envelope.emit_ok(
+        data={"projects": projects, "projects_dir": projects_root},
+        fmt=args.format)
 
 
 def cmd_show(args):

@@ -23,11 +23,10 @@ import subprocess
 import sys
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SKILL_DIR = os.path.dirname(SCRIPT_DIR)
-DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
 import script_schema  # noqa: E402
+import workspace  # noqa: E402
 
 VIDEO_KEYS = ["codec_name", "width", "height", "pix_fmt", "r_frame_rate"]
 AUDIO_KEYS = ["codec_name", "sample_rate", "channels"]
@@ -67,7 +66,7 @@ def build_parser():
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
-    video_dir = os.path.join(DOC_ROOT, "projects", args.project, "videos", args.video)
+    video_dir = workspace.video_dir(args.project, args.video)
     if not os.path.isdir(video_dir):
         cli_envelope.emit_usage_error(f"Video dir not found: {video_dir}", fmt=args.format)
 
