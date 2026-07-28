@@ -55,11 +55,15 @@ tts:
   # Reference voice audio for TTS. Generated once per project by voice_design (Step 0),
   # stored at project-level projects/{name}/voice_reference.wav, shared across all videos.
   voice_file: null          # auto-resolved to projects/{name}/voice_reference.wav if null
-  # External HTTP TTS server — multipart/form-data POST.
+  # External HTTP TTS server — multipart/form-data POST with fields:
+  #   input       — narration text
+  #   speed       — speech speed multiplier (float)
+  #   voice_file  — reference WAV file upload
+  # Response body is the raw audio bytes.
   # Only used when backend: http_server. ${BACKEND_PROXY_ENDPOINT} is resolved
   # from the BACKEND_PROXY_ENDPOINT env var; set it in your shell before running.
   http:
-    url: ${BACKEND_PROXY_ENDPOINT}/v1/audio/speech
+    url: ${BACKEND_PROXY_ENDPOINT}/tts
     speed: 1.0              # speech speed multiplier (0.25–4.0)
 
 bgm:

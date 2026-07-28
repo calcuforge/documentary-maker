@@ -22,7 +22,7 @@ Commands:
 
 Backends:
     comfyui_indextts — `comfyui-scheduler run -w index_tts_2 -i ...`
-    http_server      — multipart POST to an OpenAI-compatible /v1/audio/speech
+    http_server      — multipart/form-data POST to tts.http.url
 """
 import argparse
 import json
