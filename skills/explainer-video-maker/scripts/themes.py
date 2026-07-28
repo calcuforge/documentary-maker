@@ -66,6 +66,24 @@ def show_theme(name):
         return yaml.safe_load(f) or {}
 
 
+def apply_theme_to_prefs(prefs, theme_name):
+    """Merge theme.*, content.*, and voice_design.* from a theme into *prefs*.
+
+    Only the sections that exist in the theme file are merged; other sections
+    (component_suggestions, narrative_arc, research_providers, visual_composition)
+    are intentionally skipped — they belong to the theme file, not project prefs.
+
+    Returns *prefs* (mutated in place).
+    """
+    theme = show_theme(theme_name)
+    if theme is None:
+        return prefs
+    for section in ("theme", "content", "voice_design"):
+        if section in theme:
+            prefs = _deep_merge(prefs, {section: theme[section]})
+    return prefs
+
+
 def resolve_theme(name, prefs_path):
     theme = show_theme(name)
     if theme is None:

@@ -33,6 +33,7 @@ TEMPLATE_PATH = os.path.join(SKILL_DIR, "project_prefs.template.yaml")
 
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
+import themes  # noqa: E402
 import workspace  # noqa: E402
 
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
@@ -121,6 +122,7 @@ def cmd_create(args):
     prefs["project"]["name"] = args.name
     if args.category:
         prefs["project"]["category"] = args.category
+        themes.apply_theme_to_prefs(prefs, args.category)
     if args.orientation:
         prefs["project"]["orientation"] = args.orientation
     if args.mode:

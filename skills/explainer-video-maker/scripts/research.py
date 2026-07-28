@@ -34,6 +34,7 @@ Commands:
 import argparse
 import json
 import os
+import re
 import sys
 
 import yaml
@@ -65,7 +66,48 @@ def _load_project_prefs(project_name):
         return yaml.safe_load(f) or {}
 
 
-def _resolve_providers(prefs):
+def _extract_topic(video_dir, max_len=50):
+    """Extract a short topic name for {topic} placeholder substitution.
+
+    1. Parse ``topic_definition.md`` for a ``**事件**`` / ``**Event**`` line.
+    2. Fall back to the first narration sentence from ``narration_script.yaml``.
+    3. Return *max_len* chars at most.
+    """
+    # 1. topic_definition.md — extract the event/subject line
+    td_path = os.path.join(video_dir, "topic_definition.md")
+    if os.path.isfile(td_path):
+        with open(td_path, "r", encoding="utf-8") as f:
+            text = f.read()
+        # Match lines like: **事件** — xxx  or  **Event/subject** — xxx
+        m = re.search(
+            r"\*\*(?:事件|Event|事件/subject|Event/subject|Topic|主题)\*\*\s*[：:—\-–]\s*(.+)",
+            text,
+        )
+        if m:
+            return m.group(1).strip()[:max_len]
+        # Fall back to the first heading
+        m = re.search(r"^#\s+(.+)", text, re.MULTILINE)
+        if m:
+            return m.group(1).strip()[:max_len]
+
+    # 2. narration_script.yaml — first scene's first sentence
+    ns_path = os.path.join(video_dir, "narration_script.yaml")
+    if os.path.isfile(ns_path):
+        try:
+            with open(ns_path, "r", encoding="utf-8") as f:
+                script = yaml.safe_load(f) or {}
+            scenes = script.get("scenes", [])
+            if scenes:
+                narration = (scenes[0].get("narration") or "").strip()
+                if narration:
+                    # Take up to the first sentence-ending punctuation
+                    m = re.match(r"([^。.!！?\n]{1,%d})" % max_len, narration)
+                    if m:
+                        return m.group(1).strip()
+        except Exception:
+            pass
+
+    return ""
     """Combine theme providers with project-level overrides if present."""
     category = prefs.get("project", {}).get("category", "knowledge-sharing")
     theme = _load_theme(category)
@@ -175,12 +217,7 @@ def main(argv=None):
         )
         return
 
-    # Try to read topic_definition.md for a topic hint to substitute into queries.
-    topic_hint = ""
-    td_path = os.path.join(video_dir, "topic_definition.md")
-    if os.path.isfile(td_path):
-        with open(td_path, "r", encoding="utf-8") as f:
-            topic_hint = f.read().strip()[:200]
+    topic_hint = _extract_topic(video_dir)
 
     steps = []
     total_enabled = 0
