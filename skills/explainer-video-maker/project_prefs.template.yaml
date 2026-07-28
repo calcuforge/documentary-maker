@@ -50,21 +50,33 @@ workflows:
   tts: index_tts_2
 
 tts:
-  # comfyui_indextts (default) | http_server.
+  # ── Backend selection ──────────────────────────────────────────────────
+  #   comfyui_indextts — ComfyUI index_tts_2 workflow (default).
+  #   http_server      — HTTP multipart TTS server (see tts.http below).
+  #
+  # Both `tts synth` and `tts run` auto-read this field — no --backend flag
+  # needed in commands. Set once, all TTS calls route automatically.
   backend: comfyui_indextts
-  # Reference voice audio for TTS. Generated once per project by voice_design (Step 0),
-  # stored at project-level projects/{name}/voice_reference.wav, shared across all videos.
-  voice_file: null          # auto-resolved to projects/{name}/voice_reference.wav if null
-  # External HTTP TTS server — multipart/form-data POST with fields:
-  #   input       — narration text
-  #   speed       — speech speed multiplier (float)
-  #   voice_file  — reference WAV file upload
-  # Response body is the raw audio bytes.
-  # Only used when backend: http_server. ${BACKEND_PROXY_ENDPOINT} is resolved
-  # from the BACKEND_PROXY_ENDPOINT env var; set it in your shell before running.
+
+  # ── Reference voice (required for both backends) ───────────────────────
+  # Generated once per project by Step 0 (voice design). All videos in the
+  # project share the same voice. Auto-resolved to:
+  #   projects/{name}/voice_reference.wav
+  # if left as null and the file exists.
+  voice_file: null
+
+  # ── HTTP TTS server config (only used when backend: http_server) ───────
+  # Protocol: POST multipart/form-data
+  #   Fields:  input      — narration text (form field)
+  #            speed      — speech speed multiplier (form field, float as string)
+  #            voice_file — reference WAV (file upload, audio/wav)
+  #   Response: raw audio bytes (HTTP 200 → body is the WAV data)
+  #
+  # The URL is resolved via os.path.expandvars(). ${BACKEND_PROXY_ENDPOINT}
+  # must be set in the shell environment before running any TTS command.
   http:
-    url: ${BACKEND_PROXY_ENDPOINT}/tts
-    speed: 1.0              # speech speed multiplier (0.25–4.0)
+    url: ${BACKEND_PROXY_ENDPOINT}
+    speed: 1.0              # 0.25–4.0, passed as form field
 
 bgm:
   # 0 to 1.0. Default 0.12 = ~-18 dB, sits clearly below boosted narration.

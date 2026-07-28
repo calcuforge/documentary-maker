@@ -58,7 +58,7 @@ tts:
   backend: http_server        # or comfyui_indextts (default)
   voice_file: projects/aviation-disaster-horizontal/voice_reference.wav
   http:
-    url: ${BACKEND_PROXY_ENDPOINT}/tts
+    url: ${BACKEND_PROXY_ENDPOINT}
     speed: 1.0                # speech speed multiplier
 ```
 
