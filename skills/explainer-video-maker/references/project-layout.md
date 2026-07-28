@@ -23,35 +23,47 @@ explainer-video-maker/
             └── {video-name}/
                 ├── topic_definition.md
                 ├── topic_research.md
-                ├── chapters.yaml
-                ├── narration_script.yaml
-                ├── narration_script.json     # JSON mirror (auto-generated)
+                ├── narration_script.yaml     # chapters → scenes → shots (single source)
                 ├── assets/
-                │   ├── manifest.json         # consumed by useAssets
-                │   └── *.{png,mp4}           # generated / user-supplied
-                ├── narration_audio.wav       # TTS output
-                ├── narration_audio.srt        # char-estimated SRT
-                ├── timing.json               # consumed by useTiming
-                ├── Video.tsx                  # generated per-video
-                ├── entry.tsx                  # generated per-video
-                ├── video_info.yaml            # final metadata
-                ├── output.mp4                 # render output (no BGM)
-                ├── video_with_bgm.mp4         # +BGM
-                ├── final_video.mp4            # = video_with_bgm.mp4 (or output.mp4)
-                └── bgm.mp3                    # copied from prefs.bgm.track (optional)
+                │   ├── manifest.json         # shared by all scenes; consumed by useAssets
+                │   └── *.{png,mp4,webm}      # generated / user-supplied
+                ├── scenes/
+                │   └── {scene-name}/         # one dir per scene
+                │       ├── narration.wav     # scene TTS (48 kHz mono)
+                │       ├── narration.srt     # scene subtitles (relative time)
+                │       ├── timing.json       # scene timing (shots list)
+                │       ├── composition.json  # shot designs (auto-generated)
+                │       ├── scene.tsx         # generated per-scene composition
+                │       ├── entry.tsx         # generated per-scene Remotion entry
+                │       └── scene.mp4         # scene render (narration + subtitles)
+                ├── timing.json               # video-level summary (chapters + scenes)
+                ├── narration_audio.wav       # merged scene track
+                ├── narration_audio.srt       # merged subtitles (offset)
+                ├── concat_audio.txt          # ffmpeg concat list (auto-generated)
+                ├── concat.txt                # ffmpeg scene concat list (auto-generated)
+                ├── video_info.yaml           # final metadata
+                ├── output.mp4                # merged scenes (no BGM)
+                ├── video_with_bgm.mp4        # +BGM
+                ├── final_video.mp4           # = video_with_bgm.mp4 (or output.mp4)
+                └── bgm.mp3                   # copied from prefs.bgm.track (optional)
 ```
 
 ## --public-dir convention
 
-Every remotion command uses `--public-dir projects/{project}/videos/{video}/`. This routes `staticFile("timing.json")`, `staticFile("narration_audio.wav")`, `staticFile("narration_audio.srt")`, `staticFile("assets/manifest.json")`, and per-asset file reads into the per-video directory. The shared template's source code stays untouched.
+Every remotion command uses `--public-dir projects/{project}/videos/{video}/` — the **video root**, shared by all scenes. Scene files resolve via a `scenes/{scene}/` prefix; the asset manifest stays shared:
+
+- `staticFile("scenes/{scene}/timing.json")` / `narration.wav` / `narration.srt` / `composition.json`
+- `staticFile("assets/manifest.json")` + per-asset file reads
+
+The shared template's source code stays untouched.
 
 ```bash
 TEMPLATE_PATH="<abs>/remotion-video-template"
 VDIR="<abs>/explainer-video-maker/projects/$P/videos/$V"
 
 cd "$TEMPLATE_PATH" && npx remotion render \
-  "$VDIR/entry.tsx" MainVideo \
-  "$VDIR/output.mp4" \
+  "$VDIR/scenes/hero/entry.tsx" MainVideo \
+  "$VDIR/scenes/hero/scene.mp4" \
   --public-dir "$VDIR" --video-bitrate 16M
 ```
 
@@ -61,7 +73,9 @@ cd "$TEMPLATE_PATH" && npx remotion render \
 | --- | --- | --- |
 | Project name | lowercase, hyphen-separated, ≤64 chars | `aviation-disaster-horizontal` |
 | Video name | lowercase, hyphen-separated | `swissair-111` |
-| Section name | lowercase, underscore | `hero`, `cause_chain` |
+| Chapter name | lowercase, underscore | `opening`, `main` |
+| Scene name | lowercase, underscore, unique per video | `hero`, `cause_chain` |
+| Shot name | lowercase, underscore, unique per scene | `hero_01`, `timeline_02` |
 | Asset id | lowercase, underscore, kebab-safe | `hero_bg`, `timeline_chart` |
 | Composition ID | `MainVideo` / `MainVideo4K` / `MainVideoVertical` | (template-controlled) |
 
@@ -88,7 +102,7 @@ Create a new project when any of these config axes differs. Use `cli.py project 
 
 ## Shared remotion-video-template
 
-Located at `../remotion-video-template/` relative to explainer-video-maker root (override in `project_prefs.paths.remotion_template`). The template's `src/components/` is the canonical source for all React components. Per-video `Video.tsx` imports from it via an absolute path embedded at generation time by `scripts/compose_video.py`.
+Located at `../remotion-video-template/` relative to the explainer-video-maker repo root (override in `project_prefs.paths.remotion_template` — relative paths resolve against the repo root, absolute paths are used as-is). The template's `src/components/` is the canonical source for all React components. Per-scene `scene.tsx`/`entry.tsx` import from it via an absolute path embedded at generation time by `scripts/compose_video.py`. The template barrel also re-exports `TransitionSeries`/`linearTiming` from `@remotion/transitions` so generated compositions outside the template's node_modules tree can import them.
 
 Never copy `remotion-video-template/`. Never symlink it. Use the absolute path import mechanism.
 

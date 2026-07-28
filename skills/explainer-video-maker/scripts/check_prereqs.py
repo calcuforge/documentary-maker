@@ -22,6 +22,9 @@ import sys
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
+# explainer-video-maker repo root (two levels up from skills/explainer-video-maker/).
+# Relative template paths resolve against this root, matching compose_video.py.
+DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
 
@@ -37,7 +40,10 @@ def _check_cmd(cmd, label, required=True):
 
 
 def _check_template(template_rel):
-    template_path = os.path.normpath(os.path.join(SKILL_DIR, template_rel))
+    if os.path.isabs(template_rel):
+        template_path = os.path.normpath(template_rel)
+    else:
+        template_path = os.path.normpath(os.path.join(DOC_ROOT, template_rel))
     if os.path.isdir(template_path) and os.path.isfile(
         os.path.join(template_path, "package.json")
     ):
@@ -86,7 +92,8 @@ def build_parser():
     cli_envelope.add_format_arg(parser)
     parser.add_argument(
         "--template-path", default=None,
-        help="Override the remotion-video-template path (relative to SKILL_DIR).",
+        help="Override the remotion-video-template path "
+             "(relative to the explainer-video-maker repo root, or absolute).",
     )
     return parser
 
@@ -95,7 +102,7 @@ def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    template_rel = args.template_path or "../../remotion-video-template"
+    template_rel = args.template_path or "../remotion-video-template"
     checks = [
         _check_cmd("ffmpeg", "ffmpeg"),
         _check_cmd("ffprobe", "ffprobe"),

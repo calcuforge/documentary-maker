@@ -1,17 +1,33 @@
 #!/usr/bin/env python3
-"""Generate TTS audio from narration_script.yaml.
+"""Per-scene TTS generation + merge.
 
-Two backends:
-    comfyui_indextts  — calls `comfyui-scheduler run -w index_tts_2 -i ...`
-                        Downloads the resulting audio file → narration_audio.wav.
-    http_server       — POSTs JSON to an OpenAI-compatible /v1/audio/speech
-                        endpoint; saves the binary response → narration_audio.wav.
+Narration is synthesized **per scene** (each scene is one TTS job), so a
+scene's narration can be regenerated without touching the rest of the video.
+Every scene WAV is normalized to 48 kHz mono pcm_s16le so the merged track
+can be built with `ffmpeg -f concat -c copy` (lossless, no re-encode).
 
-After audio is on disk, runs `estimate_timing.py` to build SRT + timing.json.
+Commands:
+    tts run --project P --video V [--scene NAME] [--backend B]
+        Synthesize one scene (--scene) or ALL scenes (no --scene).
+        Per scene output:
+            scenes/{scene}/narration.wav   (48 kHz mono)
+            scenes/{scene}/narration.srt   (scene-relative cues)
+            scenes/{scene}/timing.json     (shots distribution)
+        Without --scene, automatically runs the merge afterwards.
+
+    tts merge --project P --video V
+        Concatenate scene WAVs → narration_audio.wav (video root),
+        merge scene SRTs with offsets → narration_audio.srt,
+        aggregate scene timings → timing.json (video-level summary).
+
+Backends:
+    comfyui_indextts — `comfyui-scheduler run -w index_tts_2 -i ...`
+    http_server      — multipart POST to an OpenAI-compatible /v1/audio/speech
 """
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -23,103 +39,71 @@ SKILL_DIR = os.path.dirname(SCRIPT_DIR)
 DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
-import comfyui as comfyui_runner  # noqa: E402
 import estimate_timing  # noqa: E402
+import script_schema  # noqa: E402
+
+AUDIO_FORMAT_ARGS = ["-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le"]
+
+SRT_TIME_RE = re.compile(
+    r"(\d+):(\d+):(\d+),(\d+)\s*-->\s*(\d+):(\d+):(\d+),(\d+)")
 
 
-def load_project_prefs(project_name):
+# ── loading helpers ─────────────────────────────────────────────────────────
+
+def load_project_prefs(project_name, fmt):
     ppath = os.path.join(DOC_ROOT, "projects", project_name, "project_prefs.yaml")
     if not os.path.isfile(ppath):
         cli_envelope.emit_usage_error(
-            f"Project '{project_name}' not found (no prefs at {ppath}).",
-            fmt="text",
-        )
+            f"Project '{project_name}' not found (no prefs at {ppath}).", fmt=fmt)
     with open(ppath, "r", encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
 
 
-def load_narration_script(video_dir):
-    path = os.path.join(video_dir, "narration_script.yaml")
-    if not os.path.isfile(path):
+def resolve_voice_file(prefs, project_name, fmt):
+    vf = prefs.get("tts", {}).get("voice_file")
+    if not vf:
+        default_vf = os.path.normpath(
+            os.path.join(DOC_ROOT, "projects", project_name, "voice_reference.wav"))
+        if os.path.isfile(default_vf):
+            vf = default_vf
+            prefs.setdefault("tts", {})["voice_file"] = vf
+    if not vf or not os.path.isfile(vf):
         cli_envelope.emit_usage_error(
-            f"narration_script.yaml not found at {path}", fmt="text")
-    with open(path, "r", encoding="utf-8") as f:
-        sections = yaml.safe_load(f) or []
-    return sections
-
-
-def concat_narration(sections):
-    """Build a single TTS input string with [SECTION:name] markers preserved
-    only as natural pauses (the markers are NOT sent to TTS)."""
-    parts = []
-    for s in sections:
-        text = (s.get("narration") or "").strip()
-        if text:
-            parts.append(text)
-    return "\n\n".join(parts)
-
-
-def synth_comfyui(sections, prefs, video_dir, fmt):
-    workflow_id = prefs.get("workflows", {}).get("tts", "index_tts_2")
-    voice_file = prefs.get("tts", {}).get("voice_file")
-    if not voice_file:
-        cli_envelope.emit_usage_error(
-            "tts.voice_file is required when backend=comfyui_indextts. "
-            "Set it in project_prefs.yaml.",
-            fmt=fmt,
-        )
-    if not os.path.isfile(voice_file):
-        cli_envelope.emit_usage_error(
-            f"voice_file not found: {voice_file}", fmt=fmt)
-    content = concat_narration(sections)
-    if not content.strip():
-        cli_envelope.emit_usage_error(
-            "Narration is empty. Add narration text to narration_script.yaml.",
+            f"tts.voice_file not found or does not exist: {vf}. "
+            "Run voice design (Step 0) first, or set tts.voice_file manually.",
             fmt=fmt)
-    inputs = {"content": content, "voice_file": voice_file}
-    # Run the workflow and download outputs into assets/ (audio file is the
-    # primary output; we'll move it to narration_audio.wav below).
-    dest = os.path.join(video_dir, "assets")
-    os.makedirs(dest, exist_ok=True)
-    # Use the inner function directly so we control the result object.
-    result = _run_workflow_and_capture(workflow_id, inputs, dest, fmt)
-    audio_path = None
-    for f in result.get("files", []):
-        if f.get("kind") == "audio":
-            audio_path = f.get("local_path")
-            break
-    if audio_path is None:
-        # Fall back: pick any output file.
-        for f in result.get("files", []):
-            audio_path = f.get("local_path")
-            if audio_path:
-                break
-    if audio_path is None:
-        cli_envelope.emit_error(
-            "workflow_failed",
-            "index_tts workflow produced no audio file.",
-            details=result, fmt=fmt, exit_code=1,
-        )
-    final_path = os.path.join(video_dir, "narration_audio.wav")
-    # Rename/move. If the file is already a wav, just rename; else let ffmpeg convert.
-    if audio_path.lower().endswith(".wav"):
-        os.replace(audio_path, final_path)
-    else:
+    return vf
+
+
+def normalize_wav(src, dest, fmt):
+    """Convert/resample any audio file to 48 kHz mono pcm_s16le WAV.
+
+    Required so `ffmpeg -f concat -c copy` can stitch scene WAVs losslessly.
+    """
+    try:
         subprocess.run(
-            ["ffmpeg", "-y", "-i", audio_path, final_path],
+            ["ffmpeg", "-y", "-i", src] + AUDIO_FORMAT_ARGS + [dest],
             check=True, capture_output=True, timeout=300,
         )
-        os.remove(audio_path)
-    return final_path
+    except subprocess.CalledProcessError as exc:
+        cli_envelope.emit_error(
+            "ffmpeg_failed",
+            f"Failed to normalize {src} → {dest}: "
+            f"{(exc.stderr or b'').decode('utf-8', 'replace')[-500:]}",
+            fmt=fmt, exit_code=1,
+        )
+    if os.path.abspath(src) != os.path.abspath(dest) and os.path.isfile(src):
+        os.remove(src)
 
+
+# ── synthesis backends (single scene) ───────────────────────────────────────
 
 def _run_workflow_and_capture(workflow_id, inputs, dest_dir, fmt):
-    """Reimplements comfyui_runner.run_workflow but returns dict instead of exiting."""
+    """Run a comfyui-scheduler workflow and download its output files."""
     import shutil
     if not shutil.which("comfyui-scheduler"):
         cli_envelope.emit_error(
-            "prereqs_failed",
-            "comfyui-scheduler is not on PATH.",
+            "prereqs_failed", "comfyui-scheduler is not on PATH.",
             fmt=fmt, exit_code=1,
         )
     argv = ["comfyui-scheduler", "run", "-w", workflow_id, "-i", json.dumps(inputs)]
@@ -144,8 +128,8 @@ def _run_workflow_and_capture(workflow_id, inputs, dest_dir, fmt):
             resp.raise_for_status()
         except Exception as exc:
             cli_envelope.emit_error(
-                "download_failed",
-                f"Failed to download {url}: {exc}", fmt=fmt, exit_code=1,
+                "download_failed", f"Failed to download {url}: {exc}",
+                fmt=fmt, exit_code=1,
             )
         from urllib.parse import urlsplit
         filename = os.path.basename(urlsplit(url).path) or f"output_{kind}.bin"
@@ -160,101 +144,327 @@ def _run_workflow_and_capture(workflow_id, inputs, dest_dir, fmt):
             "files": files_out}
 
 
-def synth_http(sections, prefs, video_dir, fmt):
+def synth_comfyui(text, prefs, voice_file, tmp_dir, fmt):
+    workflow_id = prefs.get("workflows", {}).get("tts", "index_tts_2")
+    inputs = {"content": text, "voice_file": voice_file}
+    result = _run_workflow_and_capture(workflow_id, inputs, tmp_dir, fmt)
+    audio_path = None
+    for f in result.get("files", []):
+        if f.get("kind") == "audio":
+            audio_path = f.get("local_path")
+            break
+    if audio_path is None:
+        for f in result.get("files", []):
+            audio_path = f.get("local_path")
+            if audio_path:
+                break
+    if audio_path is None:
+        cli_envelope.emit_error(
+            "workflow_failed", "index_tts workflow produced no audio file.",
+            details=result, fmt=fmt, exit_code=1,
+        )
+    return audio_path
+
+
+def synth_http(text, prefs, voice_file, fmt):
     cfg = prefs.get("tts", {}).get("http", {})
     url_raw = cfg.get("url", "")
     if not url_raw:
         cli_envelope.emit_usage_error(
             "tts.http.url is required when backend=http_server.", fmt=fmt)
-    # Resolve ${BACKEND_PROXY_ENDPOINT} from env var.
     url = os.path.expandvars(url_raw)
     if "${BACKEND_PROXY_ENDPOINT}" in url or not url.startswith("http"):
         cli_envelope.emit_usage_error(
             f"tts.http.url could not be resolved: {url_raw}. "
             "Set the BACKEND_PROXY_ENDPOINT env var.",
             fmt=fmt)
-
-    content = concat_narration(sections)
-    if not content.strip():
-        cli_envelope.emit_usage_error(
-            "Narration is empty. Add narration text to narration_script.yaml.",
-            fmt=fmt)
-
-    # Resolve voice_file: project prefs tts.voice_file → project-level voice_reference.wav
-    voice_file = prefs.get("tts", {}).get("voice_file")
-    if not voice_file or not os.path.isfile(voice_file):
-        cli_envelope.emit_usage_error(
-            f"tts.voice_file not found or does not exist: {voice_file}. "
-            "Run voice_design (Step 0) first, or set tts.voice_file manually.",
-            fmt=fmt)
-
     speed = cfg.get("speed", 1.0)
-    data = {"input": content, "speed": str(speed)}
-    files = {"voice_file": (os.path.basename(voice_file),
-                             open(voice_file, "rb"), "audio/wav")}
+    data = {"input": text, "speed": str(speed)}
+    with open(voice_file, "rb") as vfh:
+        files = {"voice_file": (os.path.basename(voice_file), vfh, "audio/wav")}
+        try:
+            resp = requests.post(url, data=data, files=files, timeout=900)
+            resp.raise_for_status()
+        except Exception as exc:
+            cli_envelope.emit_error(
+                "http_tts_failed", f"HTTP TTS request failed: {exc}",
+                details={"status_code": getattr(resp, "status_code", None)},
+                fmt=fmt, exit_code=1,
+            )
+    return resp.content
+
+
+# ── per-scene pipeline ──────────────────────────────────────────────────────
+
+def synth_scene(scene, prefs, voice_file, video_dir, backend, fmt):
+    """One scene → scenes/{name}/narration.wav (+ srt + timing via estimate)."""
+    name = scene["name"]
+    text = (scene.get("narration") or "").strip()
+    if not text:
+        cli_envelope.emit_usage_error(
+            f"Scene '{name}' has no narration text. Every scene needs narration "
+            "(it drives the scene's audio-master clock).",
+            fmt=fmt)
+    scene_dir = os.path.join(video_dir, "scenes", name)
+    tmp_dir = os.path.join(scene_dir, "_tts_tmp")
+    os.makedirs(tmp_dir, exist_ok=True)
+    final_path = os.path.join(scene_dir, "narration.wav")
+
+    if backend == "comfyui_indextts":
+        raw = synth_comfyui(text, prefs, voice_file, tmp_dir, fmt)
+        normalize_wav(raw, final_path, fmt)
+    elif backend == "http_server":
+        body = synth_http(text, prefs, voice_file, fmt)
+        raw = os.path.join(tmp_dir, "response.bin")
+        with open(raw, "wb") as f:
+            f.write(body)
+        normalize_wav(raw, final_path, fmt)
+    else:
+        cli_envelope.emit_usage_error(f"Unknown TTS backend: {backend}", fmt=fmt)
+
+    # Remove the tmp dir if empty (downloads already moved into final_path).
     try:
-        resp = requests.post(url, data=data, files=files, timeout=900)
-        resp.raise_for_status()
-    except Exception as exc:
-        cli_envelope.emit_error(
-            "http_tts_failed",
-            f"HTTP TTS request failed: {exc}",
-            details={"status_code": getattr(resp, "status_code", None),
-                     "body": getattr(resp, "text", None) if 'resp' in dir() else None},
-            fmt=fmt, exit_code=1,
-        )
-    final_path = os.path.join(video_dir, "narration_audio.wav")
-    with open(final_path, "wb") as f:
-        f.write(resp.content)
+        os.rmdir(tmp_dir)
+    except OSError:
+        pass
+
+    fps = prefs.get("video", {}).get("fps", 30)
+    estimate_timing.main([
+        "--video-dir", video_dir,
+        "--scene", name,
+        "--fps", str(fps),
+        "--format", fmt,
+    ])
     return final_path
 
 
+# ── merge ───────────────────────────────────────────────────────────────────
+
+def parse_srt(path):
+    """Parse an SRT file into [(start_s, end_s, text), ...]."""
+    if not os.path.isfile(path):
+        return []
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+    blocks = []
+    for block in re.split(r"\n\s*\n", content.strip()):
+        lines = [ln for ln in block.splitlines() if ln.strip()]
+        time_idx = None
+        match = None
+        for i, ln in enumerate(lines):
+            match = SRT_TIME_RE.search(ln)
+            if match:
+                time_idx = i
+                break
+        if match is None:
+            continue
+        g = [int(x) for x in match.groups()]
+        start = g[0] * 3600 + g[1] * 60 + g[2] + g[3] / 1000.0
+        end = g[4] * 3600 + g[5] * 60 + g[6] + g[7] / 1000.0
+        text = "\n".join(lines[time_idx + 1:])
+        blocks.append((start, end, text))
+    return blocks
+
+
+def merge_scenes(script, prefs, video_dir, fmt):
+    """Concatenate scene WAVs/SRTs/timings into the video-level artifacts."""
+    fps = prefs.get("video", {}).get("fps", 30)
+    scenes = script["scenes"]
+
+    # 1. Verify every scene has audio + timing.
+    missing = []
+    scene_timings = []
+    for sc in scenes:
+        wav = os.path.join(video_dir, "scenes", sc["name"], "narration.wav")
+        tj = os.path.join(video_dir, "scenes", sc["name"], "timing.json")
+        if not os.path.isfile(wav) or not os.path.isfile(tj):
+            missing.append(sc["name"])
+            continue
+        with open(tj, "r", encoding="utf-8") as f:
+            scene_timings.append((sc, json.load(f)))
+    if missing:
+        cli_envelope.emit_usage_error(
+            f"Scene(s) missing narration.wav/timing.json: {missing}. "
+            "Run `tts run` (all scenes) or `tts run --scene <name>` for each first.",
+            fmt=fmt)
+
+    # 2. Concatenate WAVs losslessly (-c copy; all scenes are 48k mono).
+    concat_list = os.path.join(video_dir, "concat_audio.txt")
+    with open(concat_list, "w", encoding="utf-8") as f:
+        for sc, _ in scene_timings:
+            wav = os.path.join(video_dir, "scenes", sc["name"], "narration.wav")
+            f.write(f"file '{os.path.abspath(wav).replace(os.sep, '/')}'\n")
+    merged_wav = os.path.join(video_dir, "narration_audio.wav")
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "concat", "-safe", "0",
+             "-i", concat_list, "-c", "copy", merged_wav],
+            check=True, capture_output=True, timeout=600,
+        )
+    except subprocess.CalledProcessError as exc:
+        cli_envelope.emit_error(
+            "ffmpeg_failed",
+            "Scene WAV concat failed. Scene WAVs must share sample rate / "
+            "channels / codec (tts run normalizes them to 48 kHz mono): "
+            f"{(exc.stderr or b'').decode('utf-8', 'replace')[-500:]}",
+            fmt=fmt, exit_code=1,
+        )
+
+    # 3. Merge SRTs with per-scene offsets; renumber sequentially.
+    srt_lines = []
+    idx = 1
+    offset = 0.0
+    for sc, st in scene_timings:
+        scene_dur = st.get("total_duration", 0.0)
+        cues = parse_srt(os.path.join(video_dir, "scenes", sc["name"], "narration.srt"))
+        for start, end, text in cues:
+            srt_lines.append(str(idx))
+            srt_lines.append(
+                f"{estimate_timing._fmt_srt_time(offset + start)} --> "
+                f"{estimate_timing._fmt_srt_time(offset + end)}")
+            srt_lines.append(text)
+            srt_lines.append("")
+            idx += 1
+        offset += scene_dur
+    merged_srt = os.path.join(video_dir, "narration_audio.srt")
+    with open(merged_srt, "w", encoding="utf-8") as f:
+        f.write("\n".join(srt_lines))
+
+    # 4. Aggregate video-level timing.json.
+    total_duration = sum(st.get("total_duration", 0.0) for _, st in scene_timings)
+    total_frames = sum(st.get("total_frames", 0) for _, st in scene_timings)
+    chapter_acc = {}
+    scene_blocks = []
+    cumulative = 0.0
+    for sc, st in scene_timings:
+        dur = st.get("total_duration", 0.0)
+        start = round(cumulative, 3)
+        end = round(cumulative + dur, 3)
+        scene_blocks.append({
+            "name": sc["name"],
+            "label": sc.get("label") or sc["name"],
+            "chapter": sc.get("chapter"),
+            "start_time": start,
+            "end_time": end,
+            "duration": round(dur, 3),
+            "start_frame": round(start * fps),
+            "duration_frames": st.get("total_frames", 0),
+        })
+        ch_name = sc.get("chapter")
+        ch_label = ch_name
+        for ch in script["chapters"]:
+            if ch.get("name") == ch_name:
+                ch_label = ch.get("label") or ch_name
+                break
+        if ch_name not in chapter_acc:
+            chapter_acc[ch_name] = {
+                "name": ch_name, "label": ch_label,
+                "start_time": start, "end_time": end,
+                "duration": round(dur, 3), "scenes": [sc["name"]],
+            }
+        else:
+            chapter_acc[ch_name]["end_time"] = end
+            chapter_acc[ch_name]["duration"] = round(
+                chapter_acc[ch_name]["duration"] + dur, 3)
+            chapter_acc[ch_name]["scenes"].append(sc["name"])
+        cumulative += dur
+
+    timing = {
+        "total_duration": round(total_duration, 3),
+        "fps": fps,
+        "total_frames": total_frames,
+        "chapters": list(chapter_acc.values()),
+        "scenes": scene_blocks,
+    }
+    with open(os.path.join(video_dir, "timing.json"), "w", encoding="utf-8") as f:
+        json.dump(timing, f, ensure_ascii=False, indent=2)
+
+    return timing, merged_wav, merged_srt
+
+
+# ── CLI ─────────────────────────────────────────────────────────────────────
+
 def build_parser():
-    parser = argparse.ArgumentParser(description="Generate TTS audio from narration_script.yaml.")
+    parser = argparse.ArgumentParser(description="Per-scene TTS generation + merge.")
     cli_envelope.add_format_arg(parser)
-    parser.add_argument("--project", required=True)
-    parser.add_argument("--video", required=True,
-                        help="Video name (subdirectory of project's videos/).")
-    parser.add_argument("--backend", default=None,
-                        choices=["comfyui_indextts", "http_server"],
-                        help="Override prefs.tts.backend.")
+    sub = parser.add_subparsers(dest="action", required=True)
+
+    p_run = sub.add_parser("run", help="Synthesize TTS for one scene or all scenes.")
+    p_run.add_argument("--project", required=True)
+    p_run.add_argument("--video", required=True)
+    p_run.add_argument("--scene", default=None,
+                       help="Synthesize only this scene. Omit for all scenes "
+                            "(which auto-runs merge afterwards).")
+    p_run.add_argument("--backend", default=None,
+                       choices=["comfyui_indextts", "http_server"],
+                       help="Override prefs.tts.backend.")
+
+    p_merge = sub.add_parser("merge",
+                             help="Concatenate scene WAVs/SRTs/timings into video-level artifacts.")
+    p_merge.add_argument("--project", required=True)
+    p_merge.add_argument("--video", required=True)
+
     return parser
 
 
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
-    prefs = load_project_prefs(args.project)
-    # Auto-resolve voice_file: if null, fall back to project-level voice_reference.wav
-    vf = prefs.get("tts", {}).get("voice_file")
-    if not vf:
-        default_vf = os.path.normpath(
-            os.path.join(DOC_ROOT, "projects", args.project, "voice_reference.wav"))
-        if os.path.isfile(default_vf):
-            prefs.setdefault("tts", {})["voice_file"] = default_vf
+    fmt = args.format
+    prefs = load_project_prefs(args.project, fmt)
     video_dir = os.path.join(DOC_ROOT, "projects", args.project, "videos", args.video)
     if not os.path.isdir(video_dir):
-        cli_envelope.emit_usage_error(
-            f"Video dir not found: {video_dir}", fmt=args.format)
-    sections = load_narration_script(video_dir)
-    backend = args.backend or prefs.get("tts", {}).get("backend", "comfyui_indextts")
-    if backend == "comfyui_indextts":
-        audio_path = synth_comfyui(sections, prefs, video_dir, args.format)
-    elif backend == "http_server":
-        audio_path = synth_http(sections, prefs, video_dir, args.format)
-    else:
-        cli_envelope.emit_usage_error(f"Unknown TTS backend: {backend}", fmt=args.format)
+        cli_envelope.emit_usage_error(f"Video dir not found: {video_dir}", fmt=fmt)
 
-    # Build SRT + timing.json via char-count estimator.
-    fps = prefs.get("video", {}).get("fps", 30)
-    # Re-invoke estimate_timing in-process to reuse its drift correction.
-    sys.argv = [
-        "estimate_timing.py",
-        "--video-dir", video_dir,
-        "--fps", str(fps),
-        "--format", args.format,
-    ]
-    estimate_timing.main()
+    try:
+        script = script_schema.load_script(os.path.join(video_dir, "narration_script.yaml"))
+    except script_schema.SchemaError as exc:
+        cli_envelope.emit_usage_error(str(exc), fmt=fmt)
+
+    if args.action == "run":
+        voice_file = resolve_voice_file(prefs, args.project, fmt)
+        backend = args.backend or prefs.get("tts", {}).get("backend", "comfyui_indextts")
+        if args.scene:
+            scene = script_schema.find_scene(script, args.scene)
+            if scene is None:
+                cli_envelope.emit_usage_error(
+                    f"Scene '{args.scene}' not found. "
+                    f"Known scenes: {[s['name'] for s in script['scenes']]}",
+                    fmt=fmt)
+            scenes = [scene]
+        else:
+            scenes = script["scenes"]
+
+        outputs = []
+        for sc in scenes:
+            path = synth_scene(sc, prefs, voice_file, video_dir, backend, fmt)
+            outputs.append({"scene": sc["name"], "wav": path})
+
+        if args.scene:
+            cli_envelope.emit_ok(
+                data={"scenes": outputs},
+                message=f"Scene '{args.scene}' TTS + timing complete. "
+                        "Run `tts merge` once all scenes are done.",
+                fmt=fmt,
+            )
+        else:
+            timing, merged_wav, merged_srt = merge_scenes(script, prefs, video_dir, fmt)
+            cli_envelope.emit_ok(
+                data={"scenes": outputs, "timing": timing,
+                      "narration_audio": merged_wav, "narration_srt": merged_srt},
+                message=(f"TTS complete for {len(outputs)} scene(s); merged track "
+                         f"{timing['total_duration']:.2f}s."),
+                fmt=fmt,
+            )
+    elif args.action == "merge":
+        timing, merged_wav, merged_srt = merge_scenes(script, prefs, video_dir, fmt)
+        cli_envelope.emit_ok(
+            data={"timing": timing,
+                  "narration_audio": merged_wav, "narration_srt": merged_srt},
+            message=(f"Merged {len(timing['scenes'])} scene(s) → "
+                     f"{merged_wav} ({timing['total_duration']:.2f}s)."),
+            fmt=fmt,
+        )
 
 
 if __name__ == "__main__":

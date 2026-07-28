@@ -36,7 +36,7 @@ comfyui-scheduler status
 fail: remotion-video-template: NOT FOUND at ...
 ```
 
-Fix: edit `project_prefs.paths.remotion_template` to point at the right location (relative to explainer-video-maker root), or pass `--template-path` to `check_prereqs.py`.
+Fix: edit `project_prefs.paths.remotion_template` to point at the right location — relative paths resolve against the **explainer-video-maker repo root** (default `../remotion-video-template`), absolute paths are used as-is. Or pass `--template-path` to `check_prereqs.py`.
 
 ### `node_modules` missing in template
 
@@ -78,24 +78,46 @@ Fix: import workflows into comfyui-scheduler's database:
 cd ../comfyui-scheduler && comfyui-scheduler workflow import-all
 ```
 
-### Render fails with "Cannot find module 'remotion'"
+### Render fails with "Cannot find module 'remotion'" or wrong template path
 
-The generated `entry.tsx` imports from `<TEMPLATE_PATH>/src/components/index.js` using an absolute path. If the template path is wrong, the bundler can't find `remotion`/`react`.
+The generated per-scene `entry.tsx`/`scene.tsx` import from `<TEMPLATE_PATH>/src/components/index.js` using an absolute path baked in at generation time. If the template path is wrong, the bundler fails.
 
-Fix: check `project_prefs.paths.remotion_template` resolves to the actual template directory. Re-run `compose_video.py` after fixing the path — the absolute path is baked into `entry.tsx` at generation time.
+Fix: check `project_prefs.paths.remotion_template` resolves to the actual template directory, then re-run `compose` to regenerate all scene files.
 
-### timing.json drift > 0.5s
+### Render fails with "Can't resolve '@remotion/transitions'"
+
+Generated compositions live outside the template's node_modules tree, so bare package imports can't resolve. The generated `scene.tsx` imports `TransitionSeries`/`linearTiming` from the template barrel (which re-exports them) — if you see this error, your `scene.tsx` is stale (generated before the barrel re-export existed). Re-run `compose`.
+
+### Render fails: entry "does not contain registerRoot"
+
+Stale generated `entry.tsx`. Re-run `compose` — current generation emits `registerRoot(RemotionRoot)`.
+
+### Legacy flat schema error
 
 ```
-warn: timing.json drift >0.5s (total=360.000, timing=359.200).
+error: narration_script.yaml uses the legacy flat section-list schema.
 ```
 
-Usually caused by the char-count estimator rounding. Re-run:
+The pipeline requires the nested chapters → scenes → shots schema. Restructure the YAML (see workflow-script.md Step 3/4) — old flat section lists are not auto-migrated. Rough mapping: each old section becomes one scene with one shot; `visual:` fields move onto the shot (`component`, `asset_id`, `props`); `data:`/`text:` move onto the shot; group scenes under chapters.
+
+### Scene timing vs scene WAV drift
+
+```
+scene 'hero': timing drift 1.20s > 0.5s
+```
+
+The scene's `timing.json` is written straight from ffprobing the scene WAV, so drift means one of them is stale. Re-run the scene's TTS:
+
 ```bash
-python3 "$SKILL_DIR/scripts/estimate_timing.py" --video-dir "$VDIR" --fps 30
+python3 "$SKILL_DIR/scripts/cli.py" tts run --project $P --video $V --scene hero
+python3 "$SKILL_DIR/scripts/cli.py" tts merge --project $P --video $V
 ```
 
-If drift persists, the narration_script.yaml sections may not match what was sent to TTS. Verify `concat_narration()` logic in `generate_tts.py` — it joins sections with `\n\n` and no markers.
+### `tts merge` / `merge` concat failures
+
+- **"Scene(s) missing narration.wav/timing.json"** — run `tts run --scene <name>` for each missing scene first.
+- **Scene WAV concat produces garbled audio or fails** — a scene WAV was produced outside the toolchain without 48 kHz mono normalization. Re-run that scene's `tts run` (it always normalizes).
+- **`merge` (video) fails with `scene_encoding_mismatch`** — scenes were rendered with different composition ids / flags. Re-render all scenes with the same `COMP_ID` and bitrate, then `merge` again.
 
 ### Render output resolution wrong
 
@@ -116,7 +138,13 @@ Either:
 fail: video/audio drift 1.20s > 0.5s
 ```
 
-Likely cause: `entry.tsx` `calculateVideoMetadata` didn't pick up the latest `timing.json`. Re-run `compose_video.py` and re-render.
+Find the offending scene first:
+
+```bash
+python3 "$SKILL_DIR/scripts/cli.py" audit beats --video-dir "$VDIR"
+```
+
+Likely cause: that scene was rendered from a stale `timing.json` (narration was regenerated but the scene wasn't re-rendered). Re-run `compose`, re-render the flagged scene, and re-run `merge`.
 
 ### Asset "resolved but no path on disk"
 

@@ -2,8 +2,10 @@
 """End-of-pipeline acceptance gate.
 
 Checks:
-    - timing.json exists and total_duration matches narration_audio.wav within 0.5s.
-    - final_video.mp4 (or video_with_bgm.mp4) exists and plays.
+    - every scene has scenes/{scene}/scene.mp4 rendered.
+    - per-scene timing.json matches the scene narration.wav within 0.5s.
+    - root timing.json exists and total_duration matches narration_audio.wav within 0.5s.
+    - final_video.mp4 (or video_with_bgm.mp4 / output.mp4) exists and plays.
     - video resolution matches project config (1920x1080 / 3840x2160 / 1080x1920).
     - audio-video duration drift < 0.5s.
     - assets/manifest.json validates (resolved entries have files on disk).
@@ -27,6 +29,7 @@ SKILL_DIR = os.path.dirname(SCRIPT_DIR)
 DOC_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
+import script_schema  # noqa: E402
 
 
 def ffprobe_duration(path):
@@ -83,6 +86,36 @@ def main(argv=None):
 
     problems = []
     warnings = []
+
+    # scene artifacts: every scene rendered + per-scene clock drift
+    script_path = os.path.join(vdir, "narration_script.yaml")
+    if not os.path.isfile(script_path):
+        problems.append("narration_script.yaml missing")
+    else:
+        try:
+            script = script_schema.load_script(script_path)
+            for sc in script["scenes"]:
+                name = sc["name"]
+                scene_dir = os.path.join(vdir, "scenes", name)
+                scene_mp4 = os.path.join(scene_dir, "scene.mp4")
+                scene_wav = os.path.join(scene_dir, "narration.wav")
+                scene_tj = os.path.join(scene_dir, "timing.json")
+                if not os.path.isfile(scene_mp4):
+                    problems.append(f"scene '{name}': scene.mp4 not rendered")
+                if not os.path.isfile(scene_wav) or not os.path.isfile(scene_tj):
+                    problems.append(f"scene '{name}': narration.wav/timing.json missing")
+                    continue
+                with open(scene_tj, "r", encoding="utf-8") as f:
+                    st = json.load(f)
+                wav_dur = ffprobe_duration(scene_wav)
+                if wav_dur is None:
+                    problems.append(f"scene '{name}': ffprobe could not read narration.wav")
+                elif abs(st.get("total_duration", 0) - wav_dur) > 0.5:
+                    problems.append(
+                        f"scene '{name}': timing drift "
+                        f"{abs(st.get('total_duration', 0) - wav_dur):.2f}s > 0.5s")
+        except script_schema.SchemaError as exc:
+            problems.append(f"narration_script.yaml: {exc}")
 
     # timing.json + audio drift
     timing_path = os.path.join(vdir, "timing.json")

@@ -12,7 +12,9 @@ python3 "$SKILL_DIR/scripts/cli.py" verify --project $P --video $V
 
 Checks (see `scripts/verify_output.py`):
 
-- `timing.json` exists, `total_duration` matches `narration_audio.wav` within ±0.5s.
+- Every scene in `narration_script.yaml` has `scenes/{s}/scene.mp4` rendered.
+- Per-scene `scenes/{s}/timing.json` matches `scenes/{s}/narration.wav` within ±0.5s.
+- Root `timing.json` exists, `total_duration` matches `narration_audio.wav` within ±0.5s.
 - `final_video.mp4` (or fallback to `video_with_bgm.mp4` / `output.mp4`) exists and plays.
 - Resolution matches project config (1920×1080 / 3840×2160 / 1080×1920 / 2160×3840).
 - Audio-video duration drift <0.5s.
@@ -45,22 +47,32 @@ video: swissair-111
 created: 2026-07-26
 workflow_version: 1.0
 
-chapters:                          # from timing.json
-  - { name: hero, label: 引子, start: 0.0, duration: 15.0 }
-  - { name: timeline, label: 时间线, start: 15.0, duration: 45.0 }
-  - { name: cause_chain, label: 事故链条, start: 60.0, duration: 50.0 }
-  - { name: impact, label: 影响, start: 110.0, duration: 40.0 }
-  - { name: summary, label: 反思, start: 150.0, duration: 25.0 }
+chapters:                          # from root timing.json
+  - name: opening
+    label: 开篇
+    start: 0.0
+    duration: 60.0
+    scenes:
+      - { name: hero, label: 引子, start: 0.0, duration: 15.0 }
+      - { name: timeline, label: 时间线, start: 15.0, duration: 45.0 }
+  - name: main
+    label: 主体
+    start: 60.0
+    duration: 115.0
+    scenes:
+      - { name: cause_chain, label: 事故链条, start: 60.0, duration: 50.0 }
+      - { name: impact, label: 影响, start: 110.0, duration: 40.0 }
+      - { name: summary, label: 反思, start: 150.0, duration: 25.0 }
 
 sources:                           # from topic_research.md
   - https://en.wikipedia.org/wiki/Swissair_Flight_111
   - https://www.tsb.gc.ca/eng/rapports-reports/aviation/1998/a98h0003/...
 
 key_frame_timestamps:              # for downstream thumbnails / shorts / cover art
-  - { time: 0.0, section: hero, asset_id: hero_bg, description: "Title card" }
-  - { time: 15.0, section: timeline, asset_id: timeline_chart, description: "Event timeline" }
-  - { time: 60.0, section: cause_chain, description: "Causal flowchart" }
-  - { time: 110.0, section: impact, description: "Casualty stats" }
+  - { time: 0.0, scene: hero, asset_id: hero_bg, description: "Title card" }
+  - { time: 15.0, scene: timeline, asset_id: timeline_chart, description: "Event timeline" }
+  - { time: 60.0, scene: cause_chain, description: "Causal flowchart" }
+  - { time: 110.0, scene: impact, description: "Casualty stats" }
 
 tags:
   - 航空事故
@@ -116,14 +128,17 @@ Use it for downstream cover-image / shorts / publishing tasks.
 
 ## Regenerating an existing video
 
-If `videos/{name}/` already exists and the user iterates ("regenerate", "re-render", "I edited the script"), reuse the dir. Minimal re-run matrix:
+If `videos/{name}/` already exists and the user iterates ("regenerate", "re-render", "I edited the script"), reuse the dir. The scene-based pipeline makes iteration cheap — only affected scenes re-synthesize / re-render, then re-merge.
 
-| Change | Re-run from |
+| Change | Re-run (scoped) |
 | --- | --- |
-| narration text only | Step 4 → 6 → 11 (re-TTS, re-render) |
-| visual component / props | Step 8 → 9 → 10 → 11 (re-compose, re-render) |
-| project theme / colors | Step 8 → 9 → 10 → 11 |
-| resolution change | Step 7 (re-upscale) → 8 → 9 → 10 → 11 |
-| new asset added | Step 5 → 8 → 9 → 10 → 11 |
+| One scene's narration | `tts run --scene {s}` → `tts merge` → render scene {s} → `merge` → Step 10 → 11 |
+| One shot's component / props / overlays | `compose` → render scene {s} → `merge` → Step 10 → 11 |
+| One scene's shot added/removed | Step 4 (edit yaml) → plan new assets if any (Step 5) → `compose` → render scene {s} → `merge` → 10 → 11 |
+| Project theme / colors | `compose` → re-render ALL scenes → `merge` → 10 → 11 |
+| Resolution change | Step 7 (re-upscale) → `compose` → re-render ALL scenes → `merge` → 10 → 11 |
+| New asset in one scene | Step 5 → `compose` → render that scene → `merge` → 10 → 11 |
+
+`compose` regenerates all scene files (fast — text generation only); you only need to **render** the scenes whose inputs changed. Always finish with `merge` + Step 10 (BGM) + Step 11 (verify), since `output.mp4` / `video_with_bgm.mp4` are stale after any scene re-render.
 
 Never start a fresh project dir for an iteration.

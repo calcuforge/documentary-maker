@@ -2,11 +2,26 @@
 
 ## The rule
 
-**Audio is the master clock.** The narration TTS audio (`narration_audio.wav`) sets the video's total duration. `timing.json.total_duration` MUST match the WAV within ±0.5s. Every section's `duration_frames` derives from this total.
+**Audio is the master clock, per scene.** TTS is generated per scene, so each scene's real narration WAV (`scenes/{s}/narration.wav`) sets that scene's duration exactly — `scenes/{s}/timing.json.total_duration` equals the ffprobed WAV length (no estimation at scene level). The video's total duration is the sum of scene durations; the root `timing.json` aggregates them.
 
-The char-count estimator (`scripts/estimate_timing.py`) is the v1 timing source because ComfyUI's `index_tts_2` workflow returns audio only — no word-level timestamps. Real audio length sets the **total**; char weights distribute time **across sections and SRT cues**.
+Inside a scene, two distributions happen (`scripts/estimate_timing.py`):
 
-## Char-count algorithm
+1. **Shot durations** — distributed across the scene's real duration by `duration_hint_seconds` (proportional; unhinted shots get the mean of positive hints; no hints anywhere → even split).
+2. **Subtitle cues** — narration split at sentence-final punctuation, cue durations by char weight (the char-count estimator below).
+
+## Scene TTS normalization (concat-critical)
+
+Every scene WAV is normalized to **48 kHz mono pcm_s16le** by `tts run` before anything else. This is what lets `tts merge` build the video-level track with `ffmpeg -f concat -c copy` — lossless, no re-encode. If you ever produce a scene WAV outside the toolchain, normalize it the same way:
+
+```bash
+ffmpeg -y -i raw.wav -ar 48000 -ac 1 -c:a pcm_s16le scenes/{s}/narration.wav
+```
+
+Never hand-splice scene WAVs or SRTs — always through `cli.py tts merge`, which also offsets SRT cues and aggregates timing.
+
+## Char-count algorithm (subtitle cues)
+
+ComfyUI's `index_tts_2` workflow returns audio only — no word-level timestamps — so cue times inside a scene are estimated by character weight:
 
 ```python
 def char_weight(ch):
@@ -17,65 +32,61 @@ def char_weight(ch):
     return 0.0   # other punctuation, symbols
 ```
 
-For a section with narration text, `section_weight = sum(char_weight(c) for c in text)`.
-
-Then:
-```
-section_duration = total_duration * (section_weight / total_weight)
-```
-
-Inside a section, narration is split into SRT cues at sentence-final punctuation (`。.!?！？`). Each cue gets:
-```
-cue_duration = section_duration * (cue_weight / sum(cue_weights))
-```
-
-## Why this works (and where it drifts)
-
-✅ **Works well** when narration pacing is roughly uniform — Chinese sentences read at similar speeds, English sentences at similar speeds.
-
-⚠️ **Drifts** when:
-- The script mixes very short and very long sentences in one section → cue alignment within section may be off by ±2s.
-- The TTS engine pauses heavily at punctuation → punctuation has 0 weight but takes real time. The estimator compensates by absorbing drift into the last cue of each section.
-- Numbers, version strings (`v1.2.3`) read slowly per digit → ASCII digit weight 0.5 under-estimates.
-
-If you need tighter alignment, plan sections so char counts roughly match desired durations. Don't hand-tune `duration_hint_seconds` in `chapters.yaml` — it's only a planning hint.
-
-## Drift correction
-
-`estimate_timing.py` automatically:
-
-1. Calls `ffprobe narration_audio.wav` for real `total_duration`.
-2. Computes per-section durations from char weights.
-3. Sums them; if drift from `total_duration` > 0.001s, absorbs the remainder into the last section's `duration` and `end_time`.
-4. Recomputes `start_frame` / `duration_frames` from times × fps.
-
-## TransitionSeries overlap compensation
-
-The Remotion template's `Video.tsx` (and our generated per-video version) uses `@remotion/transitions` `TransitionSeries`. The series renders `sum(sections) - (N-1) * overlap_frames`. To keep the rendered total equal to `timing.total_frames`, every section's `duration_frames` is scaled proportionally:
+Cues split at sentence-final punctuation (`。.!?！？`); each cue gets:
 
 ```
-target_total = timing.total_frames + transitionCount * effectiveTransitionFrames
+cue_duration = scene_duration * (cue_weight / sum(cue_weights))
+```
+
+Cue times are **relative to the scene start** (from 0). `tts merge` offsets each scene's cues by the cumulative duration of preceding scenes when building `narration_audio.srt`.
+
+### Where cue alignment drifts
+
+✅ Works well when narration pacing is roughly uniform within a scene.
+
+⚠️ Drifts when:
+- A scene mixes very short and very long sentences → individual cues may be off by ±1-2s (subtitle timing only; scene total is exact).
+- The TTS engine pauses heavily at punctuation → punctuation has 0 weight but takes real time; remainder absorbs into the last cue.
+- Numbers / version strings (`v1.2.3`) read slowly per digit → ASCII digit weight 0.5 under-estimates.
+
+Scene joins: end every scene's narration on a full sentence — each scene is an independent TTS call, so a mid-sentence cut produces an audible prosody seam at the merge boundary.
+
+## TransitionSeries overlap compensation (per scene)
+
+Each scene's generated `scene.tsx` runs its shots in a `TransitionSeries` (transitions between shots). The series renders `sum(shots) - (N-1) * overlap_frames`. To keep the rendered total equal to the scene's `timing.total_frames`, every shot's `duration_frames` is scaled proportionally:
+
+```
+target_total = scene_timing.total_frames + transitionCount * effectiveTransitionFrames
 audioScale = target_total / originalTotal
-section.duration_frames = round(section.duration_frames * audioScale)
+shot.duration_frames = round(shot.duration_frames * audioScale)
 ```
 
-Rounding error absorbs into the last section. Verbatim from `remotion-video-template/src/Video.js`.
+Rounding error absorbs into the last shot. Same math as `remotion-video-template/src/Video.js`, scoped to one scene.
 
 ## Validation checkpoints
 
 | After step | Check |
 | --- | --- |
-| 6 (TTS) | `timing.json.total_duration` ≈ `ffprobe narration_audio.wav` (±0.5s) |
-| 9 (Render) | `ffprobe output.mp4` duration ≈ `narration_audio.wav` (±0.5s) |
-| 11 (Verify) | `verify_output.py` exit 0 (or 2) |
-
-## Re-align if drift >0.5s
+| 6 (per-scene TTS) | `scenes/{s}/timing.json.total_duration` == `ffprobe scenes/{s}/narration.wav` (exact by construction) |
+| 6 (merge) | root `timing.json.total_duration` ≈ `ffprobe narration_audio.wav` (±0.5s); `audit beats` clean |
+| 9 (scene render) | each `scenes/{s}/scene.mp4` ≈ its `narration.wav` (±0.5s) — `audit beats` checks this |
+| 9 (scene merge) | `ffprobe output.mp4` ≈ `narration_audio.wav` (±0.5s) |
+| 11 (verify) | `verify_output.py` exit 0 (or 2) |
 
 ```bash
-python3 "$SKILL_DIR/scripts/estimate_timing.py" --video-dir "$VDIR" --fps 30
+python3 "$SKILL_DIR/scripts/cli.py" audit beats --video-dir "$VDIR"
 ```
 
-Re-runs the estimator with the same audio. If drift persists, check that `narration_script.yaml` sections match what was actually concatenated and sent to TTS.
+## Re-align if something drifts
+
+| Symptom | Fix |
+| --- | --- |
+| Scene timing vs scene WAV drift | `cli.py tts run --scene {s}` (regenerate scene timing from the WAV) |
+| Root timing vs merged WAV drift | `cli.py tts merge` (re-aggregate) |
+| scene.mp4 vs scene WAV drift | `cli.py compose` + re-render that scene + `cli.py merge` |
+| SRT cues feel off inside a scene | restructure that scene's narration (shorter sentences) and re-run its TTS |
+
+Scene-level regeneration is cheap — only the affected scene re-synthesizes and re-renders; the rest of the video is untouched until the final `merge`.
 
 ## Char weight table reference
 

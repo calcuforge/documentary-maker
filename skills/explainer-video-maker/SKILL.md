@@ -28,12 +28,12 @@ Narration-driven explainer video pipeline. Research → script → AIGC visuals 
 | Aspect | video-podcast-maker | explainer-video-maker |
 | --- | --- | --- |
 | Template | ships its own Remotion template | reuses shared `remotion-video-template` (no copy) |
-| Visuals | mostly Remotion components + stock | Three-layer: AIGC (ComfyUI) + data charts (DataBar/StatHighlight/MetricsRow) + text (QuoteBlock/IconCard/FeatureGrid) |
+| Visuals | mostly Remotion components + stock | Shot-based: each shot = source material (AIGC via ComfyUI / stock / user) + auxiliary layers (data charts, text components, transparent overlays) |
 | Content types | topic explainers, podcasts | 10 categories: animal/life science, history, disasters, crime, tech news, daily briefing, current affairs, knowledge sharing |
 | Platform | bilibili / youtube / xiaohongshu / etc. | platform-agnostic — saves `video_info.yaml` instead |
 | Preview | Remotion Studio gate before render | no browser preview (Step 9 renders directly) |
 | Config | JSON | YAML with comments |
-| TTS | ttsCN multi-backend | `comfyui index_tts` (default) OR HTTP multipart TTS server |
+| TTS | ttsCN multi-backend, chunked | **per-scene** `comfyui index_tts` (default) OR HTTP multipart TTS server, then merged |
 
 ## Bootstrap
 
@@ -98,20 +98,27 @@ Trigger keyword → category mapping (see `project_prefs.template.yaml` `trigger
 
 At Step 1 start, create one task per step in your agent tracker. Mark `in_progress` on start, `completed` on finish. Files in `projects/{p}/videos/{v}/` are the durable record — if interrupted, inspect the directory to determine where to resume.
 
+**Structure:** video → chapters → scenes → shots. A **shot** is the visual unit (source material + auxiliary layers: data charts, text components, transparent overlays). A **scene** is one or more shots and is the unit of narration, TTS, subtitles, and rendering. A **chapter** is an organizational grouping only.
+
 | # | Step | Output |
 | --- | ------ | -------- |
 | 0 | Voice design (once per project) | `projects/{p}/voice_reference.wav` |
 | 1 | Define topic direction | `topic_definition.md` |
 | 2 | Research topic (provider-driven: agent_search, web_fetch, rss, custom_script) | `topic_research.md` |
-| 3 | Design chapters | `chapters.yaml` |
-| 4 | Narration script + per-section visual design | `narration_script.yaml` |
-| 5 | Asset plan & AIGC generation | `assets/manifest.json` |
-| 6 | Generate TTS + SRT (char-estimated) + timing.json | `narration_audio.wav`, `.srt`, `timing.json` |
+| 3 | Design video structure (chapter → scene skeleton) | `narration_script.yaml` (skeleton) |
+| 4 | Narration + per-scene shot design | `narration_script.yaml` (full: chapters → scenes → shots) |
+| 5 | Shot asset plan & batch AIGC generation / lookup | `assets/manifest.json` (shot-level entries) |
+| 6 | Per-scene TTS + SRT + timing (parallel), then merge | `scenes/{s}/narration.wav`, `.srt`, `timing.json`; root `timing.json` + `narration_audio.wav/.srt` |
 | 7 | Upscale to target resolution | updated `assets/*` |
-| 8 | Generate per-video composition | `Video.tsx`, `entry.tsx` |
-| 9 | Render | `output.mp4` |
+| 8 | Generate per-scene composition | `scenes/{s}/scene.tsx`, `entry.tsx`, `composition.json` |
+| 9 | Render scenes (parallelizable) → ordered lossless merge | `scenes/{s}/scene.mp4` → `output.mp4` |
 | 10 | Mix BGM | `video_with_bgm.mp4` |
 | 11 | Verify + save metadata | `final_video.mp4`, `video_info.yaml` |
+
+**Three parallelizable flows after structure design:**
+- **Visuals** — Step 5 runs shot-level tasks (AI generation / upscale / asset lookup) in batched parallel; Step 9 renders each scene (narration + subtitles baked in), then merges scenes in order.
+- **Audio & subtitles** — Step 6 runs one TTS + one subtitle task per scene, in parallel, then merges.
+- **Assembly** — Step 9 scene merge (ordered) → Step 10 BGM last.
 
 ### Step 2: Research Providers
 
@@ -136,15 +143,17 @@ After all providers, merge findings into `topic_research.md`. See [references/wo
 | --- | --- |
 | **Shared template** | All videos import from `remotion-video-template/src/components`. NEVER copy the template per video. Per-video `Video.tsx`/`entry.tsx` live in the video dir. |
 | **Project grouping** | Videos sharing config live under one `projects/{name}/`. `project_prefs.yaml` is the single source of project truth. |
-| **Audio-master clock** | `timing.json.total_duration` matches `narration_audio.wav` within ±0.5s. Char-count estimates the *distribution*; real audio length sets the *total*. See [references/audio-sync.md](references/audio-sync.md). |
+| **Audio-master clock (scene level)** | Each scene's `scenes/{s}/timing.json.total_duration` equals `ffprobe scenes/{s}/narration.wav` exactly — per-scene TTS means the real scene audio sets the scene's total; no estimation at scene level. Shot durations distribute across the scene by `duration_hint_seconds` (even split without hints). The root `timing.json` aggregates scenes. See [references/audio-sync.md](references/audio-sync.md). |
+| **Scene is the render unit** | One Remotion render per scene (`scenes/{s}/scene.mp4`, narration + subtitles baked in). Scenes merge via `cli.py merge` (`ffmpeg -f concat -c copy`, lossless). Transitions run between shots inside a scene; scene joins are hard cuts. |
 | **Resolution** | 1080p (1920×1080 or 1080×1920) or 4K (3840×2160 or 2160×3840). Composition IDs: `MainVideo` / `MainVideo4K` / `MainVideoVertical`. |
 | **No CTA** | Outro is plain closing narration; never platform CTA. |
 | **No browser preview** | Render directly to file. Studio is not launched. |
 | **Verify gate** | `verify_output.py` exit 0 (or 2 with reviewed warnings) before declaring done. |
 | **`--public-dir`** | Every remotion command uses `--public-dir projects/{p}/videos/{v}/`. All outputs land in that dir. |
 | **Voice design** | One `voice_reference.wav` per project, generated by Step 0. All videos in the project share it. Re-generate only on user request. |
-| **YAML config** | Project + video metadata in YAML. JSON only for `timing.json` and `assets/manifest.json` (consumed by Remotion at runtime via staticFile). |
-| **ComfyUI batch ordering** | When generating multiple assets, group by workflow type. Run same-workflow jobs in parallel within each batch. Batches execute sequentially: voice_design → t2i → i2i → t2v → i2v → flf2v → multi_scene_i2v → video_upscale → image_upscale. Never mix different workflow IDs in one batch. See [references/workflow-assets.md](references/workflow-assets.md#5b-prime-batch-execution-strategy). |
+| **YAML config** | Project + video metadata in YAML. JSON only for `timing.json` (root + per-scene), `assets/manifest.json`, and per-scene `composition.json` (consumed by Remotion at runtime via staticFile). |
+| **ComfyUI batch ordering** | When generating multiple shot assets, group by workflow type. Run same-workflow jobs in parallel within each batch. Batches execute sequentially: voice_design → t2i → i2i → t2v → i2v → flf2v → multi_scene_i2v → video_upscale → image_upscale. Never mix different workflow IDs in one batch. See [references/workflow-assets.md](references/workflow-assets.md#5b-prime-batch-execution-strategy). |
+| **Per-scene TTS normalization** | Every scene WAV is normalized to 48 kHz mono pcm_s16le so the merged track can be built with `ffmpeg -c copy`. Never hand-edit scene WAVs into a different format. |
 
 ## Per-Video Layout
 
@@ -158,7 +167,7 @@ Load on demand — **do NOT load all at once**:
 | --- | --- |
 | [references/workflow-script.md](references/workflow-script.md) | Steps 1-4 + execution modes |
 | [references/workflow-assets.md](references/workflow-assets.md) | Step 5 — AIGC pipeline selection + speed/quality tiers |
-| [references/workflow-production.md](references/workflow-production.md) | Steps 6-10 — TTS, upscale, composition, render, BGM |
+| [references/workflow-production.md](references/workflow-production.md) | Steps 6-10 — per-scene TTS, upscale, per-scene composition/render, scene merge, BGM |
 | [references/workflow-finish.md](references/workflow-finish.md) | Step 11 — verify + video_info.yaml |
 | [references/themes.md](references/themes.md) | Theme catalog, adding new themes |
 | [references/project-layout.md](references/project-layout.md) | Directory structure, --public-dir, file naming |
@@ -172,7 +181,7 @@ All scripts are reachable through one dispatcher:
 python3 ${SKILL_DIR}/scripts/cli.py --help
 ```
 
-Resources: `project`, `assets`, `tts`, `verify`, `themes`, `prereqs`, `research`, `compose`, `audit`, `schema`.
+Resources: `project`, `assets`, `tts` (run / merge), `verify`, `themes`, `prereqs`, `research`, `compose`, `merge`, `audit`, `schema`.
 
 Each theme preset carries a `visual_composition:` block (non-binding guidance on how to balance AIGC vs stock vs data-chart vs text-component sources per category). See [references/design-guide.md](references/design-guide.md#visual-composition-per-theme) for the full table.
 

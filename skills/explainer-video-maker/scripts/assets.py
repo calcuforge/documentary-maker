@@ -5,10 +5,16 @@ Mirrors video-podcast-maker's manifest schema so the shared
 remotion-video-template's `useAssets` / `AssetImage` / `AssetVideo` work
 unchanged.
 
+Assets are planned per **shot** (the visual unit of the narration script's
+chapters → scenes → shots hierarchy). The manifest is video-level and shared
+across all scenes; entries carry `scene` and (optionally) `shot` fields so
+batch generation can be organized per shot.
+
 Commands:
     assets init   --video-dir <dir>
     assets add    --video-dir <dir>
-                  --id <id> --section <section> --type image|video|audio|text
+                  --id <id> --scene <scene> [--shot <shot>]
+                  --type image|video|audio|text
                   --role background|inline|broll|overlay|bgm|sfx
                   --source user|t2i|i2i|t2v|i2v|flf2v|multi_scene_i2v|stock|text
                   [--file <path>]            # for user-supplied assets: copy into assets/
@@ -72,7 +78,10 @@ def build_parser():
     p_add = sub.add_parser("add", help="Register a new asset.")
     p_add.add_argument("--video-dir", required=True)
     p_add.add_argument("--id", required=True)
-    p_add.add_argument("--section", required=True)
+    p_add.add_argument("--scene", required=True,
+                       help="Scene name this asset belongs to.")
+    p_add.add_argument("--shot", default=None,
+                       help="Shot name within the scene (omit for scene-level assets like bgm/sfx).")
     p_add.add_argument("--type", required=True,
                        choices=["image", "video", "audio", "text"])
     p_add.add_argument("--role", required=True,
@@ -136,7 +145,8 @@ def cmd_add(args):
             fmt=args.format)
     entry = {
         "id": args.id,
-        "section": args.section,
+        "scene": args.scene,
+        "shot": args.shot,
         "type": args.type,
         "role": args.role,
         "source": args.source,
@@ -201,6 +211,31 @@ def cmd_validate(args):
             full = os.path.join(args.video_dir, "assets", a["path"])
             if not os.path.isfile(full):
                 problems.append(f"{a['id']}: resolved path missing on disk: {a['path']}")
+
+    # Cross-check against narration_script.yaml (warn only, non-blocking).
+    script_path = os.path.join(args.video_dir, "narration_script.yaml")
+    if os.path.isfile(script_path):
+        try:
+            import script_schema
+            script = script_schema.load_script(script_path)
+            scene_map = {sc["name"]: sc for sc in script["scenes"]}
+            for a in manifest["assets"]:
+                sc_name = a.get("scene")
+                if sc_name and sc_name not in scene_map:
+                    problems.append(f"{a['id']}: references unknown scene '{sc_name}'")
+                    continue
+                shot_name = a.get("shot")
+                if sc_name and shot_name:
+                    shot_names = {s.get("name") for s in scene_map[sc_name].get("shots") or []}
+                    if shot_name not in shot_names:
+                        problems.append(
+                            f"{a['id']}: references unknown shot '{shot_name}' in scene '{sc_name}'")
+            referenced = script_schema.referenced_asset_ids(script)
+            for ref in sorted(referenced - asset_ids):
+                problems.append(f"shot references asset '{ref}' but it is not registered in manifest")
+        except Exception as exc:  # schema problems are reported by their own tools
+            problems.append(f"could not cross-check narration_script.yaml: {exc}")
+
     if problems:
         cli_envelope.emit_warning(
             data={"problems": problems, "manifest": manifest},

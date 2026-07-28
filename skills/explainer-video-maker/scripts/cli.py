@@ -7,10 +7,12 @@ stays self-contained. Mirrors the video-podcast-maker `cli.py` pattern.
 Resources / actions:
     project   create | list | show | set | video
     assets    init | add | list | update | validate
-    tts       run
+    tts       run | merge
     comfyui   run | status
     themes    list | show | resolve
+    research  plan
     compose
+    merge      (concatenate rendered scenes into output.mp4)
     audit      beats
     verify
     prereqs
@@ -45,7 +47,8 @@ METHODS = {
     "assets.update":    ("assets.py",       "Update an asset entry."),
     "assets.validate":  ("assets.py",       "Validate manifest integrity."),
 
-    "tts.run":          ("generate_tts.py", "Synthesize TTS + SRT + timing.json."),
+    "tts.run":          ("generate_tts.py", "Synthesize per-scene TTS + SRT + timing."),
+    "tts.merge":        ("generate_tts.py", "Merge scene audio/SRT/timing into video-level artifacts."),
 
     "comfyui.run":      ("comfyui.py",      "Run a ComfyUI workflow by id."),
     "comfyui.status":   ("comfyui.py",      "Show comfyui-scheduler node status."),
@@ -56,8 +59,9 @@ METHODS = {
 
     "research.plan":    ("research.py",     "Generate a research plan from provider config."),
 
-    "compose":          ("compose_video.py", "Generate per-video Remotion composition files."),
-    "audit.beats":      ("audit_beat_sync.py", "Audit section timing drift."),
+    "compose":          ("compose_video.py", "Generate per-scene Remotion composition files."),
+    "merge":            ("merge_video.py",  "Concatenate rendered scenes into output.mp4."),
+    "audit.beats":      ("audit_beat_sync.py", "Audit scene timing drift."),
     "verify":           ("verify_output.py", "End-of-pipeline acceptance gate."),
     "prereqs":          ("check_prereqs.py", "Check prerequisites."),
 }
@@ -75,14 +79,16 @@ RESOURCE_TO_SCRIPT = {
     "themes": "themes.py",
     "research": "research.py",
     "compose": "compose_video.py",
+    "merge": "merge_video.py",
     "audit": "audit_beat_sync.py",  # action: beats
     "verify": "verify_output.py",
     "prereqs": "check_prereqs.py",
 }
 
 # Some scripts use a subparser (action is the first positional arg), others
-# (compose, verify, prereqs) take their args directly with no subcommand.
-SCRIPTS_WITHOUT_SUBCOMMAND = {"compose_video.py", "verify_output.py", "check_prereqs.py"}
+# (compose, merge, verify, prereqs) take their args directly with no subcommand.
+SCRIPTS_WITHOUT_SUBCOMMAND = {"compose_video.py", "merge_video.py",
+                              "verify_output.py", "check_prereqs.py"}
 
 
 def build_parser():
@@ -140,9 +146,24 @@ def main(argv=None):
     while forwarded and forwarded[0] == "--":
         forwarded = forwarded[1:]
 
-    # Pass --format through to inner script so JSON envelopes work uniformly.
-    if args.format == "json" and "--format" not in forwarded:
-        forwarded += ["--format", "json"]
+    # Pass --format through to the inner script so JSON envelopes work
+    # uniformly. Normalize its position: pull it out wherever it appears and
+    # re-insert it BEFORE any subcommand, because subparser-based scripts
+    # (tts/project/assets/...) define --format on the parent parser and would
+    # reject `run ... --format json` after the subcommand word.
+    fmt_args = []
+    rest_args = []
+    forwarded_iter = iter(forwarded)
+    for tok in forwarded_iter:
+        if tok == "--format":
+            fmt_args = ["--format", next(forwarded_iter, "text")]
+        elif tok.startswith("--format="):
+            fmt_args = ["--format", tok.split("=", 1)[1]]
+        else:
+            rest_args.append(tok)
+    if args.format == "json" and not fmt_args:
+        fmt_args = ["--format", "json"]
+    forwarded = fmt_args + rest_args
 
     cmd = [sys.executable, script_path] + forwarded
     try:

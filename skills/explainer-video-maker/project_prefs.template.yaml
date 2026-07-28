@@ -88,8 +88,8 @@ theme:
 
 content:
   tone: educational        # educational | casual | serious | narrative | analytical | news-brief
-  section_count: 7         # target chapter count; chapter design may deviate ±1
-  # Used by the char-estimate fallback if TTS audio is unavailable.
+  section_count: 7         # target SCENE count; structure design may deviate ±1
+  # Planning hint for total runtime (scene structure ultimately follows narration).
   target_duration_seconds: 360
 
 research:
@@ -98,8 +98,9 @@ research:
   providers: null           # null = use theme's research_providers
 
 paths:
-  # Relative to skill root (skills/explainer-video-maker/). Going up 2 levels = explainer-video-maker/.
-  remotion_template: ../../remotion-video-template
+  # remotion_template: relative to the explainer-video-maker repo root, or an
+  # absolute path. The template sits next to the repo root by default.
+  remotion_template: ../remotion-video-template
   comfyui_scheduler: ../../comfyui-scheduler
 
 triggers:

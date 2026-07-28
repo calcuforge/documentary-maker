@@ -2,9 +2,9 @@
 
 ## Component selection by content type
 
-Each section in `narration_script.yaml` gets three composable layers. The `visual:` block picks the primary layout. `data:` and `text:` arrays add supporting charts, stats, quotes, and bullet points that render inside the same section.
+Each **shot** in `narration_script.yaml` (scenes → shots) composes source material with auxiliary layers. The `component` + `asset_id` fields pick the primary layout/material; `data:` and `text:` arrays add supporting charts, stats, quotes, and bullet points; `overlays:` add transparent animation layers — all rendered inside the same shot.
 
-### Visual components (primary layer — `visual.component`)
+### Visual components (primary layer — shot `component`)
 
 | Content type | Recommended component | Why |
 | --- | --- | --- |
@@ -107,9 +107,9 @@ The full prop shapes live in `remotion-video-template/src/components/*.js` — r
 
 ## Scale4K wrapping
 
-All content goes inside `<Scale4K orientation={...} scaleFactor={1|2}>`. The composition is designed at 1920×1080 (horizontal) or 1080×1920 (vertical); `scaleFactor=2` scales it to 4K. `ChapterProgressBar` and `<Subtitles>` render **outside** `Scale4K` so they paint at native resolution.
+All content goes inside `<Scale4K orientation={...} scaleFactor={1|2}>`. The composition is designed at 1920×1080 (horizontal) or 1080×1920 (vertical); `scaleFactor=2` scales it to 4K. The in-scene shot progress bar and `<Subtitles>` render **outside** `Scale4K` so they paint at native resolution.
 
-The generated `Video.tsx` already does this. Don't override it.
+The generated per-scene `scene.tsx` already does this. Don't override it.
 
 ## Animation safety
 
@@ -121,29 +121,31 @@ The generated `Video.tsx` already does this. Don't override it.
 | Ken Burns only on background images | Inline images shouldn't move |
 | Don't animate more than 4 elements in parallel | Visual overload |
 
-## Section rhythm
+## Scene rhythm
 
 For a 6-minute explainer (~360s), aim for:
 
-| Section count | Avg duration | Best for |
+| Scene count | Avg duration | Best for |
 | --- | --- | --- |
-| 5 sections | 72s each | Deep-dive tutorials, long-form history |
-| 7 sections | 51s each | Sweet spot — most explainer videos |
-| 10 sections | 36s each | News briefings, fast-paced tech news |
-| 15 sections | 24s each | Daily headlines (too much for educational) |
+| 5 scenes | 72s each | Deep-dive tutorials, long-form history |
+| 7 scenes | 51s each | Sweet spot — most explainer videos |
+| 10 scenes | 36s each | News briefings, fast-paced tech news |
+| 15 scenes | 24s each | Daily headlines (too much for educational) |
 
-`project_prefs.content.section_count` defaults to 7. Documentary topics (aviation-disaster, crime) benefit from 8-9 sections; news briefings (daily-news) work well at 5-7; knowledge-sharing fits 6-8.
+`project_prefs.content.section_count` defaults to 7 (target *scene* count). Documentary topics (aviation-disaster, crime) benefit from 8-9 scenes; news briefings (daily-news) work well at 5-7; knowledge-sharing fits 6-8.
 
-## Density per section
+Within a scene, keep shots between ~4s and ~15s — shorter reads as a cutaway/b-roll flash, longer as a dwell on one visual.
+
+## Density per shot
 
 | Tier | Items | Best for |
 | --- | --- | --- |
 | Impact | 1 (large text) | Hook, hero, summary — biggest type |
-| Standard | 2-3 | Most sections — features, comparison, quote |
+| Standard | 2-3 | Most shots — features, comparison, quote |
 | Compact | 4-6 | Feature grid, ecosystem, multi-item data |
 | Dense | 6+ | Data tables, detailed timelines — smallest type |
 
-Pick by content load: a section with 8 timeline items should use `Timeline` with small text and tight spacing; a section with one big statistic should use `StatHighlight` with hero-size text.
+Pick by content load: a shot with 8 timeline items should use `Timeline` with small text and tight spacing; a shot with one big statistic should use `StatHighlight` with hero-size text. If one scene's shot would land in "Dense" while its neighbor is "Impact", split or reorder so adjacent shots don't whiplash.
 
 ## Content-type tips
 

@@ -74,149 +74,165 @@ Project-level overrides in `project_prefs.yaml` under `research.providers:` win 
 
 ---
 
-## Step 3: Design Chapters
+## Step 3: Design Video Structure (chapter → scene skeleton)
 
-**Output:** `chapters.yaml`
+**Output:** `narration_script.yaml` — skeleton only (chapters + scene names/labels). Narration and shots are filled in Step 4, in the same file. There is no separate `chapters.yaml`.
 
-Schema:
+Structure model:
+
+- **Chapter** — organizational grouping (metadata, downstream chapter lists). Never a render unit.
+- **Scene** — one narration block + one or more shots. The unit of TTS, subtitles, timing, and rendering.
+- **Shot** — one visual unit: source material + auxiliary layers.
+
+Skeleton schema:
 
 ```yaml
-- name: hero                  # lowercase, underscore, matches timing.json section.name
-  label: 引子                  # short, for chapter bar
-  duration_hint_seconds: 15   # rough; char-estimate overrides during TTS
-  component: FullBleedLayout   # suggestion; narration_script may override
-- name: timeline
-  label: 时间线
-  duration_hint_seconds: 45
-  component: Timeline
+chapters:
+  - name: opening             # lowercase, underscore
+    label: 开篇                # short display label
+    scenes:
+      - name: hero            # lowercase, underscore, unique across the whole video
+        label: 引子
+      - name: timeline
+        label: 时间线
+  - name: main
+    label: 主体
+    scenes:
+      - name: cause_chain
+        label: 事故链条
 ```
 
-Chapter design principles:
+Structure design principles:
 
-1. **Follow the theme's narrative_arc** — each theme preset ships an `narrative_arc:` list (hook → background → ... → conclusion). Use it as a skeleton, deviating when the topic demands.
-2. **Section count** — `project_prefs.content.section_count` (default 7). Aviation disasters and crime stories usually need 7-9; short historical vignettes can fit in 5.
-3. **Each section = one visual idea** — if you'd need two components to render a section, split into two sections.
-4. **Hero + summary always** — first section is the hook, last is the takeaway.
-
-### Component selection hints
-
-Use the theme's `component_suggestions` map to pick a default component per section `name`:
-
-| Section type | Component |
-| --- | --- |
-| Opening title / hook | `FullBleedLayout` |
-| Chronological milestones | `Timeline` |
-| Causal / process | `FlowChart` / `DiagramReveal` |
-| Comparison | `ComparisonCard` |
-| Data / impact | `DataBar` / `MetricsRow` / `StatHighlight` |
-| Quote | `QuoteBlock` |
-| Media (photo / footage) | `MediaSection` / `AssetImage` / `AssetVideo` |
-| Architecture / system | `DiagramReveal` |
-| Steps / response | `StepProgress` |
+1. **Follow the theme's narrative_arc** — each theme preset ships a `narrative_arc:` list (hook → background → ... → conclusion). Use it as the chapter skeleton, deviating when the topic demands.
+2. **Scene count** — `project_prefs.content.section_count` (default 7) is the target *scene* count. Aviation disasters and crime stories usually need 7-9 scenes; short historical vignettes can fit in 5.
+3. **Each scene = one narration beat** — one idea per scene. If you'd need two unrelated visuals back to back, that's two scenes (or one scene with multiple shots covering the same beat from different angles).
+4. **Multi-shot scenes** — use multiple shots in a scene when one narration beat benefits from a visual cut (e.g. a background image shot → a diagram shot while the same narration continues). A scene with no explicit `shots:` list renders as a single implicit shot.
+5. **Hero + summary always** — first scene is the hook, last is the takeaway.
 
 ---
 
-## Step 4: Write Narration Script + Per-Section Visual Design
+## Step 4: Fill Narration + Per-Scene Shot Design
 
-**Output:** `narration_script.yaml`
+**Output:** `narration_script.yaml` (complete: chapters → scenes → shots)
 
-Each section is driven by **three layers**: narration (master clock), data materials (charts/stats), and text materials (quotes/bullets/callouts). The `visual:` block picks a primary component; the `data:` and `text:` blocks add supporting visuals that render alongside it.
+Fill each skeleton scene with `narration:` (the scene's TTS text — the scene's audio-master clock) and `shots:` (the visual units played in order while the narration runs). Each shot is driven by **source material + auxiliary layers**: an optional `asset_id` (AIGC / stock / user media), a `component` (render template), `props`, and the auxiliary layers `data:` (charts/stats), `text:` (quotes/bullets/callouts), `overlays:` (transparent webm animations).
 
 Schema:
 
 ```yaml
-- name: hero
-  label: 引子
-  narration: |
-    1998年9月2日，瑞士航空111号班机从纽约肯尼迪机场起飞，
-    目的地是日内瓦。这架MD-11客机上载有229人。
-  visual:
-    component: FullBleedLayout
-    asset_id: hero_bg
-    props:
-      title: 瑞士航空111号班机
-      subtitle: "1998.09.02 · 大西洋"
+chapters:
+  - name: opening
+    label: 开篇
+    scenes:
+      - name: hero
+        label: 引子
+        narration: |
+          1998年9月2日，瑞士航空111号班机从纽约肯尼迪机场起飞，
+          目的地是日内瓦。这架MD-11客机上载有229人。
+        shots:
+          - name: hero_01                  # lowercase, underscore; unique within the scene
+            component: FullBleedLayout     # render template (component list below)
+            asset_id: hero_bg              # source material (optional; omit for gradient/pure-component)
+            duration_hint_seconds: 8       # optional; scenes split audio time by hints (even without)
+            props:
+              title: 瑞士航空111号班机
+              subtitle: "1998.09.02 · 大西洋"
+            overlays:                      # auxiliary layer: transparent animation (optional)
+              - asset_id: smoke_overlay
+                style: { opacity: 0.6 }
 
-- name: timeline
-  label: 时间线
-  narration: |
-    起飞后约58分钟，机组成员注意到驾驶舱上方出现异常气味...
-  visual:
-    component: Timeline
-    props:
-      title: 关键时间线
-      items:
-        - { label: 00:00, description: 从肯尼迪机场起飞 }
-        - { label: 00:58, description: 异常气味出现 }
-        - { label: 01:14, description: 机组请求返航 }
-        - { label: 01:31, description: 飞机失联 }
+      - name: timeline
+        label: 时间线
+        narration: |
+          起飞后约58分钟，机组成员注意到驾驶舱上方出现异常气味。
+          随后烟雾进入驾驶舱，机组宣布进入紧急状态并请求返航。
+        shots:
+          - name: timeline_01              # material shot
+            component: AssetImage
+            asset_id: timeline_bg
+            duration_hint_seconds: 6
+            props: { layout: full, caption: 搜救现场 }
+          - name: timeline_02              # pure-component shot (no material)
+            component: Timeline
+            duration_hint_seconds: 9
+            props:
+              items:
+                - { label: 00:00, description: 从肯尼迪机场起飞 }
+                - { label: 00:58, description: 异常气味出现 }
+                - { label: 01:14, description: 机组请求返航 }
+                - { label: 01:31, description: 飞机失联 }
 
-- name: impact
-  label: 事故数据
-  narration: |
-    Swissair 111不是孤立事件。1990年代全球航空事故率居高不下，
-    每一次事故都在推动安全标准更新。
-  visual:
-    component: FullBleedLayout
-  # Data materials: structured statistics rendered as chart components.
-  data:
-    - type: stat                   # single big number
-      value: "229"
-      unit: 人
-      label: 全部遇难
-      description: "1998年9月2日，大西洋上空"
-    - type: bar_chart              # bar chart
-      title: 全球航空致命事故率（每百万架次）
-      items:
-        - { label: "1970s", value: 4.8 }
-        - { label: "1980s", value: 2.2 }
-        - { label: "1990s", value: 1.3 }
-        - { label: "2000s", value: 0.7 }
-        - { label: "2010s", value: 0.3 }
-    - type: metrics                # KPI row
-      title: 1998年航空安全数据
-      metrics:
-        - { value: "16", label: 致命事故, icon: "alert-triangle" }
-        - { value: "1244", label: 遇难人数, icon: "users" }
-        - { value: "83%", label: 人为因素占比, icon: "user" }
-        - { value: "6%", label: 机械故障, icon: "settings" }
-  # Text materials: quotes, key facts, bullet lists rendered as text components.
-  text:
-    - type: quote                  # pull quote
-      quote: "这起事故直接推动了全球航空布线安全规范的修订。"
-      attribution: "加拿大运输安全委员会 (TSB), 1999年最终报告"
-    - type: key_points             # icon bullet list
-      title: 事故三大诱因
-      items:
-        - { icon: "zap", title: Kapton电线电弧, description: "安装错误的电线在高空低气压下产生电弧" }
-        - { icon: "flame", title: MPET易燃材料, description: "隔热层被电弧点燃，火势迅速蔓延" }
-        - { icon: "alert-triangle", title: 关键系统损坏, description: "火势导致驾驶舱仪表和操纵系统失效" }
-
-- name: analysis
-  label: 专家观点
-  narration: |
-    航空安全专家指出，SR111事故暴露了机上易燃材料认证
-    体系的漏洞...
-  text:
-    - type: quote
-      quote: "当时的适航标准根本没想到要测试电线在低气压下的电弧风险。"
-      attribution: "航空工程师, 调查报告听证会"
-    - type: callout                # single highlighted fact
-      icon: "info"
-      text: "FAA在事故后3年内强制要求所有商用飞机更换Kapton绝缘材料。"
+  - name: main
+    label: 主体
+    scenes:
+      - name: impact
+        label: 事故数据
+        narration: |
+          Swissair 111不是孤立事件。1990年代全球航空事故率居高不下，
+          每一次事故都在推动安全标准更新。
+        shots:
+          - name: impact_01
+            component: FullBleedLayout
+            # Data materials: structured statistics rendered as chart components.
+            data:
+              - type: stat                 # single big number
+                value: "229"
+                unit: 人
+                label: 全部遇难
+                description: "1998年9月2日，大西洋上空"
+              - type: bar_chart            # bar chart
+                title: 全球航空致命事故率（每百万架次）
+                items:
+                  - { label: "1970s", value: 4.8 }
+                  - { label: "1980s", value: 2.2 }
+                  - { label: "1990s", value: 1.3 }
+                  - { label: "2000s", value: 0.7 }
+                  - { label: "2010s", value: 0.3 }
+            # Text materials: quotes, key facts, bullet lists.
+            text:
+              - type: quote                # pull quote
+                quote: "这起事故直接推动了全球航空布线安全规范的修订。"
+                attribution: "加拿大运输安全委员会 (TSB), 1999年最终报告"
+              - type: key_points           # icon bullet list
+                title: 事故三大诱因
+                items:
+                  - { icon: "zap", title: Kapton电线电弧, description: "安装错误的电线在高空低气压下产生电弧" }
+                  - { icon: "flame", title: MPET易燃材料, description: "隔热层被电弧点燃，火势迅速蔓延" }
+                  - { icon: "alert-triangle", title: 关键系统损坏, description: "火势导致驾驶舱仪表和操纵系统失效" }
 ```
 
-### Visual design: the three layers
+### Shot design: material + auxiliary layers
 
-Each section gets three composable visual layers. The narration audio plays over all of them. The `visual:` component is the **primary layout** — it owns the background, the title, and the overall structure. `data:` and `text:` items are **secondary** — they render inside or alongside the primary component.
+A shot composes one source material with up to three auxiliary layer types. The scene's narration audio plays over all shots of that scene.
 
-| Layer | Drives | Sources | Rendered by |
+| Field | Role | Sources | Rendered by |
 | --- | --- | --- | --- |
-| `visual:` (primary) | Composition + AIGC asset | `asset_id` (Step 5 manifest), `props` | SectionComponent switch |
-| `data:` (secondary) | Pre-processed statistics, charts | Agent research (Step 2), official reports | `StatHighlight`, `DataBar`, `MetricsRow` |
-| `text:` (secondary) | Pre-processed quotes, facts, arguments | Agent research (Step 2), interviews, documents | `QuoteBlock`, `FeatureGrid`, `IconCard` |
+| `component` + `asset_id` + `props` | **Source material / primary layout** — owns background, title, structure | AIGC (Step 5), stock search, user files, or pure component (no asset) | ShotComponent switch (FullBleedLayout / AssetImage / AssetVideo / Timeline / FlowChart / ...) |
+| `data:` | Auxiliary layer — pre-processed statistics, charts | Agent research (Step 2), official reports | `StatHighlight`, `DataBar`, `MetricsRow`, `StepProgress`, `FlowChart`, `Timeline`, `ComparisonCard` |
+| `text:` | Auxiliary layer — quotes, facts, arguments | Agent research (Step 2), interviews, documents | `QuoteBlock`, `IconCard`, `FeatureGrid`, `DiagramReveal` |
+| `overlays:` | Auxiliary layer — transparent animation over the material | user/stock webm (VP9 alpha, 30 fps, duration ≥ shot window) | `OverlayLayer` |
 
-Data and text items should be **prepared during Step 4** using facts gathered in Step 2 research. The agent writes the `data:` and `text:` blocks alongside the narration — they are NOT auto-generated. Each data/text item gets a `type` field that maps to a specific Remotion component (see [design-guide.md](design-guide.md#data-type--component-mapping)).
+Data and text items should be **prepared during Step 4** using facts gathered in Step 2 research. The agent writes the `data:` and `text:` blocks alongside the narration — they are NOT auto-generated. Each data/text item gets a `type` field that maps to a specific Remotion component (see [design-guide.md](design-guide.md)).
+
+### Shot component selection
+
+Use the theme's `component_suggestions` map (keyed by semantic scene names) as the starting point, then pick per shot:
+
+| Shot content | Component | Material needed? |
+| --- | --- | --- |
+| Opening title / hook | `FullBleedLayout` | background asset (or gradient) |
+| Photo / footage frame | `AssetImage` / `AssetVideo` | yes (inline / broll) |
+| Full-bleed backdrop | `FullBleedLayout` with `asset_id` | yes (background role, Ken Burns) |
+| Chronological milestones | `Timeline` | no |
+| Causal / process | `FlowChart` | no |
+| Architecture / system | `DiagramReveal` | no |
+| Comparison | `ComparisonCard` | no |
+| Data / impact | `DataBar` / `MetricsRow` (as component or `data:` item) | no |
+| Quote | `QuoteBlock` | no |
+| Steps / response | `StepProgress` | no |
+
+A scene mixing material and data usually wants two shots: one material shot (background image / b-roll), then one pure-component shot (chart) — rather than stacking everything on one frame.
 
 ### Visual composition guidance (`visual_composition`)
 
@@ -276,25 +292,29 @@ Same spirit as video-podcast-maker's `natural-narration.md`:
 - Dash-separated dates (`1998-09-02`) → convert to `1998年9月2日` to avoid TTS ambiguity.
 - Phone numbers, ID strings → spell out or group with spaces (`4 0 0 - 1 2 3 - 4 5 6 7`).
 
-### Visual design rules
+### Shot design rules
 
-- **Asset binding** — `visual.asset_id` must reference an id in `assets/manifest.json`. Plan the asset in Step 5 before committing the section name to the script.
-- **Component override** — `visual.component` overrides `chapters.yaml`'s `component` field. Use this when the narration suggests a different layout than the chapter designer picked.
+- **Asset binding** — `asset_id` (and every `overlays[].asset_id`) must reference an id in `assets/manifest.json`. `assets validate` cross-checks references both ways. Plan the asset in Step 5 before rendering.
 - **Props** — pass through to the Remotion component as `props`. Type-safe against the component's expected shape (`Timeline` expects `items[]` with `label` + `description`, etc.).
-- **Text-only sections** are fine. Omit `visual.asset_id`; pick a non-media component.
+- **Pure-component shots** are fine — omit `asset_id` and pick a non-media component (`Timeline`, `FlowChart`, `QuoteBlock`, ...).
+- **duration_hint_seconds** — relative, not absolute. The scene's real audio length is distributed across shots proportionally to hints (unhinted shots get the mean hint; no hints anywhere → even split). Use hints to give a chart shot more dwell time than a b-roll flash.
+- **Scene narration ends on a full sentence** — each scene is one TTS call; ending mid-sentence creates an unnatural seam at the scene join.
 
 ---
 
-## Per-section audio length estimation
+## Timing model (scene level)
 
-Char-count estimator (in `scripts/estimate_timing.py`) distributes total audio time by character weight:
-- CJK char = 1.0
-- ASCII letter/digit = 0.5
-- Punctuation, whitespace = 0.0
+With per-scene TTS there is **no cross-scene estimation**: each scene's total duration comes directly from ffprobing that scene's `narration.wav`. Two distributions happen inside a scene (`scripts/estimate_timing.py`):
 
-So a section with 100 CJK chars and a section with 200 ASCII chars get roughly the same time slice. Plan sections so char counts roughly match the desired duration split — if a section needs to be 30% of total runtime, its narration char weight should be ~30% of the script's total weight.
+1. **Shot durations** — the scene's real duration is distributed across its shots by `duration_hint_seconds` (proportional; unhinted shots get the mean of positive hints; no hints → even split). Remainder absorbed into the last shot.
+2. **Subtitle cues** — the scene narration is split at sentence-final punctuation (`。.!?！？`), and cue durations allocated by char weight:
+   - CJK char = 1.0
+   - ASCII letter/digit = 0.5
+   - Punctuation, whitespace = 0.0
 
-The estimator compensates for transition overlap (each section's `duration_frames` is scaled proportionally so total = `timing.total_frames`). Don't try to hand-tune section durations in `chapters.yaml` — `duration_hint_seconds` is just a planning hint.
+So within a scene, a cue with 30 CJK chars gets ~2× the time of a 30-ASCII-char cue. Cue times are relative to the scene start; `tts merge` offsets them into the video-global `narration_audio.srt`.
+
+The composition compensates for shot transition overlap (each shot's `duration_frames` is scaled proportionally so the rendered total = the scene's `timing.total_frames`). `duration_hint_seconds` shapes the *relative* split only — the scene audio always sets the absolute total.
 
 ---
 
@@ -302,7 +322,7 @@ The estimator compensates for transition overlap (each section's `duration_frame
 
 After each step, in Manual Mode:
 
-1. Show the user the file just produced (`topic_definition.md`, `topic_research.md`, `chapters.yaml`, `narration_script.yaml`).
+1. Show the user the file just produced (`topic_definition.md`, `topic_research.md`, `narration_script.yaml` — skeleton at Step 3, full version at Step 4).
 2. Ask: "Looks good? Reply with edits, or 'continue' to proceed."
 3. If edits: revise, re-show. Do NOT proceed until explicit "continue" / "ok" / "looks good".
 4. Apply edits in-place; do not rewrite the whole file unless asked.

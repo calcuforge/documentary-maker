@@ -208,6 +208,7 @@ def cmd_video(args):
         )
     os.makedirs(vdir, exist_ok=False)
     os.makedirs(os.path.join(vdir, "assets"), exist_ok=True)
+    os.makedirs(os.path.join(vdir, "scenes"), exist_ok=True)
     cli_envelope.emit_ok(
         data={"video_dir": vdir},
         message=f"Video '{args.video}' scaffold created under '{args.name}'.",

@@ -1,49 +1,52 @@
 #!/usr/bin/env python3
-"""Build narration_audio.srt and timing.json from narration_script.yaml.
+"""Build scene-level narration.srt and timing.json.
 
-This is the **char-count estimator** path — used because the index_tts
-workflow returns only an audio file with no word-level timestamps. Real audio
-length (from ffprobe) sets the *total*; char counts distribute that time
-across sections and SRT cues.
+This is the **scene-level char-count estimator**. TTS is generated per scene,
+so real audio length (ffprobe of the scene WAV) sets the scene's *total*
+duration exactly. Within the scene:
 
-Inputs:
-    narration_script.yaml — list of sections with `name`, `label`, `narration`.
-    narration_audio.wav   — real TTS audio (used to set total_duration).
+    - shot durations are distributed across the scene's total by
+      `duration_hint_seconds` (shots without a hint get the mean of the
+      hinted shots; a scene with no hints at all splits evenly);
+    - SRT cues are split from the scene narration at sentence-final
+      punctuation and their durations allocated by char weight.
 
-Outputs (in video dir):
-    narration_audio.srt
-    timing.json  (schema: see remotion-video-template/src/components/useTiming.js)
+Inputs (per scene):
+    narration_script.yaml      — chapters → scenes → shots.
+    scenes/{scene}/narration.wav — real TTS audio for this scene.
 
-Algorithm:
-    1. ffprobe WAV for real total_duration.
-    2. For each section, compute a "weight" = sum of char weights in narration:
-       - CJK char weight = 1.0
-       - ASCII letter/digit = 0.5
-       - whitespace, punctuation = 0.0
-    3. Allocate duration per section: weight / total_weight * total_duration.
-       Round to 0.01s. Each section gets start_time/end_time and start_frame/
-       duration_frames (frame = round(time * fps)).
-    4. Inside each section, split narration into SRT cues at sentence-final
-       punctuation (。.!?！？ and soft 。,). Allocate cue duration by char weight.
-       2-line cap per cue (~30 chars/line for zh, ~60 for en).
+Outputs (in the scene dir):
+    scenes/{scene}/narration.srt   — cues timed relative to the scene (from 0).
+    scenes/{scene}/timing.json     — schema:
+        {
+          "scene": "hero",
+          "total_duration": 12.34,
+          "fps": 30,
+          "total_frames": 370,
+          "shots": [
+            { "name": "hero_01", "start_time": 0.0, "end_time": 6.1,
+              "duration": 6.1, "start_frame": 0, "duration_frames": 183 }
+          ]
+        }
 
-Audio-master clock check:
-    final total_duration (sum of section durations) MUST equal WAV duration
-    within ±0.01s. Remainder absorbed into the last section.
+Audio-master clock rule (scene level):
+    timing.total_duration equals ffprobe(narration.wav) within ±0.01s.
+    Rounding remainders are absorbed into the last shot / last cue.
+
+Video-level aggregation (root timing.json, merged SRT, merged WAV) is done
+by `generate_tts.py merge`, not here.
 """
 import argparse
 import json
-import math
 import os
 import re
 import subprocess
 import sys
 
-import yaml
-
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 import cli_envelope  # noqa: E402
+import script_schema  # noqa: E402
 
 SENT_END = set("。.!?！？")
 SOFT_END = set("，,;：:、 ")
@@ -55,7 +58,7 @@ ASCII_WORD_RE = re.compile(r"[A-Za-z0-9]")
 def char_weight(ch):
     if ch.isspace():
         return 0.0
-    if SENT_END.__contains__(ch) or SOFT_END.__contains__(ch):
+    if ch in SENT_END or ch in SOFT_END:
         return 0.0
     if CJK_RE.match(ch):
         return 1.0
@@ -130,15 +133,113 @@ def _hard_split(sentence, max_chars):
     return pieces
 
 
+def _fmt_srt_time(t):
+    h = int(t // 3600)
+    m = int((t % 3600) // 60)
+    s = int(t % 60)
+    ms = int(round((t - int(t)) * 1000))
+    return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
+
+def distribute_shot_durations(shots, total_duration):
+    """Allocate scene duration across shots.
+
+    Weights: `duration_hint_seconds` when any shot has one (unhinted shots
+    get the mean of the positive hints); otherwise equal weights.
+    Returns a list of durations summing to total_duration (remainder
+    absorbed into the last shot).
+    """
+    n = len(shots)
+    if n == 0:
+        return []
+    hints = []
+    for s in shots:
+        h = s.get("duration_hint_seconds")
+        try:
+            h = float(h) if h is not None else 0.0
+        except (TypeError, ValueError):
+            h = 0.0
+        hints.append(max(0.0, h))
+    if any(h > 0 for h in hints):
+        positive = [h for h in hints if h > 0]
+        fallback = sum(positive) / len(positive)
+        weights = [h if h > 0 else fallback for h in hints]
+    else:
+        weights = [1.0] * n
+    tw = sum(weights) or 1.0
+    durs = [total_duration * (w / tw) for w in weights]
+    # Absorb rounding remainder into the last shot.
+    drift = total_duration - sum(durs)
+    durs[-1] = durs[-1] + drift
+    return durs
+
+
+def build_scene_timing(scene, total_duration, fps):
+    """Build the shots block for a scene's timing.json."""
+    shots = script_schema.effective_shots(scene)
+    durs = distribute_shot_durations(shots, total_duration)
+    blocks = []
+    cumulative = 0.0
+    for shot, dur in zip(shots, durs):
+        start = round(cumulative, 3)
+        end = round(cumulative + dur, 3)
+        blocks.append({
+            "name": shot["name"],
+            "start_time": start,
+            "end_time": end,
+            "duration": round(dur, 3),
+            "start_frame": round(start * fps),
+            "duration_frames": max(1, round(dur * fps)),
+        })
+        cumulative += dur
+    # Frames: recompute from rounded times; absorb frame rounding into last.
+    total_frames = round(total_duration * fps)
+    if blocks:
+        frame_sum = sum(b["duration_frames"] for b in blocks)
+        blocks[-1]["duration_frames"] += total_frames - frame_sum
+        blocks[-1]["duration_frames"] = max(1, blocks[-1]["duration_frames"])
+    return blocks, total_frames
+
+
+def build_scene_srt(narration_text, total_duration):
+    """Split scene narration into cues; allocate time by char weight.
+
+    Returns (srt_string, cue_count). Times are relative to the scene start.
+    """
+    cues = split_into_cues((narration_text or "").strip())
+    if not cues:
+        return "", 0
+    weights = [text_weight(c) or 1.0 for c in cues]
+    tw = sum(weights)
+    lines = []
+    cstart = 0.0
+    for i, (cue, w) in enumerate(zip(cues, weights)):
+        cdur = total_duration * (w / tw)
+        cend = total_duration if i == len(cues) - 1 else cstart + cdur
+        lines.append(str(i + 1))
+        lines.append(f"{_fmt_srt_time(cstart)} --> {_fmt_srt_time(cend)}")
+        lines.append(cue)
+        lines.append("")
+        cstart = cend
+    return "\n".join(lines), len(cues)
+
+
 def build_parser():
     parser = argparse.ArgumentParser(
-        description="Estimate SRT and timing.json from narration_script.yaml + narration_audio.wav."
+        description="Build scene-level narration.srt + timing.json from "
+                    "narration_script.yaml and the scene's TTS audio."
     )
     cli_envelope.add_format_arg(parser)
     parser.add_argument("--video-dir", required=True,
                         help="Path to the per-video directory.")
+    parser.add_argument("--scene", required=True,
+                        help="Scene name (subdirectory of scenes/).")
     parser.add_argument("--fps", type=int, default=None,
-                        help="Override fps (default: read from project prefs or 30).")
+                        help="Override fps (default 30).")
+    parser.add_argument("--narration-script", default=None,
+                        help="Path to narration_script.yaml (default: video dir).")
+    parser.add_argument("--audio", default=None,
+                        help="Path to the scene WAV (default: scenes/{scene}/narration.wav).")
     return parser
 
 
@@ -146,137 +247,67 @@ def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
     vdir = args.video_dir
-    script_path = os.path.join(vdir, "narration_script.yaml")
-    audio_path = os.path.join(vdir, "narration_audio.wav")
-    srt_path = os.path.join(vdir, "narration_audio.srt")
-    timing_path = os.path.join(vdir, "timing.json")
+    scene_name = args.scene
+    script_path = args.narration_script or os.path.join(vdir, "narration_script.yaml")
+    audio_path = args.audio or os.path.join(vdir, "scenes", scene_name, "narration.wav")
+    scene_dir = os.path.join(vdir, "scenes", scene_name)
+    srt_path = os.path.join(scene_dir, "narration.srt")
+    timing_path = os.path.join(scene_dir, "timing.json")
 
-    if not os.path.isfile(script_path):
+    try:
+        script = script_schema.load_script(script_path)
+    except script_schema.SchemaError as exc:
+        cli_envelope.emit_usage_error(str(exc), fmt=args.format)
+    scene = script_schema.find_scene(script, scene_name)
+    if scene is None:
         cli_envelope.emit_usage_error(
-            f"narration_script.yaml not found in {vdir}", fmt=args.format)
+            f"Scene '{scene_name}' not found in {script_path}. "
+            f"Known scenes: {[s['name'] for s in script['scenes']]}",
+            fmt=args.format)
+
     if not os.path.isfile(audio_path):
         cli_envelope.emit_usage_error(
-            f"narration_audio.wav not found in {vdir}", fmt=args.format)
-
-    with open(script_path, "r", encoding="utf-8") as f:
-        sections = yaml.safe_load(f) or []
-    if not isinstance(sections, list) or not sections:
-        cli_envelope.emit_usage_error(
-            "narration_script.yaml must be a non-empty list of sections.",
+            f"Scene audio not found: {audio_path}. Run `tts run --scene {scene_name}` first.",
             fmt=args.format)
 
     fps = args.fps or 30
-    total_duration = ffprobe_duration(audio_path)
+    probed = ffprobe_duration(audio_path)
+    total_duration = probed[0] if isinstance(probed, tuple) else probed
     if total_duration is None:
         cli_envelope.emit_error(
             "ffprobe_failed",
-            f"Could not probe duration of {audio_path}",
+            f"Could not probe duration of {audio_path}: {probed[1] if isinstance(probed, tuple) else ''}",
             fmt=args.format, exit_code=1,
         )
 
-    # Compute weights + cues per section.
-    weighted = []
-    for s in sections:
-        name = s.get("name") or ""
-        label = s.get("label") or name
-        text = (s.get("narration") or "").strip()
-        cues = split_into_cues(text)
-        cues_weights = [text_weight(c) for c in cues]
-        section_weight = sum(cues_weights) if cues_weights else 1.0  # min weight
-        weighted.append({
-            "name": name, "label": label, "text": text,
-            "cues": cues, "cues_weights": cues_weights,
-            "weight": section_weight,
-        })
+    shots, total_frames = build_scene_timing(scene, total_duration, fps)
+    srt_text, cue_count = build_scene_srt(scene.get("narration") or "", total_duration)
 
-    total_weight = sum(w["weight"] for w in weighted) or 1.0
-
-    # Allocate per-section duration proportional to weight.
-    section_blocks = []
-    cumulative = 0.0
-    for w in weighted:
-        dur = total_duration * (w["weight"] / total_weight)
-        section_blocks.append({
-            "name": w["name"], "label": w["label"],
-            "start_time": round(cumulative, 3),
-            "end_time": round(cumulative + dur, 3),
-            "duration": round(dur, 3),
-            "cues": w["cues"], "cues_weights": w["cues_weights"],
-        })
-        cumulative += dur
-
-    # Absorb rounding remainder into the last section.
-    drift = total_duration - cumulative
-    if section_blocks and abs(drift) > 0.001:
-        last = section_blocks[-1]
-        last["end_time"] = round(last["end_time"] + drift, 3)
-        last["duration"] = round(last["duration"] + drift, 3)
-
-    # Build SRT.
-    srt_lines = []
-    idx = 1
-    for b in section_blocks:
-        cues_w = b["cues_weights"]
-        section_dur = b["duration"]
-        section_start = b["start_time"]
-        sw = sum(cues_w) or 1.0
-        cstart = section_start
-        for ci, (cue, cw) in enumerate(zip(b["cues"], cues_w)):
-            cdur = section_dur * (cw / sw)
-            cend = cstart + cdur
-            srt_lines.append(str(idx))
-            srt_lines.append(f"{_fmt_srt_time(cstart)} --> {_fmt_srt_time(cend)}")
-            srt_lines.append(cue)
-            srt_lines.append("")
-            idx += 1
-            cstart = cend
-
+    os.makedirs(scene_dir, exist_ok=True)
     with open(srt_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(srt_lines))
-
-    # Build timing.json.
-    timing_sections = []
-    for b in section_blocks:
-        sf = round(b["start_time"] * fps)
-        df = round(b["duration"] * fps)
-        timing_sections.append({
-            "name": b["name"],
-            "label": b["label"],
-            "start_time": b["start_time"],
-            "end_time": b["end_time"],
-            "duration": b["duration"],
-            "start_frame": sf,
-            "duration_frames": df,
-        })
+        f.write(srt_text)
     timing = {
+        "scene": scene_name,
         "total_duration": round(total_duration, 3),
         "fps": fps,
-        "total_frames": round(total_duration * fps),
-        "sections": timing_sections,
+        "total_frames": total_frames,
+        "shots": shots,
     }
     with open(timing_path, "w", encoding="utf-8") as f:
         json.dump(timing, f, ensure_ascii=False, indent=2)
 
-    # Validate drift.
-    if abs(timing["total_duration"] - total_duration) > 0.5:
+    if not (scene.get("narration") or "").strip():
         cli_envelope.emit_warning(
             data=timing,
-            message=f"timing.json drift >0.5s (total={total_duration:.3f}, timing={timing['total_duration']:.3f}).",
+            message=f"Scene '{scene_name}' has no narration text; SRT is empty.",
             fmt=args.format,
         )
     cli_envelope.emit_ok(
         data=timing,
-        message=f"SRT ({idx-1} cues) and timing.json ({len(timing_sections)} sections) written.",
+        message=(f"Scene '{scene_name}': SRT ({cue_count} cues) + timing.json "
+                 f"({len(shots)} shots, {total_duration:.2f}s) written."),
         fmt=args.format,
     )
-
-
-def _fmt_srt_time(t):
-    h = int(t // 3600)
-    m = int((t % 3600) // 60)
-    s = int(t % 60)
-    ms = int(round((t - int(t)) * 1000))
-    return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
 if __name__ == "__main__":

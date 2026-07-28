@@ -17,5 +17,5 @@ Or use an absolute path. The `bgm.track` field accepts any resolvable filesystem
 
 ## Future
 
-- Sound effects library (per-section `sfx` cue support is planned but not yet implemented).
+- Sound effects library (per-shot `sfx` cue support is planned but not yet implemented).
 - Shared Lottie animation JSONs for `LottieAnimation` component (currently each video brings its own under `videos/{v}/animations/`).

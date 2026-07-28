@@ -4,7 +4,7 @@
 
 ## 5a. Plan
 
-For each section in `narration_script.yaml`, decide the production path for its `visual.asset_id` (if any). Register the plan in `assets/manifest.json` via `cli.py assets add --status planned` BEFORE generating.
+For each **shot** in `narration_script.yaml`, decide the production path for its `asset_id` and any `overlays[].asset_id`. Register the plan in `assets/manifest.json` via `cli.py assets add --status planned` BEFORE generating. Manifest entries carry `--scene` and `--shot` so batch generation can be organized per shot (the manifest itself is video-level and shared by all scenes).
 
 Asset types and roles:
 
@@ -13,7 +13,7 @@ Asset types and roles:
 | `background` | Full-bleed backdrop behind a title / narration | `<AssetImage role="background">` (with ken-burns) |
 | `inline` | Framed media inside the layout | `<AssetImage role="inline">` (delegates to `MediaSection`) |
 | `broll` | Atmosphere clip | `<AssetVideo>` |
-| `overlay` | Transparent animation layer | (future — `OverlayLayer`) |
+| `overlay` | Transparent animation layer over a shot | `<OverlayLayer>` (WebM VP9 with alpha, 30 fps, duration ≥ the shot window) |
 | `bgm` / `sfx` | Music / sound effects | FFmpeg mix (Step 10) |
 
 Asset sources:
@@ -107,10 +107,10 @@ VDIR="$SKILL_DIR/../projects/$PROJECT/videos/$VIDEO"
 # 1. Initialize manifest (once per video)
 python3 "$SKILL_DIR/scripts/cli.py" assets init --video-dir "$VDIR"
 
-# 2. Register ALL planned assets first
+# 2. Register ALL planned assets first (per shot)
 python3 "$SKILL_DIR/scripts/cli.py" assets add \
   --video-dir "$VDIR" \
-  --id hero_bg --section hero --type image --role background \
+  --id hero_bg --scene hero --shot hero_01 --type image --role background \
   --source t2i --status planned \
   --prompt "Photorealistic MD-11 cockpit interior, dim blue emergency lighting,
            instrument panels, wide angle, no text, no watermark" \
@@ -118,14 +118,14 @@ python3 "$SKILL_DIR/scripts/cli.py" assets add \
 
 python3 "$SKILL_DIR/scripts/cli.py" assets add \
   --video-dir "$VDIR" \
-  --id timeline_bg --section timeline --type image --role background \
+  --id timeline_bg --scene timeline --shot timeline_01 --type image --role inline \
   --source t2i --status planned \
   --prompt "Aerial view of Atlantic Ocean at dusk with search lights, dramatic sky" \
   --workflow z_image_fp16 --upscale-target 1080p
 
 python3 "$SKILL_DIR/scripts/cli.py" assets add \
   --video-dir "$VDIR" \
-  --id wreck_broll --section impact --type video --role broll \
+  --id wreck_broll --scene impact --shot impact_01 --type video --role broll \
   --source t2v --status planned \
   --prompt "Slow pan over aircraft wreckage on ocean floor, dark blue water" \
   --workflow ltx2.3_t2v_int8 --upscale-target 1080p
@@ -133,12 +133,14 @@ python3 "$SKILL_DIR/scripts/cli.py" assets add \
 # 3. Generate assets in batched groups (see 5b. batch strategy below)
 ```
 
+Scene-level assets (bgm/sfx) may omit `--shot`.
+
 ### User-supplied files
 
 ```bash
 python3 "$SKILL_DIR/scripts/cli.py" assets add \
   --video-dir "$VDIR" \
-  --id timeline_chart --section timeline --type image --role inline \
+  --id timeline_chart --scene timeline --shot timeline_02 --type image --role inline \
   --source user --status resolved \
   --file /path/to/user/diagram.png \
   --license "user-owned" --credit "user"
@@ -148,7 +150,7 @@ The file is copied into `assets/timeline_chart.png` and the manifest path set au
 
 ## 5b-prime. Batch Execution Strategy
 
-When multiple assets are planned across sections, batch out calls by workflow type to avoid overloading the ComfyUI server with mixed pipeline workloads. **Same workflow → parallel calls in one batch. Different workflows → sequential batches.**
+When multiple shot assets are planned across scenes, batch out calls by workflow type to avoid overloading the ComfyUI server with mixed pipeline workloads. **Same workflow → parallel calls in one batch. Different workflows → sequential batches.**
 
 ### Batch execution order (fixed)
 
@@ -238,7 +240,7 @@ After each batch, report number of succeeded/failed jobs before starting the nex
 python3 "$SKILL_DIR/scripts/cli.py" assets validate --video-dir "$VDIR"
 ```
 
-Checks: duplicate ids, resolved-but-missing-path, file-on-disk presence. Warnings are non-blocking.
+Checks: duplicate ids, resolved-but-missing-path, file-on-disk presence, and cross-references against `narration_script.yaml` (assets bound to unknown scenes/shots, and shot `asset_id`/`overlays[].asset_id` references not registered in the manifest). Warnings are non-blocking.
 
 ## Hard rules
 
