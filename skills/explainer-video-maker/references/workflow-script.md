@@ -15,6 +15,8 @@ In Auto Mode, the only mandatory stop is Step 11 (`verify_output.py` exit 0/2). 
 
 ## Step 1: Define Topic Direction
 
+**Prerequisite:** Project and video directories MUST be scaffolded first (see SKILL.md "Project Scaffolding" section). All outputs go under `projects/$P/videos/$V/`.
+
 **Output:** `topic_definition.md` in the video dir.
 
 Auto: infer from the user's request. Match trigger keywords → category → theme. Sensible defaults (audience: general, tone: serious, duration: 3-7 min).

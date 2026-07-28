@@ -43,12 +43,54 @@ Narration-driven explainer video pipeline. Research → script → AIGC visuals 
 2. `EXPLAINER_WORKSPACE` env var (workspace root; projects go in `<root>/projects`)
 3. `<CWD>/projects` (the normal case)
 
-At workflow start: confirm the current working directory is the workspace root, create `projects/` once, and run every skill command from there afterwards. Shell state doesn't persist between commands, but the working directory does — so a stable CWD is what keeps project resolution consistent:
+At workflow start: confirm the current working directory is the workspace root, then **scaffold the project and video directories** before any other work. Shell state doesn't persist between commands, but the working directory does — so a stable CWD is what keeps project resolution consistent:
 
 ```bash
 pwd                 # must be the workspace root — cd there first if not
 mkdir -p projects   # once per workspace
 ```
+
+## Project Scaffolding (MANDATORY — before Step 1)
+
+Every video MUST live inside a project. Before any content work, scaffold the project and video directories. ALL file outputs (topic_definition.md, narration_script.yaml, assets/, scenes/, renders, etc.) go under `projects/$P/videos/$V/`.
+
+### 1. Determine project name and category
+
+- **Project name**: lowercase, hyphen-separated, ≤64 chars. Derive from the user's topic — e.g. `aviation-disaster` for air crash videos, `animal-science` for animal documentaries. Suffix with `-vertical` for 9:16 orientation.
+- **Category**: match from trigger keywords (see Execution Modes section below). If no clear match, default to `knowledge-sharing`.
+- **Orientation**: horizontal (16:9) by default; vertical (9:16) if the user asks for shorts/vertical.
+
+### 2. Create the project
+
+```bash
+python3 "$SKILL_DIR/scripts/cli.py" project create \
+  --name $P \
+  --category $CATEGORY \
+  --orientation ${ORIENTATION:-horizontal} \
+  --language ${LANGUAGE:-zh-CN}
+```
+
+This creates `projects/$P/project_prefs.yaml` with theme defaults merged from `themes/$CATEGORY.yaml`.
+
+If the project already exists (e.g. a second video in the same project), skip `project create` and reuse the existing project.
+
+### 3. Create the video subdirectory
+
+```bash
+python3 "$SKILL_DIR/scripts/cli.py" project video --name $P --video $V
+```
+
+This creates `projects/$P/videos/$V/` with `assets/` and `scenes/` subdirectories.
+
+### 4. Set shell variables for the session
+
+```bash
+P="<project-name>"          # e.g. aviation-disaster
+V="<video-name>"            # e.g. air-france-447
+VDIR="$(pwd)/projects/$P/videos/$V"
+```
+
+Use `$P` and `$V` in all subsequent commands. Every file output goes under `$VDIR`.
 
 `check_prereqs.py` prints the resolved workspace projects dir so you can confirm placement before creating anything.
 
