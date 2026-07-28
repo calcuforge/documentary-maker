@@ -47,6 +47,7 @@ METHODS = {
     "assets.update":    ("assets.py",       "Update an asset entry."),
     "assets.validate":  ("assets.py",       "Validate manifest integrity."),
 
+    "tts.synth":        ("generate_tts.py", "Synthesize a single text string to audio (auto backend)."),
     "tts.run":          ("generate_tts.py", "Synthesize per-scene TTS + SRT + timing."),
     "tts.merge":        ("generate_tts.py", "Merge scene audio/SRT/timing into video-level artifacts."),
 

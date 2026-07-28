@@ -7,6 +7,12 @@ Every scene WAV is normalized to 48 kHz mono pcm_s16le so the merged track
 can be built with `ffmpeg -f concat -c copy` (lossless, no re-encode).
 
 Commands:
+    tts synth --prefs PATH --text TEXT --voice-file PATH [--speed FLOAT]
+              [--output PATH]
+        Synthesize a single text string to audio using the backend configured
+        in project_prefs.yaml (tts.backend). Routes to comfyui_indextts or
+        http_server automatically. Output is normalized to 48 kHz mono WAV.
+
     tts run --project P --video V [--scene NAME] [--backend B]
         Synthesize one scene (--scene) or ALL scenes (no --scene).
         Per scene output:
@@ -28,8 +34,10 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 
 import requests
 import yaml
@@ -94,6 +102,35 @@ def normalize_wav(src, dest, fmt):
         )
     if os.path.abspath(src) != os.path.abspath(dest) and os.path.isfile(src):
         os.remove(src)
+
+
+def synth_text(text, prefs, voice_file, output_path, fmt):
+    """Synthesize *text* to audio using the backend from *prefs*.
+
+    Reads ``tts.backend`` from *prefs* (default ``comfyui_indextts``), calls
+    the corresponding backend, and writes a 48 kHz mono pcm_s16le WAV to
+    *output_path*.  *voice_file* is the reference audio for voice cloning.
+
+    Returns *output_path* on success.
+    """
+    backend = prefs.get("tts", {}).get("backend", "comfyui_indextts")
+    tmp_dir = tempfile.mkdtemp(prefix="tts_synth_")
+    try:
+        if backend == "comfyui_indextts":
+            raw = synth_comfyui(text, prefs, voice_file, tmp_dir, fmt)
+        elif backend == "http_server":
+            body = synth_http(text, prefs, voice_file, fmt)
+            raw = os.path.join(tmp_dir, "response.bin")
+            with open(raw, "wb") as f:
+                f.write(body)
+        else:
+            cli_envelope.emit_usage_error(f"Unknown TTS backend: {backend}", fmt=fmt)
+
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+        normalize_wav(raw, output_path, fmt)
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+    return output_path
 
 
 # ── synthesis backends (single scene) ───────────────────────────────────────
@@ -399,6 +436,18 @@ def build_parser():
                        choices=["comfyui_indextts", "http_server"],
                        help="Override prefs.tts.backend.")
 
+    p_synth = sub.add_parser("synth", help="Synthesize a single text string to audio.")
+    p_synth.add_argument("--prefs", required=True,
+                         help="Path to project_prefs.yaml (reads tts.backend and tts.http.*).")
+    p_synth.add_argument("--text", required=True,
+                         help="Text to synthesize.")
+    p_synth.add_argument("--voice-file", required=True,
+                         help="Reference voice WAV for cloning.")
+    p_synth.add_argument("--speed", type=float, default=None,
+                         help="Speech speed multiplier (overrides tts.http.speed).")
+    p_synth.add_argument("--output", default=None,
+                         help="Output WAV path. Defaults to <cwd>/tts_output.wav.")
+
     p_merge = sub.add_parser("merge",
                              help="Concatenate scene WAVs/SRTs/timings into video-level artifacts.")
     p_merge.add_argument("--project", required=True)
@@ -421,7 +470,28 @@ def main(argv=None):
     except script_schema.SchemaError as exc:
         cli_envelope.emit_usage_error(str(exc), fmt=fmt)
 
-    if args.action == "run":
+    if args.action == "synth":
+        # Load prefs from the given path (not project-based).
+        prefs_path = args.prefs
+        if not os.path.isfile(prefs_path):
+            cli_envelope.emit_usage_error(f"Prefs file not found: {prefs_path}", fmt=fmt)
+        with open(prefs_path, "r", encoding="utf-8") as f:
+            prefs = yaml.safe_load(f) or {}
+        voice_file = args.voice_file
+        if not os.path.isfile(voice_file):
+            cli_envelope.emit_usage_error(f"Voice file not found: {voice_file}", fmt=fmt)
+        # Apply --speed override if given
+        if args.speed is not None:
+            prefs.setdefault("tts", {}).setdefault("http", {})["speed"] = args.speed
+        output_path = args.output or os.path.join(os.getcwd(), "tts_output.wav")
+        result = synth_text(args.text, prefs, voice_file, output_path, fmt)
+        cli_envelope.emit_ok(
+            data={"output": result, "backend": prefs.get("tts", {}).get("backend", "comfyui_indextts")},
+            message=f"TTS synth complete → {result}",
+            fmt=fmt,
+        )
+
+    elif args.action == "run":
         voice_file = resolve_voice_file(prefs, args.project, fmt)
         backend = args.backend or prefs.get("tts", {}).get("backend", "comfyui_indextts")
         if args.scene:
