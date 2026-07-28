@@ -75,7 +75,7 @@ tts:
   # The URL is resolved via os.path.expandvars(). ${BACKEND_PROXY_ENDPOINT}
   # must be set in the shell environment before running any TTS command.
   http:
-    url: ${BACKEND_PROXY_ENDPOINT}
+    url: ${BACKEND_PROXY_ENDPOINT}/v1/audio/speech
     speed: 1.0              # 0.25–4.0, passed as form field
 
 bgm:
