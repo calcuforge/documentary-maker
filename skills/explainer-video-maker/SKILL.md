@@ -200,9 +200,17 @@ At **Step 0** start, create one task per step (0–11) in your agent tracker. Ma
 - **Audio & subtitles** — Step 6 runs one TTS + one subtitle task per scene, in parallel, then merges.
 - **Assembly** — Step 9 scene merge (ordered) → Step 10 BGM last.
 
-### Step 2: Research Providers
+### Step 2: Research Topic (MANDATORY — do NOT skip)
 
-Research is abstracted into four **provider types**, configured per theme in `research_providers:`. Generate a plan via `cli.py research plan --project $P --video $V`, then execute each provider in order. Same-type providers in one step can be parallelized.
+Research is driven by **providers** configured in the theme's `research_providers:`. This step MUST be executed before any script writing — the research findings in `topic_research.md` are the factual foundation for the narration script.
+
+**2a. Generate the research plan:**
+
+```bash
+python3 "$SKILL_DIR/scripts/cli.py" research plan --project $P --video $V
+```
+
+**2b. Execute every enabled provider in the plan.** The JSON output contains one step per provider with an `action` field telling you exactly what to do.
 
 | Provider | What the agent does |
 | --- | --- |
@@ -212,6 +220,71 @@ Research is abstracted into four **provider types**, configured per theme in `re
 | `custom_script` | **Agent writes a Python script** to retrieve structured data. Use `requests` + `feedparser` + `beautifulsoup4` (no other deps). Save to `videos/{v}/scripts/`, run via `python`, capture stdout. Delete after use unless the user asks to keep it. The `script_hint` in the plan describes what the script should do (e.g. RSS aggregator, news clusterer, data crawler). |
 
 After all providers, merge findings into `topic_research.md`. See [references/workflow-script.md](references/workflow-script.md#step-2-research-topic) for the full provider spec, config examples, and output format.
+
+### Step 3: Design Video Structure
+
+Load [references/workflow-script.md](references/workflow-script.md) for detailed instructions. Key points:
+
+- Read the theme's `narrative_arc` from `project_prefs.yaml` — it defines the chapter sequence (e.g. aviation-disaster: hook → background → event_timeline → cause_analysis → impact → aftermath → conclusion).
+- Read `project_prefs.content.section_count` for the target scene count.
+- Output a **skeleton** `narration_script.yaml` with `chapters:` and `scenes:` (names + labels only, no narration yet).
+- Use `cli.py schema validate` to check the skeleton before proceeding.
+
+### Step 4: Narration + Per-Scene Shot Design
+
+Load [references/workflow-script.md](references/workflow-script.md) and [references/design-guide.md](references/design-guide.md) for detailed instructions. **This is the most critical design step** — every visual decision flows from here.
+
+**Each shot MUST have three layers** (even if a layer is empty):
+
+| Layer | Field | Examples |
+| --- | --- | --- |
+| Primary visual | `component` + `asset_id` | `FullBleedLayout` + `hero_bg`, `Timeline` + (no asset), `MediaSection` + `wreck_photo` |
+| Data overlays | `data[]` | `StatHighlight` (casualty count), `DataBar` (safety stats), `Timeline` (event sequence) |
+| Text overlays | `text[]` | `QuoteBlock` (investigator quote), `IconCard` (key findings) |
+
+**Asset source distribution** — consult the theme's `visual_composition:` block in `project_prefs.yaml`. For aviation-disaster: AIGC=high, stock=low, data_charts=medium, text_components=low. This means most shots use AI-generated images/videos as the primary visual, with data charts as the secondary layer. **Do NOT make every shot a plain AI image** — mix in:
+
+- **AI-generated video (t2v/i2v)** for b-roll shots (e.g. slow pan over wreckage, atmospheric establishing shots)
+- **Data charts** for statistics-heavy scenes (e.g. `DataBar` for safety comparison, `StatHighlight` for fatality count)
+- **Text components** for quotes and key findings (e.g. `QuoteBlock` for investigator statements)
+- **Pure-text shots** where appropriate (e.g. `Timeline` with no asset_id for event chronology)
+
+**Component selection** — consult the theme's `component_suggestions:` in `project_prefs.yaml`. Each scene type maps to a recommended component:
+- `hero` → `FullBleedLayout`
+- `timeline` / `event_sequence` → `Timeline`
+- `cause_chain` / `cause_analysis` → `FlowChart`
+- `impact` / `statistics` → `DataBar`
+- `quote` → `QuoteBlock`
+- `summary` → `StatHighlight`
+
+Output the **full** `narration_script.yaml` with complete `narration` text per scene and detailed `shots[]` per scene. Run `cli.py schema validate` after writing.
+
+### Step 5: Shot Asset Plan & Batch AIGC Generation
+
+Load [references/workflow-assets.md](references/workflow-assets.md) for detailed instructions. **Register ALL planned assets before generating any.**
+
+1. **Plan**: for every shot in `narration_script.yaml`, register an asset entry:
+   ```bash
+   python3 "$SKILL_DIR/scripts/cli.py" assets init --video-dir "$VDIR"
+   python3 "$SKILL_DIR/scripts/cli.py" assets add \
+     --video-dir "$VDIR" --id <id> --scene <s> --shot <sh> \
+     --type <image|video> --role <background|inline|broll> \
+     --source <t2i|t2v|i2v|text|stock> --status planned \
+     --prompt "<detailed prompt>" --workflow <workflow_id>
+   ```
+   Shots with `component: Timeline` / `FlowChart` / `DataBar` / `StatHighlight` / `QuoteBlock` and no `asset_id` → `--source text --status resolved` (pure Remotion component, no AI generation needed).
+
+2. **Generate in batched order** (see workflow-assets.md#5b-prime-batch-execution-strategy): t2i → i2i → t2v → i2v → flf2v → multi_scene_i2v. Same-workflow jobs in parallel, different workflows sequentially.
+
+3. **After each batch**: update manifest from `planned` → `resolved`:
+   ```bash
+   python3 "$SKILL_DIR/scripts/cli.py" assets update \
+     --video-dir "$VDIR" --id <id> --status resolved --path <filename>
+   ```
+
+4. **Validate**: `python3 "$SKILL_DIR/scripts/cli.py" assets validate --video-dir "$VDIR"`
+
+**Minimum asset diversity rule**: a video with 5+ scenes MUST have at least one t2v/i2v video asset, at least two data/text-only shots (source=text), and at least one shot using a non-AIGC image source (stock or research-sourced). Pure t2i-only image slideshows are NOT acceptable output.
 
 **Mandatory stops**:
 - **Manual mode** — every step from 1 to 8 may pause for user review.
