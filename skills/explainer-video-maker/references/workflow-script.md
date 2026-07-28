@@ -58,6 +58,17 @@ This emits a JSON plan with one step per enabled provider. Each step has an `act
 
 Run each provider step **in order**. Same-type providers within one step can be parallelized (e.g. multiple `web_fetch` URLs in parallel).
 
+**Web access method — priority chain:**
+
+All web requests (search, fetch, RSS) MUST follow this fallback order:
+
+| Priority | Method | Usage |
+| --- | --- | --- |
+| **1. Headless Chrome** | `/usr/bin/chrome --headless --dump-dom --disable-gpu --no-sandbox "<url>"` | Preferred. Renders JavaScript, bypasses basic bot detection, routes through system proxy. For search: construct `https://www.baidu.com/s?wd=<query>` (CN) or `https://www.google.com/search?q=<query>` (global), then parse result links from the dumped DOM. |
+| **2. Built-in WebFetch** | Agent's native fetch tool | Fallback only if Chrome is not installed (`/usr/bin/chrome` not found) or exits non-zero. |
+
+After fetching page content (via either method), extract factual information: dates, names, statistics, events, direct quotes. Cross-reference across at least 3 sources. Flag conflicting information.
+
 After all providers complete, merge findings into `topic_research.md`:
 - Factual summary (dates, names, statistics, events, quotes) — cross-reference at least 3 sources.
 - For news-type videos: top headlines + lead paragraph per story.

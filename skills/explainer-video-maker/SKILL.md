@@ -214,6 +214,15 @@ python3 "$SKILL_DIR/scripts/cli.py" research plan --project $P --video $V
 
 **2b. Execute every enabled provider in the plan.** The JSON output contains one step per provider with an `action` field telling you exactly what to do.
 
+**Web access priority** — for ALL web requests (search, fetch, RSS), use this fallback chain:
+
+| Priority | Method | Command / Tool |
+| --- | --- | --- |
+| 1 (preferred) | Headless Chrome | `/usr/bin/chrome --headless --dump-dom --disable-gpu --no-sandbox "<url>"` |
+| 2 (fallback) | Built-in web fetch | Agent's native WebFetch tool |
+
+Chrome headless renders JavaScript, bypasses basic bot detection, and works through system proxy settings — essential for accessing international sources from CN environments. Use `--dump-dom` for static HTML extraction, or `--screenshot` for visual inspection. Fall back to WebFetch only if Chrome is not installed or exits non-zero.
+
 | Provider | What the agent does |
 | --- | --- |
 | `agent_search` | Web search using the agent's native search tool. Runs each query in `queries`, reads top 3-5 results, cross-references facts. |
