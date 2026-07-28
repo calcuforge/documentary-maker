@@ -92,6 +92,8 @@ VDIR="$(pwd)/projects/$P/videos/$V"
 
 Use `$P` and `$V` in all subsequent commands. Every file output goes under `$VDIR`.
 
+**After scaffolding, proceed immediately to Step 0 (Voice Design).** Do NOT skip to Step 1.
+
 `check_prereqs.py` prints the resolved workspace projects dir so you can confirm placement before creating anything.
 
 ## Bootstrap
@@ -109,9 +111,30 @@ Prereqs check validates: workspace projects dir resolution, `python3`, `ffmpeg`,
 
 Before any video is produced, generate a reference voice audio file for the project. Each project gets **exactly one** `voice_reference.wav` shared across all its videos.
 
-1. Resolve the voice design attributes from the theme preset (`voice_design.voice_instruct`, `voice_design.content`, `voice_design.speed`) — each theme defines its own narrator persona using comma-separated attribute values (e.g. `男，中年，低音调`). Valid values are listed in [comfyui-scheduler/doc/workflow.md](../../comfyui-scheduler/doc/workflow.md#ominivoice_voice_design).
+### 0a. Check whether voice design is needed
+
+Read `project_prefs.yaml` and check two conditions:
+
+```bash
+python3 -c "
+import yaml, os
+p = yaml.safe_load(open('projects/$P/project_prefs.yaml'))
+vf = p.get('tts', {}).get('voice_file', '')
+exists = os.path.isfile(vf) if vf else False
+print(f'voice_file={vf}')
+print(f'exists={exists}')
+"
+```
+
+**Decision:**
+- If `voice_file` is set AND the file exists on disk → **skip Step 0**, proceed to Step 1. The TTS step will read `tts.voice_file` from project prefs to find the reference audio.
+- If `voice_file` is null/empty OR the file does not exist → **continue to 0b**. The project has no reference voice yet.
+
+### 0b. Generate voice reference
+
+1. Read the voice design attributes from `project_prefs.yaml` (the `voice_design` section was merged from the theme during `project create`): `voice_design.voice_instruct`, `voice_design.content`, `voice_design.speed`. Each theme defines its own narrator persona using comma-separated attribute values (e.g. `男，中年，低音调`). Valid values are listed in [comfyui-scheduler/doc/workflow.md](../../comfyui-scheduler/doc/workflow.md#ominivoice_voice_design).
 2. Choose a workflow: `project_prefs.workflows.voice_design` (default `ominivoice_voice_design`, or `qwen3_tts_voice_design`).
-3. Run the voice design workflow (from the workspace root — the download lands in the workspace's project dir):
+3. Run the voice design workflow (from the workspace root — the download lands in the project dir):
 
    ```bash
    python3 "$SKILL_DIR/scripts/cli.py" comfyui run \
@@ -121,7 +144,7 @@ Before any video is produced, generate a reference voice audio file for the proj
    ```
 
 4. Rename the downloaded audio file to `voice_reference.wav` in the project root.
-5. Set the path in project prefs so TTS steps auto-resolve it (absolute path, evaluated from the workspace root):
+5. Set the path in project prefs so TTS steps auto-resolve it (absolute path from workspace root):
 
    ```bash
    python3 "$SKILL_DIR/scripts/cli.py" project set \
@@ -129,9 +152,7 @@ Before any video is produced, generate a reference voice audio file for the proj
      --value "$(pwd)/projects/$P/voice_reference.wav"
    ```
 
-**Skip if** `projects/{p}/voice_reference.wav` already exists and `tts.voice_file` is set. Re-generate only if the user asks to change the voice persona.
-
-**Manual mode:** show the voice design prompt and ask "Generate this voice?" before running the workflow.
+**Manual mode:** show the voice design prompt and ask "Generate this voice?" before running the workflow. Re-generate only if the user asks to change the voice persona.
 
 ## Execution Modes
 
@@ -155,7 +176,7 @@ Trigger keyword → category mapping (see `project_prefs.template.yaml` `trigger
 
 ## Workflow
 
-At Step 1 start, create one task per step in your agent tracker. Mark `in_progress` on start, `completed` on finish. Files in `projects/{p}/videos/{v}/` are the durable record — if interrupted, inspect the directory to determine where to resume.
+At **Step 0** start, create one task per step (0–11) in your agent tracker. Mark `in_progress` on start, `completed` on finish. Files in `projects/{p}/videos/{v}/` are the durable record — if interrupted, inspect the directory to determine where to resume.
 
 **Structure:** video → chapters → scenes → shots. A **shot** is the visual unit (source material + auxiliary layers: data charts, text components, transparent overlays). A **scene** is one or more shots and is the unit of narration, TTS, subtitles, and rendering. A **chapter** is an organizational grouping only.
 
