@@ -62,3 +62,6 @@ subtitle:
   outline: 2,
   alignment: 2,
   marginV: 6
+rss_source_list:
+  - url: xxx
+    description: xxx
