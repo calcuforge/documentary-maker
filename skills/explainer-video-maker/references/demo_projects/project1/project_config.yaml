@@ -3,6 +3,8 @@ project:
   project_root_path: /path/to/projects/my-project # project root path
   creation_mode: auto # auto — pipeline runs end-to-end. manual — each AI product waits for user confirmation.
   language: zh-CN  # Narration language: zh-CN | en-US.
+  video_style: xxx
+  target_audience: xxx
 video:
   orientation: horizontal # horizontal (16:9) | vertical (9:16).
   resolution: 1080p # 1080p (1920x1080 horizontal, 1080x1920 vertical) | 4k (3840x2160 / 2160x3840).
@@ -20,6 +22,7 @@ tts:
   # Both `tts synth` and `tts run` auto-read this field — no --backend flag
   # needed in commands. Set once, all TTS calls route automatically.
   backend: comfyui_indextts
+  speed: 1.0
     # ── Reference voice (required for both backends) ───────────────────────
     # Generated once per project by Step 0 (voice design). All videos in the
     # project share the same voice. Auto-resolved to:
@@ -49,7 +52,7 @@ theme:
   transition_type: fade   # fade | slide | wipe | none
   transition_duration: 12 # frames @ fps
 content:
-  target_duration_seconds: 360
+  duration: medium # short (1-3min) / medium (3-7min) / long (7-15min)
 dependence_paths:
   # remotion_template: relative to the explainer-video-maker repo root, or an
   # absolute path. The template sits next to the repo root by default.
