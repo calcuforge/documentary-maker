@@ -30,6 +30,6 @@ stories:
     section_list:
         - total_frame: 120
           remotion_component: xxx # 如QuoteBlock
-          remotion_data: {"xxx":"xxx"} # 展示内容的结构化数据（用于填充到组件），json格式
+          remotion_data: '{"xxx":"xxx"}' # 展示内容的结构化数据（用于填充到组件），json格式
           audio: /path/to/1.wav # 旁白音频
           scene_id: scene1 # 对应画面单元ID
