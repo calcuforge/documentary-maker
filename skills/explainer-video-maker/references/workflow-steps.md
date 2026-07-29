@@ -12,6 +12,35 @@ Structure hierarchy: **Story → Narration → Scene**
 - 1 narration unit contains N scene units
 - Scene units split the narration duration by `percent`
 
+### Project Output Layout
+
+All pipeline artifacts live under the workspace `projects/` directory:
+
+```text
+projects/
+├── {project_name}/
+│   ├── project_config.yaml        # Step 1 — project global preferences
+│   ├── voice_file.wav             # Step 1 — TTS reference voice
+│   ├── {video_name}/
+│   │   ├── video_config.yaml      # Step 2 — topic definition
+│   │   ├── search_results/        # Step 3 — research artifacts
+│   │   │   ├── result1.md
+│   │   │   └── result2.md
+│   │   ├── video_struct.yaml      # Step 4 — video structure definition
+│   │   ├── stories/               # Step 5+7 — audio & AIGC assets
+│   │   │   └── {story_id}/
+│   │   │       └── {narration_id}/
+│   │   │           ├── speech.wav
+│   │   │           └── scenes/
+│   │   │               ├── origin_{scene_id}.{png|mp4}
+│   │   │               └── {scene_id}.{png|mp4}
+│   │   ├── video_tasks.yaml       # Step 6 — AIGC task list
+│   │   ├── remotion_sections.yaml # Step 8 — render config
+│   │   └── result.mp4             # Step 9 — final video
+```
+
+---
+
 ### Execution Modes
 
 | Mode | Behavior |

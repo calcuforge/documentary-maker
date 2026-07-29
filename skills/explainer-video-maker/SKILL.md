@@ -82,6 +82,38 @@ External dependencies:
 To determine reuse: compare `project.video_style`, `project.target_audience`,
 and `video.resolution`/`video.orientation`. If all match, reuse.
 
+### Project Output Layout
+
+```text
+projects/
+├── project1/
+│   ├── project_config.yaml        # Project global preferences
+│   ├── voice_file.wav             # TTS reference voice (shared by all videos)
+│   ├── video1/
+│   │   ├── result.mp4             # Final rendered video
+│   │   ├── video_config.yaml      # Topic definition
+│   │   ├── video_struct.yaml      # Video structure (stories → narrations → scenes)
+│   │   ├── video_tasks.yaml       # AIGC task list
+│   │   ├── remotion_sections.yaml # Remotion render config
+│   │   ├── search_results/
+│   │   │   ├── result1.md         # Research result 1
+│   │   │   └── result2.md         # Research result 2
+│   │   └── stories/
+│   │       ├── story1/
+│   │       │   └── narration1/
+│   │       │       ├── speech.wav # Narration audio
+│   │       │       └── scenes/
+│   │       │           ├── origin_scene1.png  # AIGC raw output
+│   │       │           ├── scene1.png         # Upscaled asset
+│   │       │           ├── origin_scene2.mp4
+│   │       │           └── scene2.mp4
+│   │       └── story2/
+│   └── video2/
+└── project2/
+```
+
+Detailed structure reference: [templates/demo_projects/](templates/demo_projects/)
+
 ---
 
 ## Execution Modes
