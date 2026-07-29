@@ -4,6 +4,8 @@ stories: # 故事单元列表
     narration_list: # 旁白单元列表
       - id: narration1 # 旁白ID，全局唯一
         content: 1956年，人工智能这一概念首次被提出，科学家开始探索让机器拥有类似人类的思考能力。 # 旁白内容
+        total_frame: 100 # 所有画面单元的总帧数
+        audio_path: "" # 旁白音频文件路径
         scene_list: # 画面单元列表
           - intent: 历史背景介绍  # 表达意图
             id: scene1 # 画面ID，全局唯一
