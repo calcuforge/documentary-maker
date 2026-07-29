@@ -1,6 +1,15 @@
 resolution: 1080P # 分辨率1080P/4k
 orientation: horizontal # horizontal (16:9) | vertical (9:16).
 fps: 24.0
+theme:
+  # These override the matching fields in themes/<category>.yaml.
+  # Explicit fields here win; everything else falls back to the theme preset.
+  primary_color: "#4f6ef7"
+  background_color: "#ffffff"
+  text_color: "#1a1a1a"
+  accent_color: "#FF6B6B"
+  transition_type: fade   # fade | slide | wipe | none
+  transition_duration: 12.0
 subtitle:
   font_size: 20,
   primary_color: "&H00333333",
