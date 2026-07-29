@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""
+Validate project_config.yaml structure and field values.
+
+Usage:
+    python verify_project_config.py --config /abs/path/project_config.yaml
+
+Exit codes: 0 = valid, 1 = errors found.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+SKILL_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(SKILL_ROOT))
+
+from lib.yamlutil import load_yaml
+
+VALID_LANGUAGES = ["zh-CN", "en-US"]
+VALID_ORIENTATIONS = ["horizontal", "vertical"]
+VALID_RESOLUTIONS = ["1080p", "4k"]
+VALID_QUALITY_TIERS = ["speed", "quality"]
+VALID_TTS_BACKENDS = ["comfyui_indextts", "http_server"]
+VALID_TRANSITION_TYPES = ["fade", "slide", "wipe", "none"]
+VALID_DURATIONS = ["short", "medium", "long"]
+VALID_CREATION_MODES = ["auto", "manual"]
+
+
+def validate(config: dict) -> list[str]:
+    """Return a list of error messages (empty = valid)."""
+    errors = []
+
+    # --- project section ---
+    project = config.get("project")
+    if not project:
+        errors.append("[project] section is missing")
+    else:
+        if not project.get("name"):
+            errors.append("[project.name] is required")
+        if not project.get("project_root_path"):
+            errors.append("[project.project_root_path] is required")
+        lang = project.get("language", "")
+        if lang and lang not in VALID_LANGUAGES:
+            errors.append(f"[project.language] invalid value '{lang}'. Valid: {VALID_LANGUAGES}")
+        mode = project.get("creation_mode", "")
+        if mode and mode not in VALID_CREATION_MODES:
+            errors.append(f"[project.creation_mode] invalid value '{mode}'. Valid: {VALID_CREATION_MODES}")
+
+    # --- video section ---
+    video = config.get("video")
+    if not video:
+        errors.append("[video] section is missing")
+    else:
+        orientation = video.get("orientation", "")
+        if orientation and orientation not in VALID_ORIENTATIONS:
+            errors.append(f"[video.orientation] invalid '{orientation}'. Valid: {VALID_ORIENTATIONS}")
+        resolution = video.get("resolution", "")
+        if resolution and resolution.lower() not in VALID_RESOLUTIONS:
+            errors.append(f"[video.resolution] invalid '{resolution}'. Valid: {VALID_RESOLUTIONS}")
+        fps = video.get("fps")
+        if fps is not None:
+            if not isinstance(fps, (int, float)) or fps <= 0:
+                errors.append(f"[video.fps] must be a positive number, got '{fps}'")
+
+    # --- aigc section ---
+    aigc = config.get("aigc", {})
+    quality_tier = aigc.get("quality_tier", "")
+    if quality_tier and quality_tier not in VALID_QUALITY_TIERS:
+        errors.append(f"[aigc.quality_tier] invalid '{quality_tier}'. Valid: {VALID_QUALITY_TIERS}")
+
+    # --- tts section ---
+    tts = config.get("tts")
+    if not tts:
+        errors.append("[tts] section is missing")
+    else:
+        backend = tts.get("backend", "")
+        if backend and backend not in VALID_TTS_BACKENDS:
+            errors.append(f"[tts.backend] invalid '{backend}'. Valid: {VALID_TTS_BACKENDS}")
+        speed = tts.get("speed")
+        if speed is not None:
+            if not isinstance(speed, (int, float)) or not (0.25 <= speed <= 4.0):
+                errors.append(f"[tts.speed] must be 0.25-4.0, got '{speed}'")
+        # If http_server backend, check http config
+        if backend == "http_server":
+            http = tts.get("http", {})
+            if not http.get("url"):
+                errors.append("[tts.http.url] is required when backend is http_server")
+
+    # --- theme section ---
+    theme = config.get("theme", {})
+    transition = theme.get("transition_type", "")
+    if transition and transition not in VALID_TRANSITION_TYPES:
+        errors.append(f"[theme.transition_type] invalid '{transition}'. Valid: {VALID_TRANSITION_TYPES}")
+
+    # --- content section ---
+    content = config.get("content", {})
+    duration = content.get("duration", "")
+    if duration and duration not in VALID_DURATIONS:
+        errors.append(f"[content.duration] invalid '{duration}'. Valid: {VALID_DURATIONS}")
+
+    # --- dependence_paths ---
+    deps = config.get("dependence_paths", {})
+    if not deps.get("remotion_template"):
+        errors.append("[dependence_paths.remotion_template] is required")
+
+    return errors
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Validate project_config.yaml")
+    parser.add_argument("--config", required=True, help="Path to project_config.yaml")
+    args = parser.parse_args()
+
+    config = load_yaml(args.config)
+    errors = validate(config)
+
+    if errors:
+        print(json.dumps({
+            "status": "error",
+            "msg": f"project_config.yaml has {len(errors)} error(s)",
+            "data": {"errors": errors},
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
+    else:
+        print(json.dumps({
+            "status": "ok",
+            "msg": "project_config.yaml is valid",
+            "data": {},
+        }, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main()

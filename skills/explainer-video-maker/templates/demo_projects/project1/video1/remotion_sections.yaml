@@ -1,0 +1,37 @@
+resolution: 1080P # 分辨率1080P/4k
+orientation: horizontal # horizontal (16:9) | vertical (9:16).
+fps: 24.0
+theme:
+  # These override the matching fields in themes/<category>.yaml.
+  # Explicit fields here win; everything else falls back to the theme preset.
+  primary_color: "#4f6ef7"
+  background_color: "#ffffff"
+  text_color: "#1a1a1a"
+  accent_color: "#FF6B6B"
+  transition_type: fade   # fade | slide | wipe | none
+  transition_duration: 12.0
+subtitle:
+  font_size: 20
+  primary_color: "&H00333333"
+  outline_color: "&H00FFFFFF"
+  outline: 2
+  alignment: 2
+  marginV: 6
+  list:
+    - text: "1956年，人工智能这一概念首次被提出"
+      start_frame: 1
+      end_frame: 100
+stories:
+  - story_name: 人工智能的崛起 #章节标题
+    story_id: story1
+    section_list:
+        - total_frame: 60
+          remotion_component: AssetVideo # 如QuoteBlock
+          remotion_data: '{"src":"stories/story1/narration1/scenes/scene1.mp4","role":"background"}' # 展示内容的结构化数据（用于填充到组件），json格式
+          audio: stories/story1/narration1/speech.wav # 旁白音频
+          scene_id: scene1 # 对应画面单元ID
+        - total_frame: 40
+          remotion_component: StatCounter
+          remotion_data: '{"heading":"AI Milestone","items":[{"value":1956,"suffix":"","label":"AI concept proposed","icon":"lightbulb"}]}'
+          audio: stories/story1/narration1/speech.wav
+          scene_id: scene2

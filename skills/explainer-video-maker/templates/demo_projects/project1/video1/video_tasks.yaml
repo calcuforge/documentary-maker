@@ -1,6 +1,6 @@
 task_group_list: # ai生成任务组列表，按workflow_type分组，包含有依赖任务的组靠后放
   - task_group_ordinal: 1 # 任务组序号，递增，小的先执行，
-    workflow_code: z_image_fp16_step4
+    workflow_code: z_image_fp16
     tasks:
       - ordinal: 1 # 任务序号，全局唯一
         scene_id: scene1 # 所属画面单元的ID

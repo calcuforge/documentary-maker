@@ -59,11 +59,11 @@ dependence_paths:
   remotion_template: ../remotion-video-template
   comfyui_scheduler: ../../comfyui-scheduler
 subtitle:
-  font_size: 20,
-  primary_color: "&H00333333",
-  outline_color: "&H00FFFFFF",
-  outline: 2,
-  alignment: 2,
+  font_size: 20
+  primary_color: "&H00333333"
+  outline_color: "&H00FFFFFF"
+  outline: 2
+  alignment: 2
   marginV: 6
 rss_source_list:
   - url: xxx
