@@ -7,7 +7,7 @@ stories: # 故事单元列表
         scene_list: # 画面单元列表
           - intent: 历史背景介绍  # 表达意图
             id: scene1 # 画面ID，全局唯一
-            percent: 30 # 画面单元在旁白单元的占比，单位%
+            percent: 30 # 画面单元在旁白单元的时长占比，单位%
             data: "" # 非AIGC画面展示的数据
             text: "" # 非AIGC画面展示的文本
             visual_content: 1950年代的计算机实验室，科学家围绕大型计算机进行研究，复古胶片风格，实验室灯光昏黄，体现人工智能早期探索阶段 # AIGC画面要展示的内容（非提示词）
@@ -18,4 +18,4 @@ stories: # 故事单元列表
             asset_path: "" # 资产文件路径
             workflows: # 生成资产所用的comfyui工作流列表
               - workflow_type: text_to_image
-              - workflow_text: image_to_video
+              - workflow_type: image_to_video
