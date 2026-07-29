@@ -43,6 +43,7 @@ for all scene units under each narration unit.
 
 - [Prerequisites](#prerequisites)
 - [Project Management](#project-management)
+- [Execution Modes](#execution-modes) — Auto (default) vs Manual
 - [Workflow (9 Steps)](#workflow)
 - [Hard Rules](#hard-rules)
 - [References](#references)
@@ -80,6 +81,39 @@ External dependencies:
 
 To determine reuse: compare `project.video_style`, `project.target_audience`,
 and `video.resolution`/`video.orientation`. If all match, reuse.
+
+---
+
+## Execution Modes
+
+### Auto Mode (default)
+
+The agent makes **all decisions autonomously** across all 9 steps. No user
+interaction is required until the final video is ready. Infer sensible
+defaults from the user's request (language, style, audience, duration).
+
+### Manual Mode
+
+The agent **pauses for user confirmation** at key points:
+
+| When | What to ask / report |
+|------|---------------------|
+| **Before Step 1** (project_config generation) | Ask user to confirm: video_style, target_audience, language, orientation, resolution, duration, tts backend |
+| **Before Step 2** (topic selection) | Present the chosen topic (auto) or confirm the user's topic; ask user to approve before proceeding |
+| **After each step completes** | Report which artifacts were generated (file paths), then wait for user confirmation before starting the next step |
+
+In manual mode, never proceed to the next step until the user explicitly
+confirms (e.g., "ok", "continue", "next", "确认", "继续").
+
+### Mode Detection
+
+- **Step 1:** project_config.yaml does not yet exist. If the user explicitly
+  requests manual interaction ("I want to control each step", "interactive",
+  "手动模式"), run Step 1 in manual mode (ask before creating the config).
+  Otherwise default to auto. Write the chosen mode into `project.creation_mode`.
+- **Step 2 onwards:** Read `project.creation_mode` from project_config.yaml to
+  determine behavior. Do NOT rely on conversational memory — always re-read the
+  field from the file.
 
 ---
 

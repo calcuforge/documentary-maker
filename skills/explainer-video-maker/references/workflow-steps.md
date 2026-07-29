@@ -12,11 +12,32 @@ Structure hierarchy: **Story → Narration → Scene**
 - 1 narration unit contains N scene units
 - Scene units split the narration duration by `percent`
 
+### Execution Modes
+
+| Mode | Behavior |
+|------|----------|
+| **Auto** (default) | Agent decides everything autonomously. No pauses. Runs Steps 1-9 end-to-end. |
+| **Manual** | Agent pauses for confirmation at: (1) before generating project_config.yaml, (2) before topic selection, (3) after every step completes. |
+
+**Mode detection:**
+- **Step 1:** `project_config.yaml` does not exist yet. If the user explicitly requests manual interaction ("interactive", "手动模式", "I want to control each step"), run in manual mode. Otherwise default to auto. Write the decision into `project.creation_mode`.
+- **Step 2 onwards:** Always read `project.creation_mode` from `project_config.yaml` to determine behavior. Do NOT rely on conversational memory — re-read the field from the file at each step boundary.
+
+**Manual mode protocol:**
+- Before Step 1: ask the user to confirm project parameters (style, audience, language, orientation, resolution, duration, TTS backend).
+- Before Step 2: present the topic choice and wait for approval.
+- After each step: report generated artifacts (list file paths), then wait for the user to say "continue" / "确认" / "ok" before proceeding.
+- Never skip a confirmation gate in manual mode.
+
 ---
 
 ## Step 1: Project Initialization
 
 **When:** First video request, or when category/parameters differ from existing projects.
+
+> **Manual mode:** Before generating project_config.yaml, present all configurable
+> fields to the user and ask for confirmation. Do NOT create the file until the
+> user approves the parameters.
 
 **What to do:**
 
@@ -66,6 +87,9 @@ Structure hierarchy: **Story → Narration → Scene**
 ## Step 2: Define Topic Direction
 
 **When:** Every new video.
+
+> **Manual mode:** Present the topic (auto-selected or user-specified) and ask
+> the user to confirm before proceeding. In auto mode, proceed directly.
 
 **What to do:**
 
@@ -347,6 +371,41 @@ Structure hierarchy: **Story → Narration → Scene**
    ```
 
 3. Verify the output file exists and is non-empty.
+
+---
+
+## Step Completion Reporting (Manual Mode)
+
+In manual mode, after each step finishes, report artifacts and wait for user
+confirmation. Use this template:
+
+```
+✅ Step {N} complete: {step name}
+
+Generated artifacts:
+- {file_path_1}
+- {file_path_2}
+...
+
+{Optional: key summary, e.g. "3 stories, 8 narrations, 15 scenes" or
+"TTS generated 8 audio files, total duration 4:32"}
+
+Shall I proceed to Step {N+1}: {next step name}?
+```
+
+Per-step artifact summary:
+
+| Step | Artifacts to report |
+|------|-------------------|
+| 1 | `project_config.yaml`, `voice_file.wav` (if generated) |
+| 2 | `video_config.yaml` (show the chosen topic) |
+| 3 | `search_results/result{N}.md` (list all, count of results) |
+| 4 | `video_struct.yaml` (story/narration/scene counts) |
+| 5 | `speech.wav` files (count, total duration) |
+| 6 | `video_tasks.yaml` (task group count, total tasks) |
+| 7 | `scenes/origin_*` + upscaled files (count) |
+| 8 | `remotion_sections.yaml` (section count) |
+| 9 | `result.mp4` (file size, duration) |
 
 ---
 
