@@ -1,6 +1,6 @@
 task_group_list: # ai生成任务组列表，按workflow_type分组，包含有依赖任务的组靠后放
   - task_group_ordinal: 1 # 任务组序号，递增，小的先执行，
-    workflow_type: text_to_image
+    workflow_code: z_image_fp16_step4
     tasks:
       - ordinal: 1 # 任务序号，全局唯一
         scene_id: scene1 # 所属画面单元的ID
@@ -11,7 +11,7 @@ task_group_list: # ai生成任务组列表，按workflow_type分组，包含有�
         payload: '{"prompt":"这是文生图提示词2","width":1920,"height":1080}'
         dependent_task: 0
   - task_group_ordinal: 2
-    workflow_type: image_to_video
+    workflow_code: ltx2.3_i2v_int8
     tasks:
       - ordinal: 3
         scene_id: scene1
@@ -22,7 +22,7 @@ task_group_list: # ai生成任务组列表，按workflow_type分组，包含有�
         dependent_task: 2
         payload: '{"prompt":"这是图生视频提示词2","width":1920,"height":1080,"total_frame":120,"image_file":"$task2"}'
   - task_group_ordinal: 3
-    workflow_type: text_to_video
+    workflow_code: ltx2.3_t2v_int8
     tasks:
       - ordinal: 5
         scene_id: scene1

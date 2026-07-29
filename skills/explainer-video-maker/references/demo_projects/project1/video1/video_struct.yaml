@@ -17,7 +17,8 @@ stories: # 故事单元列表
             asset_generation_method: aigc # 资产生成方式，aigc或none
             type: video # AIGC内容类型，image、video或none
             remotion_component: AssetVideo # remotion渲染组件
-            asset_path: "" # 资产文件路径
+            origin_assert_path: "" # aigc生产的资产文件路径
+            asset_path: "" # 放大后的资产文件路径
             workflows: # 生成资产所用的comfyui工作流列表
               - workflow_type: text_to_image
               - workflow_type: image_to_video
