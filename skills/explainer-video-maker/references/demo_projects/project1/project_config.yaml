@@ -1,0 +1,64 @@
+project:
+  name: my-project
+  project_root_path: /path/to/projects/my-project # project root path
+  creation_mode: auto # auto — pipeline runs end-to-end. manual — each AI product waits for user confirmation.
+  language: zh-CN  # Narration language: zh-CN | en-US.
+video:
+  orientation: horizontal # horizontal (16:9) | vertical (9:16).
+  resolution: 1080p # 1080p (1920x1080 horizontal, 1080x1920 vertical) | 4k (3840x2160 / 2160x3840).
+  fps: 24
+aigc:
+  # speed:   image at 1280x720, video at 854x480, then upscale to target.
+  # quality: image at 1920x1080 (skip image upscale if target 1080p), video at 1280x720, upscale to target.
+  quality_tier: speed
+  seed: 0 # 全局随机种子
+tts:
+  # ── Backend selection ──────────────────────────────────────────────────
+  #   comfyui_indextts — ComfyUI index_tts_2 workflow (default).
+  #   http_server      — HTTP multipart TTS server (see tts.http below).
+  #
+  # Both `tts synth` and `tts run` auto-read this field — no --backend flag
+  # needed in commands. Set once, all TTS calls route automatically.
+  backend: comfyui_indextts
+    # ── Reference voice (required for both backends) ───────────────────────
+    # Generated once per project by Step 0 (voice design). All videos in the
+    # project share the same voice. Auto-resolved to:
+    #   projects/{name}/voice_reference.wav
+    # if left as empty and the file exists.
+  voice_file: ""
+  voice_instruct: "" # voice design instrust
+    # ── HTTP TTS server config (only used when backend: http_server) ───────
+    # Protocol: POST multipart/form-data
+    #   Fields:  input      — narration text (form field)
+    #            speed      — speech speed multiplier (form field, float as string)
+    #            voice_file — reference WAV (file upload, audio/wav)
+    #   Response: raw audio bytes (HTTP 200 → body is the WAV data)
+    #
+    # The URL is resolved via os.path.expandvars(). ${BACKEND_PROXY_ENDPOINT}
+    # must be set in the shell environment before running any TTS command.
+  http:
+      url: ${BACKEND_PROXY_ENDPOINT}/v1/audio/speech
+      speed: 1.0              # 0.25–4.0, passed as form field
+theme:
+  # These override the matching fields in themes/<category>.yaml.
+  # Explicit fields here win; everything else falls back to the theme preset.
+  primary_color: "#4f6ef7"
+  background_color: "#ffffff"
+  text_color: "#1a1a1a"
+  accent_color: "#FF6B6B"
+  transition_type: fade   # fade | slide | wipe | none
+  transition_duration: 12 # frames @ fps
+content:
+  target_duration_seconds: 360
+dependence_paths:
+  # remotion_template: relative to the explainer-video-maker repo root, or an
+  # absolute path. The template sits next to the repo root by default.
+  remotion_template: ../remotion-video-template
+  comfyui_scheduler: ../../comfyui-scheduler
+subtitle:
+  font_size: 20,
+  primary_color: "&H00333333",
+  outline_color: "&H00FFFFFF",
+  outline: 2,
+  alignment: 2,
+  marginV: 6

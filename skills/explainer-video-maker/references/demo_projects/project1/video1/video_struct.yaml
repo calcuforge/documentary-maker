@@ -1,0 +1,21 @@
+stories: # 故事单元列表
+  - id: story1  # 故事ID，全局唯一
+    name: 人工智能的崛起 # 故事名称
+    narration_list: # 旁白单元列表
+      - id: narration1 # 旁白ID，全局唯一
+        content: 1956年，人工智能这一概念首次被提出，科学家开始探索让机器拥有类似人类的思考能力。 # 旁白内容
+        scene_list: # 画面单元列表
+          - intent: 历史背景介绍  # 表达意图
+            id: scene1 # 画面ID，全局唯一
+            percent: 30 # 画面单元在旁白单元的占比，单位%
+            data: "" # 非AIGC画面展示的数据
+            text: "" # 非AIGC画面展示的文本
+            visual_content: 1950年代的计算机实验室，科学家围绕大型计算机进行研究，复古胶片风格，实验室灯光昏黄，体现人工智能早期探索阶段 # AIGC画面要展示的内容（非提示词）
+            is_aigc_scene: true # 是否AIGC生成的画面
+            asset_generation_method: aigc # 资产生成方式，aigc或none
+            type: video # AIGC内容类型，image、video或none
+            remotion_component: AssetVideo # remotion渲染组件
+            asset_path: "" # 资产文件路径
+            workflows: # 生成资产所用的comfyui工作流列表
+              - workflow_type: text_to_image
+              - workflow_text: image_to_video
