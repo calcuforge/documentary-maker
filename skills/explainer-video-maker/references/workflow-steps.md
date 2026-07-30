@@ -233,9 +233,11 @@ projects/
    | medium (8-12min) | 5-7     | 25-30                 | ~10 min        |
    | long (15-20min) | 8-12    | 50-60                 | ~18 min        |
 
-   **Each scene's narration MUST be ≤ 50 characters** (roughly 1-2 short
-   sentences, ~10-12 seconds of speech). If a passage is longer, split it into
-   multiple scenes. This is enforced by `verify_video_struct.py`.
+   **Narration length:** each scene's narration MUST be **≤ 50 characters — a
+   ceiling, not a target** (enforced by `verify_video_struct.py`). Aim for a
+   substantive line of roughly **20-45 characters** and **vary the length**
+   across scenes; do NOT reduce them all to 10-character fragments. If a passage
+   exceeds 50 characters, split it into multiple scenes.
 
    **Build the structure in segments — do NOT generate everything at once:**
    - **First pass (all at once):** lay out the whole `stories` list in one go —
@@ -252,7 +254,9 @@ projects/
    - **Data/text scenes** (`is_aigc_scene: false`): filled with text/data directly into Remotion components
 
 3. **Write narration content** — MUST follow [natural-narration.md](natural-narration.md):
-   - **≤ 50 characters per narration** — split longer text into more scenes
+   - **≤ 50 characters per narration (a ceiling, not a target)** — aim for ~20-45
+     chars that carry a full thought, vary length across scenes, and do NOT make
+     them all tiny fragments; split longer text into more scenes
    - No AI filler phrases
    - No rule-of-three abuse
    - Vary sentence length

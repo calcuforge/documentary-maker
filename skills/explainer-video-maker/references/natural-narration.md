@@ -7,10 +7,13 @@ A narration script is **heard**, not read. AI-generated prose has predictable
 tells that make it sound like a machine reading a press release. This guide
 removes those tells.
 
-> **Hard length limit:** each scene's narration (`narration.content`) MUST be
-> **≤ 50 characters**. Short narrations keep the pace tight and pair cleanly with
-> one visual per scene. If a passage exceeds 50 characters, split it into
-> multiple scenes. `verify_video_struct.py` rejects anything longer.
+> **Length budget:** each scene's narration (`narration.content`) MUST be
+> **≤ 50 characters — but that is a ceiling, not a target.** Write a complete,
+> substantive thought: aim for roughly **20-45 characters**, and **vary the
+> length** across scenes (mix fuller lines with the occasional short punch).
+> Do NOT chop every narration into a 10-character fragment — a line should carry
+> real information. If a passage exceeds 50 characters, split it into multiple
+> scenes. `verify_video_struct.py` rejects anything over 50.
 
 ---
 
@@ -124,4 +127,5 @@ Before finalizing narration content, verify:
 - [ ] Attributions are named or removed
 - [ ] Numbers formatted for TTS
 - [ ] Ending is a concrete fact, not "未来可期"
-- [ ] Each scene's narration is ≤ 50 characters (split longer text into more scenes)
+- [ ] Each narration is ≤ 50 characters (split longer text into more scenes)
+- [ ] Narrations are NOT all tiny fragments — most carry a full thought (~20-45 chars) and lengths vary across scenes
