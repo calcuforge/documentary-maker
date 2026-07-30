@@ -161,6 +161,53 @@ def collect_narration_units(video_struct: dict) -> list[dict]:
     return units
 
 
+def _run_voice_design(voice_instruct: str, output_path: str) -> str:
+    """Generate a reference voice via ominivoice_voice_design workflow.
+
+    Returns the output audio file path.
+    """
+    content = "这是一个语音参考样本，用于确定解说视频的旁白音色。" if "男" in voice_instruct or "女" in voice_instruct else \
+              "This is a voice reference sample for narration."
+
+    inputs = json.dumps({
+        "voice_instruct": voice_instruct,
+        "content": content,
+    }, ensure_ascii=False)
+
+    cmd = ["comfyui-scheduler", "run", "-w", "ominivoice_voice_design", "-i", inputs]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Voice design timed out")
+    except FileNotFoundError:
+        raise RuntimeError("comfyui-scheduler not found on PATH")
+
+    if result.returncode != 0:
+        raise RuntimeError(f"Voice design failed: {result.stderr or result.stdout[:300]}")
+
+    try:
+        output = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        raise RuntimeError(f"Invalid JSON from voice design: {result.stdout[:200]}")
+
+    if output.get("status") != "ok":
+        raise RuntimeError(f"Voice design error: {output.get('msg', 'unknown')}")
+
+    files = output.get("data", {}).get("files", [])
+    if not files:
+        raise RuntimeError("No output files from voice design")
+
+    file_url = files[0].get("url", "")
+    if not file_url:
+        raise RuntimeError("No URL in voice design output")
+
+    from lib.net import download_file
+    download_file(file_url, output_path)
+
+    return output_path
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run TTS synthesis and calculate frames")
     parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
@@ -181,22 +228,37 @@ def main() -> None:
     speed = tts_config.get("speed", 1.0)
     fps = project_config.get("video", {}).get("fps", 24)
 
-    # Resolve voice file
+    # Resolve voice file — auto-generate via voice design if missing
+    project_root = project_config.get("project", {}).get("project_root_path", "")
     voice_file = tts_config.get("voice_file", "")
-    if not voice_file:
-        # Auto-resolve: projects/{name}/voice_file.wav
-        project_root = project_config.get("project", {}).get("project_root_path", "")
-        if project_root:
-            candidate = Path(project_root) / "voice_file.wav"
-            if candidate.exists():
-                voice_file = str(candidate)
+    if not voice_file and project_root:
+        candidate = Path(project_root) / "voice_file.wav"
+        if candidate.exists():
+            voice_file = str(candidate)
+
     if not voice_file or not Path(voice_file).exists():
-        print(json.dumps({
-            "status": "error",
-            "msg": f"Voice reference file not found: '{voice_file}'. Set tts.voice_file in project_config.yaml",
-            "data": {},
-        }, ensure_ascii=False, indent=2))
-        sys.exit(1)
+        # Run voice design to generate a reference voice
+        voice_instruct = tts_config.get("voice_instruct", "")
+        if not voice_instruct:
+            lang = project_config.get("project", {}).get("language", "zh-CN")
+            voice_instruct = "男，中年，中音调" if lang == "zh-CN" else "male, middle-aged, moderate pitch"
+
+        voice_output = str(Path(project_root) / "voice_file.wav") if project_root else ""
+        if not voice_output:
+            print(json.dumps({
+                "status": "error",
+                "msg": "Cannot auto-generate voice: project.project_root_path is not set",
+                "data": {},
+            }, ensure_ascii=False, indent=2))
+            sys.exit(1)
+
+        print(f"Voice file not found. Running voice design (instruct: {voice_instruct})...", file=sys.stderr)
+        voice_file = _run_voice_design(voice_instruct, voice_output)
+
+        # Update project_config.yaml with the generated voice file
+        tts_config["voice_file"] = voice_file
+        save_yaml(project_config, args.project_config)
+        print(f"Voice file generated and saved to project_config: {voice_file}", file=sys.stderr)
 
     # HTTP server config
     http_config = tts_config.get("http", {})

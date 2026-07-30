@@ -87,12 +87,13 @@ projects/
    - `video.fps` — typically `24`
    - `aigc.quality_tier` — `speed` (faster, lower res then upscale) or `quality`
    - `tts.backend` — `comfyui_indextts` or `http_server`
-   - `tts.voice_file` — leave empty if voice not yet designed
+   - `tts.voice_instruct` — **required**. Voice characteristics description (e.g., `男，中年，中音调` or `male, middle-aged, moderate pitch`)
+   - `tts.voice_file` — leave empty; auto-generated from `voice_instruct` in Step 5
    - `content.duration` — `short` (1-3min) / `medium` (3-7min) / `long` (7-15min)
    - `dependence_paths.remotion_template` — relative or absolute path to remotion-video-template
 
 3. Fields that can wait for later steps:
-   - `tts.voice_instruct` — Step 5 (or voice design step)
+   - `tts.voice_file` — Step 5 (auto-generated from `voice_instruct`)
    - `theme.*` — defaults are fine initially, customize before Step 8
    - `subtitle.*` — defaults are fine
    - `rss_source_list` — Step 3
@@ -377,6 +378,27 @@ projects/
    | AnimationDemo | `heading`, `type`, `color` |
    | AssetImage | `src`, `role`, `caption` |
    | AssetVideo | `src`, `role`, `muted` |
+
+   **Icon field usage** — Components `FeatureGrid`, `IconCard`, `StatCounter`,
+   `FlowChart` accept an `icon` field. Two formats are supported:
+
+   | Format | Example | Description |
+   |--------|---------|-------------|
+   | Lucide name | `zap`, `arrow-right`, `Lightbulb`, `trending-up` | Any [Lucide icon](https://lucide.dev/icons/) name, kebab-case or PascalCase |
+   | Emoji | `🚀`, `💡`, `📊` | Any emoji (≤4 chars), rendered as text |
+
+   Commonly used icons for explainer videos:
+
+   | Category | Icons |
+   |----------|-------|
+   | Tech | `cpu`, `code`, `server`, `database`, `cloud`, `wifi`, `smartphone` |
+   | Data | `bar-chart`, `trending-up`, `pie-chart`, `activity`, `percent` |
+   | People | `users`, `user`, `award`, `star`, `heart` |
+   | Process | `zap`, `rocket`, `target`, `check-circle`, `arrow-right` |
+   | Concepts | `lightbulb`, `book-open`, `globe`, `shield`, `key` |
+   | Business | `dollar-sign`, `briefcase`, `shopping-cart`, `package`, `truck` |
+
+   If an icon name is not found in Lucide, it renders as `[name]` placeholder text.
 
 3. **Reference:** [demo_projects/project1/video1/remotion_sections.yaml](demo_projects/project1/video1/remotion_sections.yaml)
 
