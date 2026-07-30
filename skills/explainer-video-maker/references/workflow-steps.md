@@ -283,6 +283,11 @@ projects/
    - Calculate `total_frame = ceil(duration × fps)`
    - Update `video_struct.yaml` `narration.audio_path` (pointing to .mp3) and `narration.total_frame`
 
+   **Idempotent:** re-running skips narrations whose audio already exists
+   (reported as `skipped`) — safe to resume after an interruption. Pass
+   `--force` to regenerate ALL audio. Use `--force` after editing any
+   `narration.content`, otherwise the stale audio is kept.
+
 2. **Validate:**
    ```bash
    python3 "${SKILL_DIR}/scripts/verify/verify_audio.py" --video-struct /abs/path/video_struct.yaml
@@ -349,7 +354,10 @@ projects/
    - `--total-timeout 7200` (default): entire script wall-clock timeout (2h). **Increase for longer videos with many tasks.**
    - Executes task groups in order, resolves `$taskN` dependencies,
      saves outputs as `origin_{scene_id}.{ext}`, and updates `origin_asset_path`.
-   - Already-completed tasks are automatically skipped (resume-safe).
+   - **Idempotent:** tasks whose `origin_{scene_id}.{ext}` already exists
+     (non-empty) are skipped (reported as `skipped`) — safe to resume after an
+     interruption. Pass `--force` to re-execute ALL tasks. Use `--force` (or
+     `--retry`) after editing task payloads, otherwise the stale outputs are kept.
 
    **Partial retry ("抽卡"):** To re-generate specific tasks (e.g., user is
    unsatisfied with a scene's result in manual mode):
