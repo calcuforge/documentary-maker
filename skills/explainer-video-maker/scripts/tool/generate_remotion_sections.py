@@ -187,7 +187,7 @@ def main() -> None:
             "transition_duration": float(theme_cfg.get("transition_duration", 12)),
         },
         "subtitle": {
-            "font_size": subtitle_cfg.get("font_size", 20),
+            "font_size": subtitle_cfg.get("font_size", 26),
             "primary_color": subtitle_cfg.get("primary_color", "&H00333333"),
             "outline_color": subtitle_cfg.get("outline_color", "&H00FFFFFF"),
             "outline": subtitle_cfg.get("outline", 2),

@@ -11,7 +11,7 @@ theme:
   transition_type: fade   # fade | slide | wipe | none
   transition_duration: 12.0
 subtitle:
-  font_size: 20
+  font_size: 32
   primary_color: "&H00333333"
   outline_color: "&H00FFFFFF"
   outline: 2

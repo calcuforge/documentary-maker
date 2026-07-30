@@ -70,9 +70,9 @@ dependence_paths:
   comfyui_scheduler: ../../comfyui-scheduler
 subtitle:
   # font_size: adjust based on resolution and orientation. Do NOT go too small.
-  #   1080p horizontal → 20-24    1080p vertical → 28-34
-  #   4K horizontal   → 36-44    4K vertical   → 48-56
-  font_size: 24
+  #   1080p horizontal → 26-32    1080p vertical → 36-44
+  #   4K horizontal   → 47-57    4K vertical   → 62-73
+  font_size: 32
   primary_color: "&H00333333"
   outline_color: "&H00FFFFFF"
   outline: 2
