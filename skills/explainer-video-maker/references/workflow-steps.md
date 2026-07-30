@@ -328,6 +328,25 @@ projects/
    - `--total-timeout 7200` (default): entire script wall-clock timeout (2h)
    - Executes task groups in order, resolves `$taskN` dependencies,
      saves outputs as `origin_{scene_id}.{ext}`, and updates `origin_asset_path`.
+   - Already-completed tasks are automatically skipped (resume-safe).
+
+   **Partial retry ("抽卡"):** To re-generate specific tasks (e.g., user is
+   unsatisfied with a scene's result in manual mode):
+   ```bash
+   python3 "${SKILL_DIR}/scripts/tool/run_aigc.py" \
+     --project-config /abs/path/project_config.yaml \
+     --video-struct /abs/path/video_struct.yaml \
+     --video-tasks /abs/path/video_tasks.yaml \
+     --retry 1,3
+   ```
+   - `--retry` accepts comma-separated task ordinals from video_tasks.yaml.
+   - If a retried task has dependents (other tasks with `dependent_task` pointing
+     to it), those dependents are **automatically included** in the retry set
+     (transitive — the entire downstream chain re-executes).
+   - The script deletes origin files for the retry set, then runs the normal
+     pipeline. Unaffected tasks are skipped (their files still exist).
+   - After retry, re-run `run_upscale.py` to regenerate upscaled assets for the
+     affected scenes.
 
 2. Run upscale (skips automatically if origin dimensions >= target):
    ```bash

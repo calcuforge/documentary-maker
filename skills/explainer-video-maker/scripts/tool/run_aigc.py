@@ -98,6 +98,33 @@ def run_single_task(
     return output_path
 
 
+def collect_retry_set(task_groups: list[dict], retry_ordinals: list[int]) -> set[int]:
+    """Build the full set of ordinals to re-execute.
+
+    Includes the requested ordinals plus all transitive dependents
+    (tasks whose dependent_task chain leads back to a retried task).
+    """
+    # Build dependency map: ordinal -> dependent_task
+    all_tasks = []
+    for group in task_groups:
+        all_tasks.extend(group.get("tasks", []))
+
+    retry_set = set(retry_ordinals)
+
+    # Iteratively find dependents until no new ones are found
+    changed = True
+    while changed:
+        changed = False
+        for task in all_tasks:
+            ordinal = task.get("ordinal", 0)
+            dep = task.get("dependent_task", 0)
+            if dep in retry_set and ordinal not in retry_set:
+                retry_set.add(ordinal)
+                changed = True
+
+    return retry_set
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Execute AIGC tasks via comfyui-scheduler")
     parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
@@ -108,7 +135,10 @@ def main() -> None:
                         help="Per-task subprocess timeout in seconds (default 30min)")
     parser.add_argument("--total-timeout", type=int, default=7200,
                         help="Total script wall-clock timeout in seconds (default 2h)")
-    parser.add_argument("--force", action="store_true", help="Force re-execute even if output already exists")
+    parser.add_argument("--force", action="store_true", help="Force re-execute all tasks even if output exists")
+    parser.add_argument("--retry", default="",
+                        help="Comma-separated task ordinals to retry (e.g., '1,3'). "
+                             "Dependent tasks are automatically included.")
     args = parser.parse_args()
 
     from lib.net import require_abs
@@ -127,6 +157,36 @@ def main() -> None:
 
     # Sort groups by ordinal
     task_groups.sort(key=lambda g: g.get("task_group_ordinal", 0))
+
+    # Handle --retry: delete origin files for retry tasks + dependents
+    retry_ordinals: list[int] = []
+    if args.retry:
+        retry_ordinals = [int(x.strip()) for x in args.retry.split(",") if x.strip()]
+
+    retry_set: set[int] = set()
+    if retry_ordinals:
+        retry_set = collect_retry_set(task_groups, retry_ordinals)
+        # Delete origin files so the skip logic will re-execute them
+        deleted = 0
+        for group in task_groups:
+            workflow_code = group.get("workflow_code", "")
+            for task in group.get("tasks", []):
+                if task.get("ordinal") not in retry_set:
+                    continue
+                scene_id = task.get("scene_id", "")
+                ctx = find_scene_context(video_struct, scene_id)
+                if not ctx:
+                    continue
+                ext = get_extension_for_workflow(workflow_code)
+                origin_file = video_dir / "stories" / ctx["story_id"] / ctx["narration_id"] / "scenes" / f"origin_{scene_id}.{ext}"
+                if origin_file.exists():
+                    origin_file.unlink()
+                    deleted += 1
+        extra = retry_set - set(retry_ordinals)
+        print(f"Retry mode: {len(retry_ordinals)} requested + {len(extra)} dependent(s) = {len(retry_set)} task(s) to re-execute", file=sys.stderr)
+        if extra:
+            print(f"  Auto-included dependents: {sorted(extra)}", file=sys.stderr)
+        print(f"  Deleted {deleted} existing origin file(s)", file=sys.stderr)
 
     # Track task outputs: ordinal -> output file path
     task_outputs: dict[int, str] = {}
