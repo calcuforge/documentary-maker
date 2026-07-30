@@ -50,6 +50,8 @@ theme:
   transition_type: fade # fade | slide | wipe | none
   transition_duration: 12 # frames @ fps
 content:
+  # duration: controls the number of chapters (stories) only —
+  #   short = 2-3 chapters, medium = 5-7 chapters, long = 8-12 chapters.
   duration: medium
   # min_story_chars: minimum character count for each chapter's narration script
   #   (stories/{story_id}/script.md). Enforced by verify_story_scripts.py (Step 5).

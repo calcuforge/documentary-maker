@@ -225,14 +225,14 @@ projects/
    This is cheap and locks in the overall narrative arc; the scene-level detail
    comes later (Step 6).
 
-   **Content volume reference** (from `content.duration` in project_config.yaml).
-   Since 1 scene = 1 narration, the scene count equals the narration count:
+   **Chapter count reference** — `content.duration` in project_config.yaml
+   controls the number of chapters (stories) only:
 
-   | Duration | Stories | Scenes (= narrations) | Approx. length |
-   |----------|---------|-----------------------|----------------|
-   | short (2-5min) | 2-3     | 10-15                 | ~4 min         |
-   | medium (8-12min) | 5-7     | 25-30                 | ~10 min        |
-   | long (15-20min) | 8-12    | 50-60                 | ~18 min        |
+   | Duration | Stories (章节数) |
+   |----------|------------------|
+   | short    | 2-3              |
+   | medium   | 5-7              |
+   | long     | 8-12             |
 
 2. Create `video_struct.yaml` with the chapter list ONLY — no `scene_list` yet:
    ```yaml
