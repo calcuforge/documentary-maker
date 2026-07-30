@@ -69,7 +69,10 @@ dependence_paths:
   remotion_template: ../remotion-video-template
   comfyui_scheduler: ../../comfyui-scheduler
 subtitle:
-  font_size: 20
+  # font_size: adjust based on resolution and orientation. Do NOT go too small.
+  #   1080p horizontal → 20-24    1080p vertical → 28-34
+  #   4K horizontal   → 36-44    4K vertical   → 48-56
+  font_size: 24
   primary_color: "&H00333333"
   outline_color: "&H00FFFFFF"
   outline: 2
