@@ -32,7 +32,7 @@ tts:
   # voice_instruct: REQUIRED. Describes the target voice characteristics.
   #   zh-CN: "男，中年，中音调"   en-US: "male, middle-aged, moderate pitch"
   #   See comfyui-scheduler/doc/workflow.md for the valid voice attributes.
-  voice_instruct: "男，中年，超低音调"
+  voice_instruct: "男，中年，极低音调"
   # HTTP TTS server config (only used when backend: http_server).
   # Protocol: POST multipart/form-data (fields: input, speed, voice_file).
   # The URL is resolved via os.path.expandvars(); ${BACKEND_PROXY_ENDPOINT}
