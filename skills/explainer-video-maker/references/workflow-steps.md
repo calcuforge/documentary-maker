@@ -233,6 +233,15 @@ projects/
    sentences, ~10-12 seconds of speech). If a passage is longer, split it into
    multiple scenes. This is enforced by `verify_video_struct.py`.
 
+   **Build the structure in segments — do NOT generate everything at once:**
+   - **First pass (all at once):** lay out the whole `stories` list in one go —
+     just each story's `id` + `name`. This is cheap and locks in the overall arc.
+   - **Second pass (one story at a time):** then design the `scene_list` for
+     **one story at a time** — its scenes, narrations, and expression methods —
+     and finish it before moving to the next story. Do NOT generate every scene
+     of every story in a single pass. Focusing on one story at a time produces
+     richer, more detailed scenes and narrations.
+
 2. For each scene, decide the expression method using
    [expression_intent_mapping.md](expression_intent_mapping.md):
    - **AIGC scenes** (`is_aigc_scene: true`): need AI-generated imagery/video
@@ -246,7 +255,8 @@ projects/
    - State facts directly
    - Write for the ear, not the eye
 
-4. Create `video_struct.yaml` with these fields per scene:
+4. Create `video_struct.yaml`, working **one story's `scene_list` at a time**
+   (per the segmented approach above). Fill these fields per scene:
    - Fill NOW: `id`, `intent`, `is_aigc_scene`, `type`, `remotion_component`, `visual_content`, `data`, `text`, `workflows`, `narration.id`, `narration.content`
    - Leave EMPTY (auto-filled later): `asset_path`, `origin_asset_path`, `narration.total_frame`, `narration.audio_path`
 
