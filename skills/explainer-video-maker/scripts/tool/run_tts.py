@@ -60,6 +60,7 @@ def synth_comfyui_indextts(
     voice_file: str,
     output_path: str,
     speed: float = 1.0,
+    timeout: int = 3600,
 ) -> str:
     """Generate speech using comfyui-scheduler index_tts_2 workflow.
 
@@ -73,9 +74,9 @@ def synth_comfyui_indextts(
     cmd = ["comfyui-scheduler", "run", "-w", "index_tts_2", "-i", inputs]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=tts_timeout)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
-        raise RuntimeError(f"TTS timed out after {tts_timeout}s for: {content[:50]}...")
+        raise RuntimeError(f"TTS timed out after {timeout}s for: {content[:50]}...")
     except FileNotFoundError:
         raise RuntimeError("comfyui-scheduler not found on PATH")
 
@@ -160,7 +161,7 @@ def collect_narration_units(video_struct: dict) -> list[dict]:
     return units
 
 
-def _run_voice_design(voice_instruct: str, output_path: str) -> str:
+def _run_voice_design(voice_instruct: str, output_path: str, timeout: int = 3600) -> str:
     """Generate a reference voice via ominivoice_voice_design workflow.
 
     Returns the output audio file path.
@@ -176,9 +177,9 @@ def _run_voice_design(voice_instruct: str, output_path: str) -> str:
     cmd = ["comfyui-scheduler", "run", "-w", "ominivoice_voice_design", "-i", inputs]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=tts_timeout)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
-        raise RuntimeError(f"Voice design timed out after {tts_timeout}s")
+        raise RuntimeError(f"Voice design timed out after {timeout}s")
     except FileNotFoundError:
         raise RuntimeError("comfyui-scheduler not found on PATH")
 
@@ -254,7 +255,7 @@ def main() -> None:
             sys.exit(1)
 
         print(f"Voice file not found. Running voice design (instruct: {voice_instruct})...", file=sys.stderr)
-        voice_file = _run_voice_design(voice_instruct, voice_output)
+        voice_file = _run_voice_design(voice_instruct, voice_output, timeout=tts_timeout)
 
         # Update project_config.yaml with the generated voice file
         tts_config["voice_file"] = voice_file
@@ -315,6 +316,7 @@ def main() -> None:
                     voice_file=voice_file,
                     output_path=unit["output_path"],
                     speed=speed,
+                    timeout=tts_timeout,
                 )
             elif backend == "http_server":
                 synth_http_server(
