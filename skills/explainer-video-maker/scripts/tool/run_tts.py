@@ -216,13 +216,23 @@ def main() -> None:
 
     # Filter units that need generation
     to_generate = []
+    skipped = 0
     for u in units:
-        audio_path = u["audio_path"]
-        if not args.force and audio_path and Path(audio_path).exists():
-            continue  # Skip existing
         # Output path: video_dir/stories/{story_id}/{narration_id}/speech.wav
         out_dir = video_dir / "stories" / u["story_id"] / u["narration_id"]
         out_path = str(out_dir / "speech.wav")
+
+        # Check both the YAML audio_path and the computed output path
+        audio_path = u["audio_path"]
+        already_exists = (
+            (audio_path and Path(audio_path).exists())
+            or Path(out_path).exists()
+        )
+        if not args.force and already_exists:
+            u["output_path"] = out_path if Path(out_path).exists() else audio_path
+            skipped += 1
+            continue
+
         u["output_path"] = out_path
         to_generate.append(u)
 
@@ -256,7 +266,8 @@ def main() -> None:
             return {"unit": unit, "error": str(e)}
 
     if to_generate:
-        print(f"Generating TTS for {len(to_generate)} narration unit(s) using backend: {backend}", file=sys.stderr)
+        print(f"Generating TTS for {len(to_generate)} narration unit(s) using backend: {backend}"
+              f" ({skipped} skipped, already exist)", file=sys.stderr)
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
             futures = {executor.submit(generate_one, u): u for u in to_generate}
             for future in concurrent.futures.as_completed(futures):
@@ -289,14 +300,14 @@ def main() -> None:
         print(json.dumps({
             "status": "error",
             "msg": f"TTS completed with {len(errors)} error(s)",
-            "data": {"generated": generated, "updated": updated_count, "errors": errors},
+            "data": {"generated": generated, "skipped": skipped, "updated": updated_count, "errors": errors},
         }, ensure_ascii=False, indent=2))
         sys.exit(1)
     else:
         print(json.dumps({
             "status": "ok",
-            "msg": f"TTS complete: {generated} generated, {updated_count} updated with frame counts",
-            "data": {"generated": generated, "updated": updated_count, "fps": fps},
+            "msg": f"TTS complete: {generated} generated, {skipped} skipped, {updated_count} updated with frame counts",
+            "data": {"generated": generated, "skipped": skipped, "updated": updated_count, "fps": fps},
         }, ensure_ascii=False, indent=2))
 
 

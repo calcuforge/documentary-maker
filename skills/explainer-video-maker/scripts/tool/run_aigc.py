@@ -105,6 +105,7 @@ def main() -> None:
     parser.add_argument("--video-tasks", required=True, help="Path to video_tasks.yaml")
     parser.add_argument("--workers", type=int, default=2, help="Concurrent tasks per group")
     parser.add_argument("--timeout", type=int, default=600, help="Per-task timeout (seconds)")
+    parser.add_argument("--force", action="store_true", help="Force re-execute even if output already exists")
     args = parser.parse_args()
 
     project_config = load_yaml(args.project_config)
@@ -166,14 +167,19 @@ def main() -> None:
             scenes_dir = video_dir / "stories" / ctx["story_id"] / ctx["narration_id"] / "scenes"
             output_path = str(scenes_dir / f"origin_{scene_id}.{ext}")
 
+            # Skip if output already exists (resume after interruption)
+            if not args.force and Path(output_path).exists() and Path(output_path).stat().st_size > 0:
+                return {"ordinal": ordinal, "scene_id": scene_id, "path": output_path, "error": None, "skipped": True}
+
             try:
                 result_path = run_single_task(workflow_code, payload, output_path, args.timeout)
-                return {"ordinal": ordinal, "scene_id": scene_id, "path": result_path, "error": None}
+                return {"ordinal": ordinal, "scene_id": scene_id, "path": result_path, "error": None, "skipped": False}
             except Exception as e:
                 return {"ordinal": ordinal, "error": str(e)}
 
         # Execute tasks in this group concurrently
         group_results = []
+        skipped = 0
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
             futures = {executor.submit(execute_task, t): t for t in tasks}
             for future in concurrent.futures.as_completed(futures):
@@ -184,11 +190,17 @@ def main() -> None:
                     print(f"    ERROR task {result['ordinal']}: {result['error']}", file=sys.stderr)
                 else:
                     task_outputs[result["ordinal"]] = result["path"]
-                    completed += 1
+                    if result.get("skipped"):
+                        skipped += 1
+                        print(f"    SKIP task {result['ordinal']} (already exists)", file=sys.stderr)
+                    else:
+                        completed += 1
                     # Update video_struct origin_asset_path
                     ctx = find_scene_context(video_struct, result["scene_id"])
                     if ctx:
                         ctx["scene"]["origin_asset_path"] = result["path"]
+
+        print(f"  Group {group_ordinal}: {completed} new, {skipped} skipped", file=sys.stderr)
 
     # Save updated video_struct
     save_yaml(video_struct, args.video_struct)

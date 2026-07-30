@@ -196,7 +196,6 @@ def main() -> None:
     print(f"Upscaling {len(scenes)} scene(s), magnification={magnification}x...", file=sys.stderr)
 
     errors = []
-    completed = 0
 
     def do_upscale(scene_info: dict) -> dict:
         origin = scene_info["origin_asset_path"]
@@ -204,6 +203,10 @@ def main() -> None:
         origin_p = Path(origin)
         output_name = origin_p.name.replace("origin_", "")
         output_path = str(origin_p.parent / output_name)
+
+        # Skip if upscaled output already exists
+        if not args.force and Path(output_path).exists() and Path(output_path).stat().st_size > 0:
+            return {"scene_id": scene_info["scene_id"], "path": output_path, "error": None, "skipped": True}
 
         try:
             result_path = upscale_asset(
@@ -219,18 +222,30 @@ def main() -> None:
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
         futures = {executor.submit(do_upscale, s): s for s in scenes}
+        upscaled = 0
+        skipped = 0
         for future in concurrent.futures.as_completed(futures):
             result = future.result()
             if result.get("error"):
                 errors.append(result)
                 print(f"  ERROR {result['scene_id']}: {result['error']}", file=sys.stderr)
+            elif result.get("skipped"):
+                skipped += 1
+                print(f"  SKIP {result['scene_id']} (already exists)", file=sys.stderr)
+                # Still update video_struct from disk
+                for s in scenes:
+                    if s["scene_id"] == result["scene_id"]:
+                        s["scene_ref"]["asset_path"] = result["path"]
+                        break
             else:
-                completed += 1
+                upscaled += 1
                 # Update video_struct
                 for s in scenes:
                     if s["scene_id"] == result["scene_id"]:
                         s["scene_ref"]["asset_path"] = result["path"]
                         break
+
+    print(f"  Upscale: {upscaled} new, {skipped} skipped", file=sys.stderr)
 
     # Save updated video_struct
     save_yaml(video_struct, args.video_struct)
@@ -239,14 +254,14 @@ def main() -> None:
         print(json.dumps({
             "status": "error",
             "msg": f"Upscale completed with {len(errors)} error(s)",
-            "data": {"completed": completed, "errors": errors},
+            "data": {"upscaled": upscaled, "skipped": skipped, "errors": errors},
         }, ensure_ascii=False, indent=2))
         sys.exit(1)
     else:
         print(json.dumps({
             "status": "ok",
-            "msg": f"Upscaled {completed} asset(s) at {magnification}x",
-            "data": {"completed": completed, "magnification": magnification},
+            "msg": f"Upscaled {upscaled} asset(s) at {magnification}x ({skipped} skipped)",
+            "data": {"upscaled": upscaled, "skipped": skipped, "magnification": magnification},
         }, ensure_ascii=False, indent=2))
 
 
