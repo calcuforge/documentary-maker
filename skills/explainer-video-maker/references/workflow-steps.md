@@ -73,9 +73,8 @@ projects/
 1. Create project directory under `projects/`. The directory name MUST be the
    video category (`video_style` value). If it already exists, append a number:
    ```
-   projects/documentary/       # first documentary project
-   projects/documentary2/      # second (different params)
-   projects/knowledge_sharing/ # different category
+   projects/air_crash_documentary/       # e.g., air crash documentary
+   projects/air_crash_documentary2/      # second project of same category
    ```
 
 2. Create `project_config.yaml` — fill these fields NOW:
@@ -102,7 +101,7 @@ projects/
    - `subtitle.*` — defaults are fine
    - `rss_source_list` — Step 3
 
-4. **Reference:** [demo_projects/project1/project_config.yaml](demo_projects/project1/project_config.yaml)
+4. **Reference:** [demo_projects/air_crash_documentary/project_config.yaml](demo_projects/air_crash_documentary/project_config.yaml)
 
 5. **Validate:**
    ```bash
@@ -144,7 +143,7 @@ projects/
    topic: <chosen topic title>
    ```
 
-5. **Reference:** [demo_projects/project1/video1/video_config.yaml](demo_projects/project1/video1/video_config.yaml)
+5. **Reference:** [demo_projects/air_crash_documentary/video1/video_config.yaml](demo_projects/air_crash_documentary/video1/video_config.yaml)
 
 ---
 
@@ -169,7 +168,7 @@ projects/
    ```bash
    python3 "${SKILL_DIR}/scripts/search_provider/search.py" \
      --query "Air France Flight 447 accident investigation" \
-     --output /abs/path/projects/project1/video1/search_results/result1.md
+     --output /abs/path/projects/air_crash_documentary/video1/search_results/result1.md
    ```
    - Sources auto-detected by locale (China: bing+baike, else: google+wikipedia)
    - Override with `--sources bing,baike`
@@ -181,7 +180,7 @@ projects/
      python3 "${SKILL_DIR}/scripts/search_provider/search_rss.py" \
        --feed-url "https://rsshub.app/36kr/newsflashes" \
        --keywords "GPU,pricing" \
-       --output /abs/path/projects/project1/video1/search_results/result2.md
+       --output /abs/path/projects/air_crash_documentary/video1/search_results/result2.md
      ```
    - If no suitable feeds, discover them:
      ```bash
@@ -238,7 +237,7 @@ projects/
 
 5. **Percent rule:** Within each narration unit, all scene `percent` values MUST sum to exactly 100.
 
-6. **Reference:** [demo_projects/project1/video1/video_struct.yaml](demo_projects/project1/video1/video_struct.yaml)
+6. **Reference:** [demo_projects/air_crash_documentary/video1/video_struct.yaml](demo_projects/air_crash_documentary/video1/video_struct.yaml)
 
 7. **Validate:**
    ```bash
@@ -306,7 +305,7 @@ projects/
 6. Use `$taskN` placeholder in payload to reference dependent task output.
 
 7. Create `video_tasks.yaml`:
-   **Reference:** [demo_projects/project1/video1/video_tasks.yaml](demo_projects/project1/video1/video_tasks.yaml)
+   **Reference:** [demo_projects/air_crash_documentary/video1/video_tasks.yaml](demo_projects/air_crash_documentary/video1/video_tasks.yaml)
 
 8. **Validate:**
    ```bash
@@ -431,7 +430,7 @@ projects/
 
    If an icon name is not found in Lucide, it renders as `[name]` placeholder text.
 
-3. **Reference:** [demo_projects/project1/video1/remotion_sections.yaml](demo_projects/project1/video1/remotion_sections.yaml)
+3. **Reference:** [demo_projects/air_crash_documentary/video1/remotion_sections.yaml](demo_projects/air_crash_documentary/video1/remotion_sections.yaml)
 
 4. **Validate:**
    ```bash
