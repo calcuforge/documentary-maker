@@ -18,8 +18,8 @@ aigc:
   # these sizes, then upscaled to the target video resolution if needed.
   origin_image_width: 1280
   origin_image_height: 720
-  origin_video_width: 1280
-  origin_video_height: 720
+  origin_video_width: 960
+  origin_video_height: 540
   seed: 0 # global random seed
 tts:
   # backend: comfyui_indextts — ComfyUI index_tts_2 workflow (default).
@@ -49,7 +49,7 @@ theme:
   transition_type: fade # fade | slide | wipe | none
   transition_duration: 12 # frames @ fps
 content:
-  duration: medium # short (1-3min) / medium (3-7min) / long (7-15min)
+  duration: medium
 render:
   concurrency: 1 # Remotion render concurrency (parallel browser tabs). Increase to speed up rendering.
 dependence_paths:

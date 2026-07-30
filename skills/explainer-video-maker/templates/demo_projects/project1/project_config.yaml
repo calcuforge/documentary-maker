@@ -60,7 +60,7 @@ theme:
   transition_type: fade   # fade | slide | wipe | none
   transition_duration: 12 # frames @ fps
 content:
-  duration: medium # short (1-3min) / medium (3-7min) / long (7-15min)
+  duration: medium # short (2-5min) / medium (8-12min) / long (15-20min)
 render:
   concurrency: 1 # Remotion render concurrency (number of parallel browser tabs). Increase to speed up rendering on multi-core machines.
 dependence_paths:

@@ -133,7 +133,10 @@ projects/
 
 **What to do:**
 
-1. Create video directory: `projects/{project_name}/video{N}/`
+1. Create a **new** video directory: `projects/{project_name}/video{N}/`.
+   Every video-making request gets its own directory — use the next available
+   `N` (`video1`, `video2`, ...). **Never reuse or overwrite an existing
+   `video{N}/`** for a new request.
 
 2. **Auto topic selection** (user only names a category):
    - The agent selects a specific topic that:
@@ -221,9 +224,9 @@ projects/
 
    | Duration | Stories | Scenes (= narrations) | Approx. length |
    |----------|---------|-----------------------|----------------|
-   | short (1-3min) | 1-2 | 5-10 | ~2 min |
-   | medium (3-7min) | 2-4 | 12-25 | ~5 min |
-   | long (7-15min) | 4-6 | 25-40 | ~10 min |
+   | short (2-5min) | 2-3     | 10-15                 | ~4 min         |
+   | medium (8-12min) | 5-7     | 25-30                 | ~10 min        |
+   | long (15-20min) | 8-12    | 50-60                 | ~18 min        |
 
    Each scene's narration should be 2-5 sentences (roughly 10-30 seconds of speech).
 
@@ -511,6 +514,10 @@ Per-step artifact summary:
 ---
 
 ## Resuming After Interruption
+
+> This applies only to continuing an **interrupted** pipeline for the *current*
+> video request (recovery). It is NOT reuse: a brand-new video-making request
+> always starts in a new `video{N}/` directory (see Step 2).
 
 If the pipeline is interrupted, inspect the video directory to determine
 where to resume:

@@ -81,14 +81,24 @@ already exists, a numeric suffix is appended automatically: `documentary`,
 to set the actual `project.name`, `project.video_style`, and other
 request-dependent fields.
 
+**Video directory — never reuse.** Every video-making request creates a NEW
+`video{N}/` directory (`video1`, `video2`, ...). Each time the user asks to make
+a video, create the next available `video{N}/`; never reuse or overwrite an
+existing one. (Resuming an *interrupted* pipeline continues the same in-progress
+`video{N}/` — that is recovery, not reuse.)
+
+**Project directory reuse** (the table below is about the *project* dir, not the
+video dir):
+
 | Situation | Action |
 |-----------|--------|
 | First video request | Run Step 1: create `projects/{video_style}/` |
-| Same category + same parameters | Reuse existing project, create a new `video{N}/` subdirectory |
+| Same category + same parameters | Reuse existing project, then create a new `video{N}/` inside it |
 | Different category or parameters | Run Step 1: create a new project directory |
 
-To determine reuse: compare `project.video_style`, `project.target_audience`,
-and `video.resolution`/`video.orientation`. If all match, reuse.
+To determine project reuse: compare `project.video_style`, `project.target_audience`,
+and `video.resolution`/`video.orientation`. If all match, reuse the project (but
+still create a new `video{N}/`).
 
 ### Project Output Layout
 
@@ -189,6 +199,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | Rule | Requirement |
 |------|-------------|
 | **Projects under workspace** | All project directories MUST be under `projects/` in the workspace. Never create outside. |
+| **New video dir per request** | Every video-making request creates a NEW `video{N}/` directory. Never reuse or overwrite an existing `video{N}/` — always pick the next available `N`. |
 | **Audio-master clock** | Each scene's narration audio duration determines that scene's total frames. `total_frame = ceil(audio_duration × fps)`. Never hand-estimate. |
 | **One scene = one narration** | Every scene carries exactly one nested `narration`. There is no separate narration layer and no `percent` splitting. |
 | **Locale-aware search** | Detect network locale. China → use Baidu Baike, Bing; elsewhere → Wikipedia, Google. |
