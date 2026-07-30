@@ -1,7 +1,7 @@
 # Natural Narration — Anti-Slop Rules for Spoken Scripts
 
-> **When to load:** During Step 4 (design video structure), when writing narration
-> content for each narration unit. Apply to every `content` field in video_struct.yaml.
+> **When to load:** During Step 4 (design video structure), when writing the
+> narration for each scene. Apply to every `narration.content` field in video_struct.yaml.
 
 A narration script is **heard**, not read. AI-generated prose has predictable
 tells that make it sound like a machine reading a press release. This guide
@@ -119,4 +119,4 @@ Before finalizing narration content, verify:
 - [ ] Attributions are named or removed
 - [ ] Numbers formatted for TTS
 - [ ] Ending is a concrete fact, not "未来可期"
-- [ ] Each narration unit is 2-5 sentences (not a wall of text)
+- [ ] Each scene's narration is 2-5 sentences (not a wall of text)

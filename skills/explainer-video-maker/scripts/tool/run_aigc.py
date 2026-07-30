@@ -34,16 +34,19 @@ from lib.yamlutil import load_yaml, save_yaml
 
 
 def find_scene_context(video_struct: dict, scene_id: str) -> dict | None:
-    """Find the story_id and narration_id for a given scene_id."""
+    """Find the story_id and narration_id for a given scene_id.
+
+    Each scene carries its narration as a nested property (scene.narration).
+    """
     for story in video_struct.get("stories", []):
-        for narration in story.get("narration_list", []):
-            for scene in narration.get("scene_list", []):
-                if scene.get("id") == scene_id:
-                    return {
-                        "story_id": story.get("id", ""),
-                        "narration_id": narration.get("id", ""),
-                        "scene": scene,
-                    }
+        for scene in story.get("scene_list", []):
+            if scene.get("id") == scene_id:
+                narration = scene.get("narration") or {}
+                return {
+                    "story_id": story.get("id", ""),
+                    "narration_id": narration.get("id", ""),
+                    "scene": scene,
+                }
     return None
 
 

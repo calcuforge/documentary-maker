@@ -12,15 +12,15 @@ The skill guides an AI coding agent through a 9-step pipeline:
 1. **Project initialization** — create project config
 2. **Topic definition** — auto-select or user-specified topic
 3. **Topic research** — browser search, RSS feeds, custom providers
-4. **Video structure design** — stories → narrations → scenes
+4. **Video structure design** — stories → scenes (each scene carries one narration)
 5. **TTS synthesis** — generate narration audio, calculate frame counts
 6. **AIGC task planning** — design prompts, choose workflows
 7. **AIGC execution** — generate images/videos via ComfyUI, upscale
 8. **Remotion config generation** — build rendering configuration
 9. **Video rendering** — render final MP4 via remotion-video-template
 
-Audio drives visuals: narration audio duration determines the total frame
-count for all scene units under each narration unit.
+Audio drives visuals: each scene carries exactly one narration, and that
+narration's audio duration determines the scene's total frame count.
 
 ## Project Structure
 

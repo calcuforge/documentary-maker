@@ -69,10 +69,9 @@ def collect_aigc_scenes(video_struct: dict) -> set[str]:
     """Collect scene IDs that require AIGC generation."""
     aigc_scenes = set()
     for story in video_struct.get("stories", []):
-        for narration in story.get("narration_list", []):
-            for scene in narration.get("scene_list", []):
-                if scene.get("is_aigc_scene", False):
-                    aigc_scenes.add(scene.get("id", ""))
+        for scene in story.get("scene_list", []):
+            if scene.get("is_aigc_scene", False):
+                aigc_scenes.add(scene.get("id", ""))
     return aigc_scenes
 
 

@@ -1,37 +1,40 @@
 stories: # 故事单元列表
   - id: story1  # 故事ID，全局唯一
     name: 人工智能的崛起 # 故事名称
-    narration_list: # 旁白单元列表
-      - id: narration1 # 旁白ID，全局唯一
-        content: 1956年，人工智能这一概念首次被提出，科学家开始探索让机器拥有类似人类的思考能力。 # 旁白内容
-        total_frame: 100 # 所有画面单元的总帧数
-        audio_path: "" # 旁白音频文件路径
-        scene_list: # 画面单元列表
-          - intent: 历史背景介绍  # 表达意图
-            id: scene1 # 画面ID，全局唯一
-            percent: 60 # 画面单元在旁白单元的时长占比，单位%
-            data: "" # 非AIGC画面展示的数据
-            text: "" # 非AIGC画面展示的文本
-            visual_content: 1950年代的计算机实验室，科学家围绕大型计算机进行研究，复古胶片风格，实验室灯光昏黄，体现人工智能早期探索阶段 # AIGC画面要展示的内容（非提示词）
-            is_aigc_scene: true # 是否AIGC生成的画面
-            asset_generation_method: aigc # 资产生成方式，aigc或none
-            type: video # AIGC内容类型，image、video或none
-            remotion_component: AssetVideo # remotion渲染组件
-            origin_asset_path: "" # aigc生产的资产文件路径
-            asset_path: "" # 放大后的资产文件路径
-            workflows: # 生成资产所用的comfyui工作流列表
-              - workflow_type: text_to_image
-              - workflow_type: image_to_video
-          - intent: 关键数据展示  # 表达意图
-            id: scene2 # 画面ID，全局唯一
-            percent: 40 # 画面单元在旁白单元的时长占比，单位%
-            data: '{"heading":"AI Milestone","items":[{"value":1956,"suffix":"","label":"AI concept proposed","icon":"lightbulb"}]}' # 非AIGC画面展示的数据
-            text: "" # 非AIGC画面展示的文本
-            visual_content: "" # AIGC画面要展示的内容（非提示词）
-            is_aigc_scene: false # 是否AIGC生成的画面
-            asset_generation_method: none # 资产生成方式，aigc或none
-            type: none # AIGC内容类型，image、video或none
-            remotion_component: StatCounter # remotion渲染组件
-            origin_asset_path: "" # aigc生产的资产文件路径
-            asset_path: "" # 放大后的资产文件路径
-            workflows: [] # 非AIGC无需工作流
+    scene_list: # 画面单元列表，1个画面对应1个旁白
+      - intent: 历史背景介绍  # 表达意图
+        id: scene1 # 画面ID，全局唯一
+        data: "" # 非AIGC画面展示的数据
+        text: "" # 非AIGC画面展示的文本
+        visual_content: 1950年代的计算机实验室，科学家围绕大型计算机进行研究，复古胶片风格，实验室灯光昏黄，体现人工智能早期探索阶段 # AIGC画面要展示的内容（非提示词）
+        is_aigc_scene: true # 是否AIGC生成的画面
+        asset_generation_method: aigc # 资产生成方式，aigc或none
+        type: video # AIGC内容类型，image、video或none
+        remotion_component: AssetVideo # remotion渲染组件
+        origin_asset_path: "" # aigc生产的资产文件路径
+        asset_path: "" # 放大后的资产文件路径
+        workflows: # 生成资产所用的comfyui工作流列表
+          - workflow_type: text_to_image
+          - workflow_type: image_to_video
+        narration: # 旁白单元，作为画面的属性，1个画面对应1个旁白
+          id: narration1 # 旁白ID，全局唯一
+          content: 1956年，人工智能这一概念首次被提出，科学家开始探索让机器拥有类似人类的思考能力。 # 旁白内容
+          total_frame: 60 # 该画面（旁白）的总帧数
+          audio_path: "" # 旁白音频文件路径
+      - intent: 关键数据展示  # 表达意图
+        id: scene2 # 画面ID，全局唯一
+        data: '{"heading":"AI Milestone","items":[{"value":1956,"suffix":"","label":"AI concept proposed","icon":"lightbulb"}]}' # 非AIGC画面展示的数据
+        text: "" # 非AIGC画面展示的文本
+        visual_content: "" # AIGC画面要展示的内容（非提示词）
+        is_aigc_scene: false # 是否AIGC生成的画面
+        asset_generation_method: none # 资产生成方式，aigc或none
+        type: none # AIGC内容类型，image、video或none
+        remotion_component: StatCounter # remotion渲染组件
+        origin_asset_path: "" # aigc生产的资产文件路径
+        asset_path: "" # 放大后的资产文件路径
+        workflows: [] # 非AIGC无需工作流
+        narration: # 旁白单元，作为画面的属性，1个画面对应1个旁白
+          id: narration2 # 旁白ID，全局唯一
+          content: 同年召开的达特茅斯会议，正式确立了人工智能作为一门独立学科的地位。 # 旁白内容
+          total_frame: 40 # 该画面（旁白）的总帧数
+          audio_path: "" # 旁白音频文件路径

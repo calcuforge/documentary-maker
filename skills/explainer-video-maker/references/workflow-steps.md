@@ -7,10 +7,10 @@
 The pipeline produces narration-driven explainer videos through 9 steps.
 Audio drives visuals: narration audio length determines frame counts.
 
-Structure hierarchy: **Story → Narration → Scene**
-- 1 story contains N narration units
-- 1 narration unit contains N scene units
-- Scene units split the narration duration by `percent`
+Structure hierarchy: **Story → Scene** (each scene carries one narration)
+- 1 story contains N scene units
+- Each scene has exactly one nested `narration` (1 scene = 1 narration)
+- The narration audio duration determines the scene's total frame count
 
 ### Project Output Layout
 
@@ -206,18 +206,19 @@ projects/
 
 1. Based on research, design the video structure:
    - Divide content into **stories** (chapters/sections)
-   - Each story has **narration units** (paragraphs of spoken text)
-   - Each narration has **scene units** (visual elements)
+   - Each story has **scene units** (visual elements)
+   - Each scene carries exactly one **narration** (the spoken text for that scene)
 
-   **Content volume reference** (from `content.duration` in project_config.yaml):
+   **Content volume reference** (from `content.duration` in project_config.yaml).
+   Since 1 scene = 1 narration, the scene count equals the narration count:
 
-   | Duration | Stories | Narrations | Scenes | Approx. length |
-   |----------|---------|------------|--------|----------------|
-   | short (1-3min) | 1-2 | 3-5 | 5-10 | ~2 min |
-   | medium (3-7min) | 2-4 | 6-12 | 12-25 | ~5 min |
-   | long (7-15min) | 4-6 | 12-20 | 25-40 | ~10 min |
+   | Duration | Stories | Scenes (= narrations) | Approx. length |
+   |----------|---------|-----------------------|----------------|
+   | short (1-3min) | 1-2 | 5-10 | ~2 min |
+   | medium (3-7min) | 2-4 | 12-25 | ~5 min |
+   | long (7-15min) | 4-6 | 25-40 | ~10 min |
 
-   Each narration unit should be 2-5 sentences (roughly 10-30 seconds of speech).
+   Each scene's narration should be 2-5 sentences (roughly 10-30 seconds of speech).
 
 2. For each scene, decide the expression method using
    [expression_intent_mapping.md](expression_intent_mapping.md):
@@ -232,10 +233,10 @@ projects/
    - Write for the ear, not the eye
 
 4. Create `video_struct.yaml` with these fields per scene:
-   - Fill NOW: `id`, `intent`, `percent`, `content`, `is_aigc_scene`, `type`, `remotion_component`, `visual_content`, `data`, `text`, `workflows`
-   - Leave EMPTY (auto-filled later): `asset_path`, `total_frame`, `audio_path`, `origin_asset_path`
+   - Fill NOW: `id`, `intent`, `is_aigc_scene`, `type`, `remotion_component`, `visual_content`, `data`, `text`, `workflows`, `narration.id`, `narration.content`
+   - Leave EMPTY (auto-filled later): `asset_path`, `origin_asset_path`, `narration.total_frame`, `narration.audio_path`
 
-5. **Percent rule:** Within each narration unit, all scene `percent` values MUST sum to exactly 100.
+5. **One scene = one narration:** Each scene has exactly one nested `narration`. There is no `percent` splitting — the scene occupies its whole narration duration.
 
 6. **Reference:** [demo_projects/air_crash_documentary/video1/video_struct.yaml](demo_projects/air_crash_documentary/video1/video_struct.yaml)
 
@@ -262,11 +263,11 @@ projects/
    ```
    - `--timeout 3600` (default): per-TTS subprocess timeout (1h)
    This will:
-   - Generate `speech.wav` for each narration unit
+   - Generate `speech.wav` for each scene's narration
    - **Compress WAV → MP3 (128kbps)** to reduce Remotion render memory
    - Measure audio duration via ffprobe (from WAV for accuracy)
    - Calculate `total_frame = ceil(duration × fps)`
-   - Update `video_struct.yaml` with `audio_path` (pointing to .mp3) and `total_frame`
+   - Update `video_struct.yaml` `narration.audio_path` (pointing to .mp3) and `narration.total_frame`
 
 2. **Validate:**
    ```bash
@@ -299,8 +300,8 @@ projects/
    - Image tasks: `origin_image_width` × `origin_image_height` (default 1280×720)
    - Video tasks: `origin_video_width` × `origin_video_height` (default 1280×720)
 
-5. Calculate `total_frame` for video tasks from the scene's allocated frames:
-   `scene_frames = narration.total_frame × scene.percent / 100`
+5. Calculate `total_frame` for video tasks from the scene's narration:
+   `scene_frames = narration.total_frame` (the scene owns its whole narration duration)
 
 6. Use `$taskN` placeholder in payload to reference dependent task output.
 
@@ -387,8 +388,8 @@ projects/
    ```
 
 2. **Fill `remotion_data` for each scene.** The generated structure is nested:
-   each `section_list` entry is a narration unit (`audio` + `scene_list`), and
-   each `scene_list` entry is a visual scene. The script auto-populates
+   each `section_list` entry corresponds to one scene and its narration
+   (`audio` + a single-entry `scene_list`). The script auto-populates
    `remotion_data` for AssetVideo/AssetImage and data/text scenes, but complex
    components may need enrichment. Consult the remotion-video-template README.md:
 
@@ -480,8 +481,8 @@ Generated artifacts:
 - {file_path_2}
 ...
 
-{Optional: key summary, e.g. "3 stories, 8 narrations, 15 scenes" or
-"TTS generated 8 audio files, total duration 4:32"}
+{Optional: key summary, e.g. "3 stories, 15 scenes (each with one narration)" or
+"TTS generated 15 audio files, total duration 4:32"}
 
 Shall I proceed to Step {N+1}: {next step name}?
 ```
@@ -493,7 +494,7 @@ Per-step artifact summary:
 | 1 | `project_config.yaml`, `voice_file.wav` (if generated) |
 | 2 | `video_config.yaml` (show the chosen topic) |
 | 3 | `search_results/result{N}.md` (list all, count of results) |
-| 4 | `video_struct.yaml` (story/narration/scene counts) |
+| 4 | `video_struct.yaml` (story/scene counts; each scene = one narration) |
 | 5 | `speech.wav` files (count, total duration) |
 | 6 | `video_tasks.yaml` (task group count, total tasks) |
 | 7 | `scenes/origin_*` + upscaled files (count) |

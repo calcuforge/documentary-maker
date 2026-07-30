@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Verify that all narration audio files have been generated and that
-video_struct.yaml has been updated with total_frame and audio_path.
+Verify that all scene narration audio files have been generated and that
+video_struct.yaml narrations have been updated with total_frame and audio_path.
 
 Usage:
     python verify_audio.py --video-struct /abs/path/video_struct.yaml
@@ -38,7 +38,8 @@ def verify(struct: dict) -> tuple[list[str], list[str]]:
     path_missing = []
 
     for story in stories:
-        for narration in story.get("narration_list", []):
+        for scene in story.get("scene_list", []):
+            narration = scene.get("narration") or {}
             total_narrations += 1
             narration_id = narration.get("id", "?")
 

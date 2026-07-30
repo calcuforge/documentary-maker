@@ -2,11 +2,11 @@
 """
 TTS synthesis + frame count calculation.
 
-Reads video_struct.yaml, generates speech audio for each narration unit using
+Reads video_struct.yaml, generates speech audio for each scene's narration using
 the configured TTS backend (comfyui_indextts or http_server), then uses ffprobe
-to measure audio duration and calculates total_frame for each narration unit.
+to measure audio duration and calculates total_frame for each narration.
 
-Updates video_struct.yaml with audio_path and total_frame fields.
+Updates video_struct.yaml narration.audio_path and narration.total_frame fields.
 
 Usage:
     python run_tts.py --project-config /abs/path/project_config.yaml --video-struct /abs/path/video_struct.yaml
@@ -146,13 +146,19 @@ def synth_http_server(
 
 
 def collect_narration_units(video_struct: dict) -> list[dict]:
-    """Collect all narration units with their context from video_struct."""
+    """Collect all scene narrations with their context from video_struct.
+
+    Each scene carries exactly one narration (scene.narration). The narration
+    dict reference is kept for in-place updates of audio_path / total_frame.
+    """
     units = []
     for story in video_struct.get("stories", []):
         story_id = story.get("id", "")
-        for narration in story.get("narration_list", []):
+        for scene in story.get("scene_list", []):
+            narration = scene.get("narration") or {}
             units.append({
                 "story_id": story_id,
+                "scene_id": scene.get("id", ""),
                 "narration_id": narration.get("id", ""),
                 "content": narration.get("content", ""),
                 "audio_path": narration.get("audio_path", ""),

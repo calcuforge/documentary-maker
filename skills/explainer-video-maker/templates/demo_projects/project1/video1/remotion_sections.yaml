@@ -17,23 +17,26 @@ subtitle:
   outline: 2
   alignment: 2
   marginV: 6
-  list:
-    - text: "1956年，人工智能这一概念首次被提出"
+  list: # 与scene_list一一对应：每个画面（旁白）一条字幕
+    - text: "1956年，人工智能这一概念首次被提出，科学家开始探索让机器拥有类似人类的思考能力。"
       start_frame: 1
+      end_frame: 60
+    - text: "同年召开的达特茅斯会议，正式确立了人工智能作为一门独立学科的地位。"
+      start_frame: 61
       end_frame: 100
 stories: # 对应video_struct.yaml中的stories
   - story_name: 人工智能的崛起 #章节标题
     story_id: story1
-    section_list: # 对应video_struct.yaml中的narration_list
-        - audio: stories/story1/narration1/speech.wav # 旁白音频
-          scene_list: # 对应video_struct.yaml中的scene_list
+    section_list: # 每个section对应一个画面及其旁白（1画面对应1旁白）
+        - audio: stories/story1/narration1/speech.wav # 该画面（旁白）的音频
+          scene_list: # 对应video_struct.yaml中的scene_list（此处单画面）
             - remotion_component: AssetVideo # 如QuoteBlock
               remotion_data: '{"src":"stories/story1/narration1/scenes/scene1.mp4","role":"background"}' # 展示内容的结构化数据（用于填充到组件），json格式
               total_frame: 60
               scene_id: scene1 # 对应画面单元ID
-        - audio: stories/story1/narration1/speech.wav
+        - audio: stories/story1/narration2/speech.wav # 该画面（旁白）的音频
           scene_list:
             - remotion_component: StatCounter
               remotion_data: '{"heading":"AI Milestone","items":[{"value":1956,"suffix":"","label":"AI concept proposed","icon":"lightbulb"}]}'
-              scene_id: scene4 # 对应画面单元ID
+              scene_id: scene2 # 对应画面单元ID
               total_frame: 40

@@ -26,56 +26,30 @@ sys.path.insert(0, str(SKILL_ROOT))
 from lib.yamlutil import load_yaml, save_yaml
 
 
-def split_text_to_sentences(text: str) -> list[str]:
-    """Split narration text into sentence-level chunks for subtitles."""
-    import re
-    # Split on Chinese/English sentence boundaries
-    parts = re.split(r'(?<=[。！？；\.\!\?;])\s*', text)
-    sentences = [s.strip() for s in parts if s.strip()]
-    # Merge very short fragments (< 8 chars) with the previous sentence
-    merged = []
-    for s in sentences:
-        if merged and len(s) < 8:
-            merged[-1] += s
-        else:
-            merged.append(s)
-    # If only one long sentence, split by comma
-    if len(merged) == 1 and len(merged[0]) > 60:
-        parts = re.split(r'(?<=[，,、])\s*', merged[0])
-        merged = [p.strip() for p in parts if p.strip()]
-    return merged if merged else [text]
+def build_subtitle_list(video_struct: dict) -> list[dict]:
+    """Build subtitle list with one entry per scene (1:1 with scene_list).
 
-
-def build_subtitle_list(video_struct: dict, fps: int) -> list[dict]:
-    """Build subtitle list from narration content, split by sentence."""
+    Each scene carries exactly one narration; the subtitle text is the full
+    narration content and the frame span covers the whole scene. Iteration
+    order matches build_stories, so subtitle.list aligns one-to-one with the
+    flattened scene_list across all stories/sections.
+    """
     subtitles = []
     current_frame = 1
 
     for story in video_struct.get("stories", []):
-        for narration in story.get("narration_list", []):
+        for scene in story.get("scene_list", []):
+            narration = scene.get("narration") or {}
             total_frame = narration.get("total_frame", 0)
             content = narration.get("content", "")
-            if total_frame > 0 and content:
-                narration_start = current_frame
-                narration_end = current_frame + total_frame - 1
-                sentences = split_text_to_sentences(content)
-                # Distribute frames proportionally by character count
-                total_chars = sum(len(s) for s in sentences)
-                frame_cursor = narration_start
-                for i, sent in enumerate(sentences):
-                    if i == len(sentences) - 1:
-                        # Last subtitle: clamp end to narration boundary
-                        sub_end = narration_end
-                    else:
-                        sent_frames = max(1, round(total_frame * len(sent) / total_chars))
-                        sub_end = min(frame_cursor + sent_frames - 1, narration_end)
-                    subtitles.append({
-                        "text": sent,
-                        "start_frame": frame_cursor,
-                        "end_frame": sub_end,
-                    })
-                    frame_cursor = sub_end + 1
-            current_frame += total_frame
+            # Scene owns its whole narration duration (min 1 frame, matches build_stories)
+            scene_frames = max(1, total_frame)
+            subtitles.append({
+                "text": content,
+                "start_frame": current_frame,
+                "end_frame": current_frame + scene_frames - 1,
+            })
+            current_frame += scene_frames
 
     return subtitles
 
@@ -101,12 +75,14 @@ def _to_relative(path: str, video_dir: str) -> str:
 def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
     """Build the stories/sections structure for remotion_sections.yaml.
 
-    New nested structure — each section_list entry represents a narration unit:
+    Each scene carries exactly one narration, so every section_list entry
+    corresponds to a single scene and its narration:
       section_list[]:
-        - audio: path/to/speech.wav    # shared across all scenes
-          scene_list[]:                 # visual scenes under this narration
+        - audio: path/to/speech.wav    # the scene's narration audio
+          scene_list[]:                 # a single visual scene
             - remotion_component, remotion_data, total_frame, scene_id
 
+    A scene occupies its whole narration duration (total_frame = narration.total_frame).
     All paths are relative to video_dir (--public-dir).
     """
     stories_out = []
@@ -116,43 +92,41 @@ def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
         story_name = story.get("name", "")
         section_list = []
 
-        for narration in story.get("narration_list", []):
+        for scene in story.get("scene_list", []):
+            narration = scene.get("narration") or {}
             total_frame = narration.get("total_frame", 0)
             audio_path = narration.get("audio_path", "")
             audio_rel = _to_relative(audio_path, video_dir)
 
-            scene_list_out = []
-            for scene in narration.get("scene_list", []):
-                scene_id = scene.get("id", "")
-                percent = scene.get("percent", 100)
-                component = scene.get("remotion_component", "")
+            scene_id = scene.get("id", "")
+            component = scene.get("remotion_component", "")
 
-                # Calculate scene frames from percent
-                scene_frames = max(1, round(total_frame * percent / 100))
+            # The scene owns its entire narration duration
+            scene_frames = max(1, total_frame)
 
-                # Build remotion_data
-                asset_path = scene.get("asset_path", "")
-                data_content = scene.get("data", "")
-                text_content = scene.get("text", "")
+            # Build remotion_data
+            asset_path = scene.get("asset_path", "")
+            data_content = scene.get("data", "")
+            text_content = scene.get("text", "")
 
-                remotion_data = {}
-                if component in ("AssetVideo", "AssetImage"):
-                    raw_src = asset_path if asset_path else scene.get("origin_asset_path", "")
-                    remotion_data = {"src": _to_relative(raw_src, video_dir), "role": "background"}
-                elif data_content:
-                    try:
-                        remotion_data = json.loads(data_content) if isinstance(data_content, str) else data_content
-                    except (json.JSONDecodeError, TypeError):
-                        remotion_data = {"content": str(data_content)}
-                elif text_content:
-                    remotion_data = {"text": text_content}
+            remotion_data = {}
+            if component in ("AssetVideo", "AssetImage"):
+                raw_src = asset_path if asset_path else scene.get("origin_asset_path", "")
+                remotion_data = {"src": _to_relative(raw_src, video_dir), "role": "background"}
+            elif data_content:
+                try:
+                    remotion_data = json.loads(data_content) if isinstance(data_content, str) else data_content
+                except (json.JSONDecodeError, TypeError):
+                    remotion_data = {"content": str(data_content)}
+            elif text_content:
+                remotion_data = {"text": text_content}
 
-                scene_list_out.append({
-                    "remotion_component": component,
-                    "remotion_data": json.dumps(remotion_data, ensure_ascii=False) if remotion_data else "{}",
-                    "total_frame": scene_frames,
-                    "scene_id": scene_id,
-                })
+            scene_list_out = [{
+                "remotion_component": component,
+                "remotion_data": json.dumps(remotion_data, ensure_ascii=False) if remotion_data else "{}",
+                "total_frame": scene_frames,
+                "scene_id": scene_id,
+            }]
 
             section_list.append({
                 "audio": audio_rel,
@@ -197,7 +171,7 @@ def main() -> None:
 
     # Build sections
     stories = build_stories(video_struct, video_dir)
-    subtitle_list = build_subtitle_list(video_struct, fps)
+    subtitle_list = build_subtitle_list(video_struct)
 
     # Assemble remotion_sections.yaml
     remotion_sections = {

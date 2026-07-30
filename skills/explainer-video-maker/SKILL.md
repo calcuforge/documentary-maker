@@ -36,8 +36,8 @@ Automated pipeline for **narration-driven explainer videos** from any topic.
 Supports documentaries, knowledge sharing, news, data reports, product
 introductions, and any format suitable for narrated explanation.
 
-Audio drives visuals: narration audio duration determines total frame count
-for all scene units under each narration unit.
+Audio drives visuals: each scene carries exactly one narration, and that
+narration's audio duration determines the scene's total frame count.
 
 ## Contents
 
@@ -96,7 +96,7 @@ projects/
 │   ├── video1/
 │   │   ├── result.mp4             # Final rendered video
 │   │   ├── video_config.yaml      # Topic definition
-│   │   ├── video_struct.yaml      # Video structure (stories → narrations → scenes)
+│   │   ├── video_struct.yaml      # Video structure (stories → scenes; each scene carries one narration)
 │   │   ├── video_tasks.yaml       # AIGC task list
 │   │   ├── remotion_sections.yaml # Remotion render config
 │   │   ├── search_results/
@@ -163,7 +163,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | 2 | Define topic | — (agent research) | `video_config.yaml` |
 | 3 | Topic research | `scripts/search_provider/search.py`, `scripts/search_provider/search_rss.py` | `search_results/*.md` |
 | 4 | Design video structure | `scripts/verify/verify_video_struct.py` | `video_struct.yaml` |
-| 5 | TTS + frame calculation | `scripts/tool/run_tts.py`, `scripts/verify/verify_audio.py` | `speech.wav` per narration |
+| 5 | TTS + frame calculation | `scripts/tool/run_tts.py`, `scripts/verify/verify_audio.py` | `speech.wav` per scene |
 | 6 | Plan AIGC tasks | `scripts/verify/verify_video_tasks.py` | `video_tasks.yaml` |
 | 7 | Execute AIGC tasks | `scripts/tool/run_aigc.py`, `scripts/tool/run_upscale.py`, `scripts/verify/verify_aigc_assets.py` | `scenes/` assets |
 | 8 | Generate remotion config | `scripts/tool/generate_remotion_sections.py`, `scripts/verify/verify_remotion_sections.py` | `remotion_sections.yaml` |
@@ -185,8 +185,8 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | Rule | Requirement |
 |------|-------------|
 | **Projects under workspace** | All project directories MUST be under `projects/` in the workspace. Never create outside. |
-| **Audio-master clock** | Narration audio duration determines total frames. `total_frame = ceil(audio_duration × fps)`. Never hand-estimate. |
-| **Percent sum** | Scene `percent` values within each narration unit MUST sum to exactly 100. |
+| **Audio-master clock** | Each scene's narration audio duration determines that scene's total frames. `total_frame = ceil(audio_duration × fps)`. Never hand-estimate. |
+| **One scene = one narration** | Every scene carries exactly one nested `narration`. There is no separate narration layer and no `percent` splitting. |
 | **Locale-aware search** | Detect network locale. China → use Baidu Baike, Bing; elsewhere → Wikipedia, Google. |
 | **Playwright for web** | All website access uses Playwright Chromium (headless), except where `curl` is explicitly specified (RSS feeds). |
 | **Anti-slop narration** | Narration text MUST follow [references/natural-narration.md](references/natural-narration.md). No AI-sounding filler, no rhetorical hooks, no rule-of-three abuse. |

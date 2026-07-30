@@ -2,11 +2,14 @@
 """
 Validate video_struct.yaml structure and business rules.
 
+Structure hierarchy: stories → scene_list → scene, with a nested `narration`
+property on each scene (1 scene corresponds to exactly 1 narration).
+
 Key validations:
 - is_aigc_scene=true → workflows and type must not be empty
 - is_aigc_scene=false → data and text must not BOTH be empty
-- percent values within each narration unit must sum to 100
-- All IDs must be globally unique
+- each scene has a narration with a non-empty content
+- All IDs (story / scene / narration) must be globally unique
 - remotion_component must be a valid component name
 
 Usage:
@@ -69,86 +72,73 @@ def validate(struct: dict) -> tuple[list[str], list[str]]:
         if not story.get("name"):
             warnings.append(f"{prefix}: 'name' is empty")
 
-        narration_list = story.get("narration_list", [])
-        if not narration_list:
-            errors.append(f"{prefix}: 'narration_list' is empty")
+        scene_list = story.get("scene_list", [])
+        if not scene_list:
+            errors.append(f"{prefix}: 'scene_list' is empty")
 
-        for ni, narration in enumerate(narration_list):
-            narration_id = narration.get("id", "")
-            n_prefix = f"{prefix}.narration_list[{ni}]"
+        for sci, scene in enumerate(scene_list):
+            scene_id = scene.get("id", "")
+            s_prefix = f"{prefix}.scene_list[{sci}]"
 
-            if not narration_id:
-                errors.append(f"{n_prefix}: 'id' is required")
-            elif narration_id in narration_ids:
-                errors.append(f"{n_prefix}: duplicate narration id '{narration_id}'")
-            narration_ids.add(narration_id)
+            if not scene_id:
+                errors.append(f"{s_prefix}: 'id' is required")
+            elif scene_id in scene_ids:
+                errors.append(f"{s_prefix}: duplicate scene id '{scene_id}'")
+            scene_ids.add(scene_id)
 
-            if not narration.get("content"):
-                errors.append(f"{n_prefix}: 'content' (narration text) is required")
+            # Component validation
+            component = scene.get("remotion_component", "")
+            if not component:
+                errors.append(f"{s_prefix}: 'remotion_component' is required")
+            elif component not in VALID_COMPONENTS:
+                errors.append(f"{s_prefix}: invalid remotion_component '{component}'. Valid: {VALID_COMPONENTS}")
 
-            scene_list = narration.get("scene_list", [])
-            if not scene_list:
-                errors.append(f"{n_prefix}: 'scene_list' is empty")
+            # AIGC vs non-AIGC validation
+            is_aigc = scene.get("is_aigc_scene", False)
 
-            # Check percent sum
-            percent_sum = sum(s.get("percent", 0) for s in scene_list)
-            if scene_list and percent_sum != 100:
-                errors.append(f"{n_prefix}: scene percent values sum to {percent_sum}, expected 100")
+            if is_aigc:
+                # AIGC scene: workflows and type required
+                scene_type = scene.get("type", "")
+                if not scene_type or scene_type == "none":
+                    errors.append(f"{s_prefix}: is_aigc_scene=true but 'type' is empty/none")
+                elif scene_type not in VALID_SCENE_TYPES:
+                    errors.append(f"{s_prefix}: invalid type '{scene_type}'. Valid: {VALID_SCENE_TYPES}")
 
-            for sci, scene in enumerate(scene_list):
-                scene_id = scene.get("id", "")
-                s_prefix = f"{n_prefix}.scene_list[{sci}]"
-
-                if not scene_id:
-                    errors.append(f"{s_prefix}: 'id' is required")
-                elif scene_id in scene_ids:
-                    errors.append(f"{s_prefix}: duplicate scene id '{scene_id}'")
-                scene_ids.add(scene_id)
-
-                # Percent validation
-                percent = scene.get("percent")
-                if percent is None:
-                    errors.append(f"{s_prefix}: 'percent' is required")
-                elif not isinstance(percent, (int, float)) or percent <= 0 or percent > 100:
-                    errors.append(f"{s_prefix}: 'percent' must be 1-100, got {percent}")
-
-                # Component validation
-                component = scene.get("remotion_component", "")
-                if not component:
-                    errors.append(f"{s_prefix}: 'remotion_component' is required")
-                elif component not in VALID_COMPONENTS:
-                    errors.append(f"{s_prefix}: invalid remotion_component '{component}'. Valid: {VALID_COMPONENTS}")
-
-                # AIGC vs non-AIGC validation
-                is_aigc = scene.get("is_aigc_scene", False)
-
-                if is_aigc:
-                    # AIGC scene: workflows and type required
-                    scene_type = scene.get("type", "")
-                    if not scene_type or scene_type == "none":
-                        errors.append(f"{s_prefix}: is_aigc_scene=true but 'type' is empty/none")
-                    elif scene_type not in VALID_SCENE_TYPES:
-                        errors.append(f"{s_prefix}: invalid type '{scene_type}'. Valid: {VALID_SCENE_TYPES}")
-
-                    workflows = scene.get("workflows", [])
-                    if not workflows:
-                        errors.append(f"{s_prefix}: is_aigc_scene=true but 'workflows' is empty")
-                    else:
-                        for wi, wf in enumerate(workflows):
-                            wt = wf.get("workflow_type", "")
-                            if not wt:
-                                errors.append(f"{s_prefix}.workflows[{wi}]: 'workflow_type' is required")
-                            elif wt not in VALID_WORKFLOW_TYPES:
-                                errors.append(f"{s_prefix}.workflows[{wi}]: invalid workflow_type '{wt}'. Valid: {VALID_WORKFLOW_TYPES}")
-
-                    if not scene.get("visual_content"):
-                        warnings.append(f"{s_prefix}: 'visual_content' is empty (recommended for AIGC scenes)")
+                workflows = scene.get("workflows", [])
+                if not workflows:
+                    errors.append(f"{s_prefix}: is_aigc_scene=true but 'workflows' is empty")
                 else:
-                    # Non-AIGC scene: data and text must not both be empty
-                    data = scene.get("data", "")
-                    text = scene.get("text", "")
-                    if not data and not text:
-                        errors.append(f"{s_prefix}: is_aigc_scene=false but both 'data' and 'text' are empty")
+                    for wi, wf in enumerate(workflows):
+                        wt = wf.get("workflow_type", "")
+                        if not wt:
+                            errors.append(f"{s_prefix}.workflows[{wi}]: 'workflow_type' is required")
+                        elif wt not in VALID_WORKFLOW_TYPES:
+                            errors.append(f"{s_prefix}.workflows[{wi}]: invalid workflow_type '{wt}'. Valid: {VALID_WORKFLOW_TYPES}")
+
+                if not scene.get("visual_content"):
+                    warnings.append(f"{s_prefix}: 'visual_content' is empty (recommended for AIGC scenes)")
+            else:
+                # Non-AIGC scene: data and text must not both be empty
+                data = scene.get("data", "")
+                text = scene.get("text", "")
+                if not data and not text:
+                    errors.append(f"{s_prefix}: is_aigc_scene=false but both 'data' and 'text' are empty")
+
+            # Narration validation — each scene carries exactly one narration
+            narration = scene.get("narration")
+            n_prefix = f"{s_prefix}.narration"
+            if not isinstance(narration, dict):
+                errors.append(f"{n_prefix}: is required (each scene must carry one narration)")
+            else:
+                narration_id = narration.get("id", "")
+                if not narration_id:
+                    errors.append(f"{n_prefix}: 'id' is required")
+                elif narration_id in narration_ids:
+                    errors.append(f"{n_prefix}: duplicate narration id '{narration_id}'")
+                narration_ids.add(narration_id)
+
+                if not narration.get("content"):
+                    errors.append(f"{n_prefix}: 'content' (narration text) is required")
 
     return errors, warnings
 
