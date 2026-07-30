@@ -381,9 +381,12 @@ projects/
 
 **What to do:**
 
-1. Review `video_struct.yaml` — identify all scenes where `is_aigc_scene: true`.
+1. **Plan tasks one story at a time** (consistent with Steps 5-6) — do NOT plan
+   all stories' tasks in a single pass. For the current story, identify its
+   scenes where `is_aigc_scene: true`, design and append their tasks to
+   `video_tasks.yaml`, then move on to the next story.
 
-2. For each AIGC scene, design:
+2. For each AIGC scene in the current story, design:
    - **Prompt:** Based on `visual_content`, craft an effective generation prompt
    - **Workflow pipeline:** Choose from available workflows (see `comfyui-scheduler/doc/workflow.md`):
      - `z_image_fp16` — text-to-image
@@ -393,21 +396,26 @@ projects/
      - `qwen_image_edit_2511_int8_step4` — image-to-image
    - **Dependencies:** e.g., text-to-image → image-to-video (two groups)
 
-3. Group tasks by `workflow_code`. Groups with dependencies go later.
+3. Append the current story's tasks to `video_tasks.yaml`:
+   - **Group by `workflow_code`** — tasks are organized by workflow and shared
+     across stories. Append this story's tasks to the matching group (create the
+     group the first time a `workflow_code` appears). Groups that others depend
+     on go first (`task_group_ordinal`).
+   - **Global ordinals** — keep one continuous `ordinal` counter across all
+     stories; do NOT restart it per story.
+   - Use `$taskN` in a payload to reference a dependent task's output (a scene's
+     image-to-video task depends on its own text-to-image task).
+   - Use dimensions from `aigc` config:
+     - Image tasks: `origin_image_width` × `origin_image_height` (default 1280×720)
+     - Video tasks: `origin_video_width` × `origin_video_height` (default 1280×720)
+   - Calculate `total_frame` for video tasks from the scene's narration:
+     `scene_frames = narration.total_frame` (the scene owns its whole narration duration).
 
-4. Use dimensions from `aigc` config:
-   - Image tasks: `origin_image_width` × `origin_image_height` (default 1280×720)
-   - Video tasks: `origin_video_width` × `origin_video_height` (default 1280×720)
+4. Repeat for every story until all AIGC tasks are in `video_tasks.yaml`.
 
-5. Calculate `total_frame` for video tasks from the scene's narration:
-   `scene_frames = narration.total_frame` (the scene owns its whole narration duration)
+5. **Reference:** [demo_projects/project1/video1/video_tasks.yaml](demo_projects/project1/video1/video_tasks.yaml)
 
-6. Use `$taskN` placeholder in payload to reference dependent task output.
-
-7. Create `video_tasks.yaml`:
-   **Reference:** [demo_projects/project1/video1/video_tasks.yaml](demo_projects/project1/video1/video_tasks.yaml)
-
-8. **Validate:**
+6. **Validate:**
    ```bash
    python3 "${SKILL_DIR}/scripts/verify/verify_video_tasks.py" \
      --video-tasks /abs/path/video_tasks.yaml \
