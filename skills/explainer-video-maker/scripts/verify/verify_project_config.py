@@ -24,7 +24,6 @@ from lib.yamlutil import load_yaml
 VALID_LANGUAGES = ["zh-CN", "en-US"]
 VALID_ORIENTATIONS = ["horizontal", "vertical"]
 VALID_RESOLUTIONS = ["1080p", "4k"]
-VALID_QUALITY_TIERS = ["speed", "quality"]
 VALID_TTS_BACKENDS = ["comfyui_indextts", "http_server"]
 VALID_TRANSITION_TYPES = ["fade", "slide", "wipe", "none"]
 VALID_DURATIONS = ["short", "medium", "long"]
@@ -69,9 +68,11 @@ def validate(config: dict) -> list[str]:
 
     # --- aigc section ---
     aigc = config.get("aigc", {})
-    quality_tier = aigc.get("quality_tier", "")
-    if quality_tier and quality_tier not in VALID_QUALITY_TIERS:
-        errors.append(f"[aigc.quality_tier] invalid '{quality_tier}'. Valid: {VALID_QUALITY_TIERS}")
+    for field in ["origin_image_width", "origin_image_height", "origin_video_width", "origin_video_height"]:
+        val = aigc.get(field)
+        if val is not None:
+            if not isinstance(val, int) or val <= 0:
+                errors.append(f"[aigc.{field}] must be a positive integer, got '{val}'")
 
     # --- tts section ---
     tts = config.get("tts")

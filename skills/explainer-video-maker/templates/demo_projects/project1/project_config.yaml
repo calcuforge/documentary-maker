@@ -10,9 +10,12 @@ video:
   resolution: 1080p # 1080p (1920x1080 horizontal, 1080x1920 vertical) | 4k (3840x2160 / 2160x3840).
   fps: 24
 aigc:
-  # speed:   image at 1280x720, video at 854x480, then upscale to target.
-  # quality: image at 1920x1080 (skip image upscale if target 1080p), video at 1280x720, upscale to target.
-  quality_tier: speed
+  # Origin (pre-upscale) generation dimensions. AIGC assets are generated at
+  # these sizes, then upscaled to the target video resolution if needed.
+  origin_image_width: 1280
+  origin_image_height: 720
+  origin_video_width: 1280
+  origin_video_height: 720
   seed: 0 # 全局随机种子
 tts:
   # ── Backend selection ──────────────────────────────────────────────────

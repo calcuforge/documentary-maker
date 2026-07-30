@@ -85,7 +85,8 @@ projects/
    - `video.orientation` — `horizontal` or `vertical`
    - `video.resolution` — `1080p` or `4k`
    - `video.fps` — typically `24`
-   - `aigc.quality_tier` — `speed` (faster, lower res then upscale) or `quality`
+   - `aigc.origin_image_width` / `origin_image_height` — AIGC image generation size (default 1280×720)
+   - `aigc.origin_video_width` / `origin_video_height` — AIGC video generation size (default 1280×720)
    - `tts.backend` — `comfyui_indextts` or `http_server`
    - `tts.voice_instruct` — **required**. Voice characteristics description (e.g., `男，中年，中音调` or `male, middle-aged, moderate pitch`)
    - `tts.voice_file` — leave empty; auto-generated from `voice_instruct` in Step 5
@@ -289,9 +290,9 @@ projects/
 
 3. Group tasks by `workflow_code`. Groups with dependencies go later.
 
-4. Calculate dimensions based on `aigc.quality_tier`:
-   - `speed`: image 1280×720, video 854×480
-   - `quality`: image 1920×1080, video 1280×720
+4. Use dimensions from `aigc` config:
+   - Image tasks: `origin_image_width` × `origin_image_height` (default 1280×720)
+   - Video tasks: `origin_video_width` × `origin_video_height` (default 1280×720)
 
 5. Calculate `total_frame` for video tasks from the scene's allocated frames:
    `scene_frames = narration.total_frame × scene.percent / 100`
@@ -328,7 +329,7 @@ projects/
    - Executes task groups in order, resolves `$taskN` dependencies,
      saves outputs as `origin_{scene_id}.{ext}`, and updates `origin_asset_path`.
 
-2. Run upscale (if quality_tier requires it):
+2. Run upscale (skips automatically if origin dimensions >= target):
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/run_upscale.py" \
      --project-config /abs/path/project_config.yaml \

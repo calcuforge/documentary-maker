@@ -45,23 +45,18 @@ def get_target_dimensions(project_config: dict) -> tuple[int, int]:
         return 1920, 1080
 
 
-def get_origin_dimensions(project_config: dict) -> tuple[int, int]:
-    """Get origin (pre-upscale) dimensions based on quality_tier."""
+def get_origin_dimensions(project_config: dict, asset_type: str = "image") -> tuple[int, int]:
+    """Get origin (pre-upscale) dimensions from aigc config fields."""
     aigc_cfg = project_config.get("aigc", {})
-    quality_tier = aigc_cfg.get("quality_tier", "speed")
-    video_cfg = project_config.get("video", {})
-    orientation = video_cfg.get("orientation", "horizontal")
-
-    if quality_tier == "speed":
-        # image 1280x720, video 854x480
-        if orientation == "vertical":
-            return 720, 1280
-        return 1280, 720
-    else:  # quality
-        # image 1920x1080, video 1280x720
-        if orientation == "vertical":
-            return 1080, 1920
-        return 1920, 1080
+    if asset_type == "video":
+        return (
+            aigc_cfg.get("origin_video_width", 1280),
+            aigc_cfg.get("origin_video_height", 720),
+        )
+    return (
+        aigc_cfg.get("origin_image_width", 1280),
+        aigc_cfg.get("origin_image_height", 720),
+    )
 
 
 def calculate_magnification(
@@ -158,15 +153,17 @@ def main() -> None:
     video_struct = load_yaml(args.video_struct)
 
     target_w, target_h = get_target_dimensions(project_config)
-    origin_w, origin_h = get_origin_dimensions(project_config)
-    magnification = calculate_magnification(origin_w, origin_h, target_w, target_h)
+    img_ow, img_oh = get_origin_dimensions(project_config, "image")
+    vid_ow, vid_oh = get_origin_dimensions(project_config, "video")
+    img_mag = calculate_magnification(img_ow, img_oh, target_w, target_h)
+    vid_mag = calculate_magnification(vid_ow, vid_oh, target_w, target_h)
 
-    # Check if upscale is needed (origin == target means skip)
-    if magnification <= 1.0:
+    # Check if upscale is needed for either type
+    if img_mag <= 1.0 and vid_mag <= 1.0:
         print(json.dumps({
             "status": "ok",
-            "msg": "No upscale needed (origin dimensions >= target)",
-            "data": {"magnification": magnification},
+            "msg": "No upscale needed (origin dimensions >= target for both image and video)",
+            "data": {"image_magnification": img_mag, "video_magnification": vid_mag},
         }, ensure_ascii=False, indent=2))
         return
 
@@ -196,16 +193,26 @@ def main() -> None:
         }, ensure_ascii=False, indent=2))
         return
 
-    print(f"Upscaling {len(scenes)} scene(s), magnification={magnification}x...", file=sys.stderr)
+    print(f"Upscaling {len(scenes)} scene(s), image={img_mag}x, video={vid_mag}x...", file=sys.stderr)
 
     errors = []
 
     def do_upscale(scene_info: dict) -> dict:
         origin = scene_info["origin_asset_path"]
+        asset_type = scene_info["type"]
         # Output: same dir, filename without origin_ prefix
         origin_p = Path(origin)
         output_name = origin_p.name.replace("origin_", "")
         output_path = str(origin_p.parent / output_name)
+
+        # Per-type magnification
+        mag = vid_mag if asset_type == "video" else img_mag
+        if mag <= 1.0:
+            # No upscale needed for this asset type — copy origin as asset
+            import shutil
+            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(origin, output_path)
+            return {"scene_id": scene_info["scene_id"], "path": output_path, "error": None, "skipped": True}
 
         # Skip if upscaled output already exists
         if not args.force and Path(output_path).exists() and Path(output_path).stat().st_size > 0:
@@ -215,8 +222,8 @@ def main() -> None:
             result_path = upscale_asset(
                 origin_path=origin,
                 output_path=output_path,
-                asset_type=scene_info["type"],
-                magnification=magnification,
+                asset_type=asset_type,
+                magnification=mag,
                 timeout=args.timeout,
             )
             return {"scene_id": scene_info["scene_id"], "path": result_path, "error": None}
@@ -263,8 +270,8 @@ def main() -> None:
     else:
         print(json.dumps({
             "status": "ok",
-            "msg": f"Upscaled {upscaled} asset(s) at {magnification}x ({skipped} skipped)",
-            "data": {"upscaled": upscaled, "skipped": skipped, "magnification": magnification},
+            "msg": f"Upscaled {upscaled} asset(s) ({skipped} skipped), image={img_mag}x, video={vid_mag}x",
+            "data": {"upscaled": upscaled, "skipped": skipped, "image_magnification": img_mag, "video_magnification": vid_mag},
         }, ensure_ascii=False, indent=2))
 
 
