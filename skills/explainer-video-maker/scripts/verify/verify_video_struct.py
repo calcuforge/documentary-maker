@@ -9,6 +9,7 @@ Key validations:
 - is_aigc_scene=true → workflows and type must not be empty
 - is_aigc_scene=false → data and text must not BOTH be empty
 - each scene has a narration with a non-empty content
+- narration content must not exceed MAX_NARRATION_CHARS (50) characters
 - All IDs (story / scene / narration) must be globally unique
 - remotion_component must be a valid component name
 
@@ -42,6 +43,9 @@ VALID_WORKFLOW_TYPES = [
     "text_to_image", "text_to_video", "image_to_video",
     "image_to_image", "first_last_frame_to_video",
 ]
+
+# A single narration must not exceed this many characters.
+MAX_NARRATION_CHARS = 50
 
 
 def validate(struct: dict) -> tuple[list[str], list[str]]:
@@ -137,8 +141,14 @@ def validate(struct: dict) -> tuple[list[str], list[str]]:
                     errors.append(f"{n_prefix}: duplicate narration id '{narration_id}'")
                 narration_ids.add(narration_id)
 
-                if not narration.get("content"):
+                content = narration.get("content", "")
+                if not content:
                     errors.append(f"{n_prefix}: 'content' (narration text) is required")
+                elif len(content) > MAX_NARRATION_CHARS:
+                    errors.append(
+                        f"{n_prefix}: 'content' is {len(content)} chars, "
+                        f"exceeds the {MAX_NARRATION_CHARS}-character limit"
+                    )
 
     return errors, warnings
 

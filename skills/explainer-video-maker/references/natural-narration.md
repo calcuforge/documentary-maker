@@ -7,6 +7,11 @@ A narration script is **heard**, not read. AI-generated prose has predictable
 tells that make it sound like a machine reading a press release. This guide
 removes those tells.
 
+> **Hard length limit:** each scene's narration (`narration.content`) MUST be
+> **≤ 50 characters**. Short narrations keep the pace tight and pair cleanly with
+> one visual per scene. If a passage exceeds 50 characters, split it into
+> multiple scenes. `verify_video_struct.py` rejects anything longer.
+
 ---
 
 ## The 5 Core Rules (write for the ear)
@@ -119,4 +124,4 @@ Before finalizing narration content, verify:
 - [ ] Attributions are named or removed
 - [ ] Numbers formatted for TTS
 - [ ] Ending is a concrete fact, not "未来可期"
-- [ ] Each scene's narration is 2-5 sentences (not a wall of text)
+- [ ] Each scene's narration is ≤ 50 characters (split longer text into more scenes)

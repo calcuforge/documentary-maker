@@ -228,7 +228,9 @@ projects/
    | medium (8-12min) | 5-7     | 25-30                 | ~10 min        |
    | long (15-20min) | 8-12    | 50-60                 | ~18 min        |
 
-   Each scene's narration should be 2-5 sentences (roughly 10-30 seconds of speech).
+   **Each scene's narration MUST be ≤ 50 characters** (roughly 1-2 short
+   sentences, ~10-12 seconds of speech). If a passage is longer, split it into
+   multiple scenes. This is enforced by `verify_video_struct.py`.
 
 2. For each scene, decide the expression method using
    [expression_intent_mapping.md](expression_intent_mapping.md):
@@ -236,6 +238,7 @@ projects/
    - **Data/text scenes** (`is_aigc_scene: false`): filled with text/data directly into Remotion components
 
 3. **Write narration content** — MUST follow [natural-narration.md](natural-narration.md):
+   - **≤ 50 characters per narration** — split longer text into more scenes
    - No AI filler phrases
    - No rule-of-three abuse
    - Vary sentence length

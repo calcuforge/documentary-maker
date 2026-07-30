@@ -205,6 +205,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | **Locale-aware search** | Detect network locale. China → use Baidu Baike, Bing; elsewhere → Wikipedia, Google. |
 | **Playwright for web** | All website access uses Playwright Chromium (headless), except where `curl` is explicitly specified (RSS feeds). |
 | **Anti-slop narration** | Narration text MUST follow [references/natural-narration.md](references/natural-narration.md). No AI-sounding filler, no rhetorical hooks, no rule-of-three abuse. |
+| **Narration length** | Each scene's narration `content` MUST be ≤ 50 characters. Enforced by `verify_video_struct.py`. Split longer text into more scenes. |
 | **Verify before proceed** | Each step's verify script must pass before moving to the next step. |
 | **Absolute paths** | All script path arguments (`--config`, `--video-struct`, `--output`, etc.) MUST be absolute paths. Scripts reject relative paths with an error. |
 
