@@ -461,6 +461,9 @@ def main() -> None:
                         help="Number of top results to visit for full content")
     args = parser.parse_args()
 
+    from lib.net import require_abs
+    require_abs(args.output)
+
     # Determine sources based on network locale
     if args.sources:
         sources = [s.strip().lower() for s in args.sources.split(",")]

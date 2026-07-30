@@ -187,6 +187,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | **Playwright for web** | All website access uses Playwright Chromium (headless), except where `curl` is explicitly specified (RSS feeds). |
 | **Anti-slop narration** | Narration text MUST follow [references/natural-narration.md](references/natural-narration.md). No AI-sounding filler, no rhetorical hooks, no rule-of-three abuse. |
 | **Verify before proceed** | Each step's verify script must pass before moving to the next step. |
+| **Absolute paths** | All script path arguments (`--config`, `--video-struct`, `--output`, etc.) MUST be absolute paths. Scripts reject relative paths with an error. |
 
 ---
 

@@ -49,12 +49,15 @@ def resolve_template_path(project_config: dict) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Render video via remotion-video-template")
-    parser.add_argument("--remotion-sections", required=True, help="Path to remotion_sections.yaml")
-    parser.add_argument("--project-config", required=True, help="Path to project_config.yaml")
-    parser.add_argument("--output", required=True, help="Output video file path")
+    parser.add_argument("--remotion-sections", required=True, help="Path to remotion_sections.yaml (absolute)")
+    parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
+    parser.add_argument("--output", required=True, help="Output video file path (absolute)")
     parser.add_argument("--studio", action="store_true", help="Launch Studio instead of rendering")
     parser.add_argument("--timeout", type=int, default=1800, help="Render timeout (seconds, default 30min)")
     args = parser.parse_args()
+
+    from lib.net import require_abs
+    require_abs(args.remotion_sections, args.project_config, args.output)
 
     project_config = load_yaml(args.project_config)
     template_path = resolve_template_path(project_config)

@@ -113,8 +113,11 @@ def validate(config: dict) -> list[str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate project_config.yaml")
-    parser.add_argument("--config", required=True, help="Path to project_config.yaml")
+    parser.add_argument("--config", required=True, help="Path to project_config.yaml (absolute)")
     args = parser.parse_args()
+
+    from lib.net import require_abs
+    require_abs(args.config)
 
     config = load_yaml(args.config)
     errors = validate(config)

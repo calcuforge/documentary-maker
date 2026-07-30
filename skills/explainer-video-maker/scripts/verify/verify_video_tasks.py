@@ -174,9 +174,12 @@ def validate(tasks: dict, video_struct: dict) -> tuple[list[str], list[str]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate video_tasks.yaml")
-    parser.add_argument("--video-tasks", required=True, help="Path to video_tasks.yaml")
-    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml")
+    parser.add_argument("--video-tasks", required=True, help="Path to video_tasks.yaml (absolute)")
+    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
     args = parser.parse_args()
+
+    from lib.net import require_abs
+    require_abs(args.video_tasks, args.video_struct)
 
     tasks = load_yaml(args.video_tasks)
     video_struct = load_yaml(args.video_struct)

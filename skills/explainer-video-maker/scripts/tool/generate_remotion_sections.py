@@ -56,18 +56,25 @@ def build_subtitle_list(video_struct: dict, fps: int) -> list[dict]:
             total_frame = narration.get("total_frame", 0)
             content = narration.get("content", "")
             if total_frame > 0 and content:
+                narration_start = current_frame
+                narration_end = current_frame + total_frame - 1
                 sentences = split_text_to_sentences(content)
                 # Distribute frames proportionally by character count
                 total_chars = sum(len(s) for s in sentences)
-                frame_cursor = current_frame
-                for sent in sentences:
-                    sent_frames = max(1, round(total_frame * len(sent) / total_chars))
+                frame_cursor = narration_start
+                for i, sent in enumerate(sentences):
+                    if i == len(sentences) - 1:
+                        # Last subtitle: clamp end to narration boundary
+                        sub_end = narration_end
+                    else:
+                        sent_frames = max(1, round(total_frame * len(sent) / total_chars))
+                        sub_end = min(frame_cursor + sent_frames - 1, narration_end)
                     subtitles.append({
                         "text": sent,
                         "start_frame": frame_cursor,
-                        "end_frame": frame_cursor + sent_frames - 1,
+                        "end_frame": sub_end,
                     })
-                    frame_cursor += sent_frames
+                    frame_cursor = sub_end + 1
             current_frame += total_frame
 
     return subtitles
@@ -165,10 +172,13 @@ def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate remotion_sections.yaml")
-    parser.add_argument("--project-config", required=True, help="Path to project_config.yaml")
-    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml")
-    parser.add_argument("--output", required=True, help="Output remotion_sections.yaml path")
+    parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
+    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
+    parser.add_argument("--output", required=True, help="Output remotion_sections.yaml path (absolute)")
     args = parser.parse_args()
+
+    from lib.net import require_abs
+    require_abs(args.project_config, args.video_struct, args.output)
 
     project_config = load_yaml(args.project_config)
     video_struct = load_yaml(args.video_struct)

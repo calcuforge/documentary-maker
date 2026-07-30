@@ -168,6 +168,9 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=30000, help="Page load timeout (ms)")
     args = parser.parse_args()
 
+    from lib.net import require_abs
+    require_abs(args.output)
+
     xml_text = fetch_feed(args.feed_url)
     articles = parse_feed(xml_text)
 

@@ -144,12 +144,15 @@ def collect_scenes_to_upscale(video_struct: dict) -> list[dict]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Upscale AIGC assets")
-    parser.add_argument("--project-config", required=True, help="Path to project_config.yaml")
-    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml")
+    parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
+    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
     parser.add_argument("--workers", type=int, default=2, help="Concurrent upscale workers")
     parser.add_argument("--timeout", type=int, default=300, help="Per-task timeout (seconds)")
     parser.add_argument("--force", action="store_true", help="Re-upscale even if asset_path exists")
     args = parser.parse_args()
+
+    from lib.net import require_abs
+    require_abs(args.project_config, args.video_struct)
 
     project_config = load_yaml(args.project_config)
     video_struct = load_yaml(args.video_struct)

@@ -82,9 +82,12 @@ def verify(struct: dict, check_upscaled: bool = False) -> tuple[list[str], list[
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Verify AIGC asset files")
-    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml")
+    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
     parser.add_argument("--check-upscaled", action="store_true", help="Also verify asset_path (upscaled)")
     args = parser.parse_args()
+
+    from lib.net import require_abs
+    require_abs(args.video_struct)
 
     struct = load_yaml(args.video_struct)
     errors, warnings = verify(struct, check_upscaled=args.check_upscaled)

@@ -100,9 +100,9 @@ def run_single_task(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Execute AIGC tasks via comfyui-scheduler")
-    parser.add_argument("--project-config", required=True, help="Path to project_config.yaml")
-    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml")
-    parser.add_argument("--video-tasks", required=True, help="Path to video_tasks.yaml")
+    parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
+    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
+    parser.add_argument("--video-tasks", required=True, help="Path to video_tasks.yaml (absolute)")
     parser.add_argument("--workers", type=int, default=2, help="Concurrent tasks per group")
     parser.add_argument("--timeout", type=int, default=1800,
                         help="Per-task subprocess timeout in seconds (default 30min)")
@@ -110,6 +110,9 @@ def main() -> None:
                         help="Total script wall-clock timeout in seconds (default 2h)")
     parser.add_argument("--force", action="store_true", help="Force re-execute even if output already exists")
     args = parser.parse_args()
+
+    from lib.net import require_abs
+    require_abs(args.project_config, args.video_struct, args.video_tasks)
 
     project_config = load_yaml(args.project_config)
     video_struct = load_yaml(args.video_struct)

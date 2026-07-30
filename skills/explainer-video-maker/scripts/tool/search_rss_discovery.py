@@ -127,12 +127,16 @@ def suggest_common_feeds(query: str) -> list[dict]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Search for RSS feed sources")
     parser.add_argument("--query", required=True, help="Search query for RSS feeds")
-    parser.add_argument("--output", default="", help="Output JSON file path (optional, prints to stdout if omitted)")
+    parser.add_argument("--output", default="", help="Output JSON file path (absolute, optional — prints to stdout if omitted)")
     parser.add_argument("--max-results", type=int, default=10, help="Max results to return")
     parser.add_argument("--timeout", type=int, default=30000, help="Page load timeout (ms)")
     parser.add_argument("--offline", action="store_true",
                         help="Skip browser search, only use built-in feed suggestions (no Playwright needed)")
     args = parser.parse_args()
+
+    if args.output:
+        from lib.net import require_abs
+        require_abs(args.output)
 
     all_results: list[dict] = []
 

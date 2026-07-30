@@ -11,6 +11,14 @@ import sys
 from typing import Optional
 
 
+def require_abs(*paths: str) -> None:
+    """Validate that all given paths are absolute. Exits with error if not."""
+    for p in paths:
+        if p and not os.path.isabs(p):
+            print(f"ERROR: Path must be absolute, got: {p}", file=sys.stderr)
+            sys.exit(1)
+
+
 def is_china_network() -> bool:
     """Heuristic: detect if the local environment is likely in China.
 

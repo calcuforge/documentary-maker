@@ -163,11 +163,14 @@ def collect_narration_units(video_struct: dict) -> list[dict]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run TTS synthesis and calculate frames")
-    parser.add_argument("--project-config", required=True, help="Path to project_config.yaml")
-    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml")
+    parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
+    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
     parser.add_argument("--workers", type=int, default=3, help="Concurrent TTS workers")
     parser.add_argument("--force", action="store_true", help="Re-generate even if audio exists")
     args = parser.parse_args()
+
+    from lib.net import require_abs
+    require_abs(args.project_config, args.video_struct)
 
     # Load configs
     project_config = load_yaml(args.project_config)

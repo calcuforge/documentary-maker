@@ -72,8 +72,11 @@ def verify(struct: dict) -> tuple[list[str], list[str]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Verify audio generation status")
-    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml")
+    parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
     args = parser.parse_args()
+
+    from lib.net import require_abs
+    require_abs(args.video_struct)
 
     struct = load_yaml(args.video_struct)
     errors, warnings = verify(struct)

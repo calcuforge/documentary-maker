@@ -157,8 +157,11 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate remotion_sections.yaml")
-    parser.add_argument("--remotion-sections", required=True, help="Path to remotion_sections.yaml")
+    parser.add_argument("--remotion-sections", required=True, help="Path to remotion_sections.yaml (absolute)")
     args = parser.parse_args()
+
+    from lib.net import require_abs
+    require_abs(args.remotion_sections)
 
     config = load_yaml(args.remotion_sections)
     errors, warnings = validate(config)
