@@ -1,0 +1,70 @@
+# project_config.yaml template — default values for a new project.
+# init_project.py copies this file into projects/{name}/project_config.yaml and
+# fills project.project_root_path. The agent then edits the created file DIRECTLY
+# to supply request-dependent fields (marked "agent fills" below).
+project:
+  name: my-project # agent fills: descriptive project name (also used as the directory name)
+  project_root_path: "" # filled by init_project.py — absolute path to the project dir
+  creation_mode: auto # auto — pipeline runs end-to-end. manual — each AI product waits for user confirmation.
+  language: "" # agent fills: narration language zh-CN | en-US
+  video_style: "" # agent fills: e.g. documentary, knowledge_sharing, news_broadcast, product_intro, data_report, tutorial
+  target_audience: "" # agent fills: e.g. general, tech_enthusiasts, students, professionals, investors
+video:
+  orientation: horizontal # horizontal (16:9) | vertical (9:16).
+  resolution: 1080p # 1080p (1920x1080 / 1080x1920) | 4k (3840x2160 / 2160x3840).
+  fps: 24
+aigc:
+  # Origin (pre-upscale) generation dimensions. AIGC assets are generated at
+  # these sizes, then upscaled to the target video resolution if needed.
+  origin_image_width: 1280
+  origin_image_height: 720
+  origin_video_width: 1280
+  origin_video_height: 720
+  seed: 0 # global random seed
+tts:
+  # backend: comfyui_indextts — ComfyUI index_tts_2 workflow (default).
+  #          http_server      — HTTP multipart TTS server (see tts.http below).
+  backend: comfyui_indextts
+  speed: 1.0
+  # voice_file: empty at Step 1. If empty when running TTS (Step 5), the voice
+  #   design workflow runs automatically using voice_instruct and updates this field.
+  voice_file: ""
+  # voice_instruct: REQUIRED. Describes the target voice characteristics.
+  #   zh-CN: "男，中年，中音调"   en-US: "male, middle-aged, moderate pitch"
+  voice_instruct: "男，中年，中音调"
+  # HTTP TTS server config (only used when backend: http_server).
+  # Protocol: POST multipart/form-data (fields: input, speed, voice_file).
+  # The URL is resolved via os.path.expandvars(); ${BACKEND_PROXY_ENDPOINT}
+  # must be set in the shell environment before running any TTS command.
+  http:
+    url: ${BACKEND_PROXY_ENDPOINT}/v1/audio/speech
+    speed: 1.0 # 0.25–4.0, passed as form field
+theme:
+  # These override the matching fields in themes/<category>.yaml.
+  # Explicit fields here win; everything else falls back to the theme preset.
+  primary_color: "#4f6ef7"
+  background_color: "#ffffff"
+  text_color: "#1a1a1a"
+  accent_color: "#FF6B6B"
+  transition_type: fade # fade | slide | wipe | none
+  transition_duration: 12 # frames @ fps
+content:
+  duration: medium # short (1-3min) / medium (3-7min) / long (7-15min)
+render:
+  concurrency: 1 # Remotion render concurrency (parallel browser tabs). Increase to speed up rendering.
+dependence_paths:
+  # remotion_template: relative to the explainer-video-maker repo root, or an
+  # absolute path. The template sits next to the repo root by default.
+  remotion_template: ""
+  comfyui_scheduler: ""
+subtitle:
+  # font_size: adjust based on resolution and orientation. Do NOT go too small.
+  #   1080p horizontal → 20-24    1080p vertical → 28-34
+  #   4K horizontal   → 36-44    4K vertical   → 48-56
+  font_size: 24
+  primary_color: "&H00333333"
+  outline_color: "&H00FFFFFF"
+  outline: 2
+  alignment: 2
+  marginV: 6
+rss_source_list: [] # Step 3: cached RSS feeds ({url, description})

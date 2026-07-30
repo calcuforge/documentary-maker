@@ -73,9 +73,12 @@ External dependencies:
 
 **All projects MUST live under the workspace `projects/` directory.**
 
-**Project directory naming:** Use the video category name (i.e., `video_style`
-value) as the directory name. If a directory with that name already exists,
-append a numeric suffix: `documentary`, `documentary2`, `documentary3`, ...
+**Project directory naming:** `scripts/tool/init_project.py` creates the project
+directory from the `scripts/project_config_tpl.yaml` template, named after the
+template's `project.name`. If the name already exists, a numeric suffix is
+appended automatically: `my-project`, `my-project2`, `my-project3`, ... After
+creation, edit `project_config.yaml` to set the actual `project.name` and
+`project.video_style`.
 
 | Situation | Action |
 |-----------|--------|
@@ -159,7 +162,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 
 | # | Step | Key Script | Output |
 |---|------|-----------|--------|
-| 1 | Project initialization | `scripts/verify/verify_project_config.py` | `project_config.yaml` |
+| 1 | Project initialization | `scripts/tool/init_project.py`, `scripts/verify/verify_project_config.py` | `project_config.yaml` |
 | 2 | Define topic | — (agent research) | `video_config.yaml` |
 | 3 | Topic research | `scripts/search_provider/search.py`, `scripts/search_provider/search_rss.py` | `search_results/*.md` |
 | 4 | Design video structure | `scripts/verify/verify_video_struct.py` | `video_struct.yaml` |

@@ -30,6 +30,7 @@ explainer-video-maker/
 └── skills/explainer-video-maker/
     ├── SKILL.md                    # Main skill definition
     ├── scripts/                    # All automation scripts
+    │   ├── project_config_tpl.yaml # Default project_config.yaml template (used by init_project.py)
     │   ├── lib/                    # Shared Python utilities
     │   │   ├── envelope.py         # JSON output envelope
     │   │   ├── yamlutil.py         # YAML load/save
@@ -40,6 +41,7 @@ explainer-video-maker/
     │   │   ├── search_rss.py       # RSS feed fetcher (curl + Playwright)
     │   ├── tool/                   # Pipeline tool scripts
     │   │   ├── check_prereqs.py    # Prerequisite checker
+    │   │   ├── init_project.py     # Project scaffolding (dir + default config template)
     │   │   ├── search_rss_discovery.py  # RSS source discovery
     │   │   ├── run_tts.py          # TTS synthesis + frame calculation
     │   │   ├── run_aigc.py         # AIGC task execution

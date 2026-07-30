@@ -64,36 +64,36 @@ projects/
 
 **When:** First video request, or when category/parameters differ from existing projects.
 
-> **Manual mode:** Before generating project_config.yaml, present all configurable
-> fields to the user and ask for confirmation. Do NOT create the file until the
-> user approves the parameters.
+> **Manual mode:** Before running init_project.py, present all configurable
+> fields to the user and ask for confirmation. Do NOT create the project until
+> the user approves the parameters.
 
 **What to do:**
 
-1. Create project directory under `projects/`. The directory name MUST be the
-   video category (`video_style` value). If it already exists, append a number:
+1. **Generate the project skeleton with the init script.** All default field
+   values live in the template `scripts/project_config_tpl.yaml` (nothing is
+   hardcoded in the script). The script copies the template into a new project
+   directory under `projects/`, fills `project.project_root_path`, and writes
+   `project_config.yaml`:
+   ```bash
+   python3 "${SKILL_DIR}/scripts/tool/init_project.py" --projects-dir /abs/path/projects
    ```
-   projects/air_crash_documentary/       # e.g., air crash documentary
-   projects/air_crash_documentary2/      # second project of same category
-   ```
+   - The project directory is named after `project.name` in the template
+     (a numeric suffix is appended if it exists: `my-project`, `my-project2`, ...).
+   - The JSON output's `data.project_dir` and `data.project_config` give the created
+     project directory and `project_config.yaml` locations. `data.agent_supplement`
+     lists the fields left empty for you to fill.
 
-2. Create `project_config.yaml` — fill these fields NOW:
+2. **Edit the created `project_config.yaml` directly** to supply the
+   request-dependent fields and adjust defaults to match the request:
    - `project.name` — descriptive project name
-   - `project.project_root_path` — absolute path to the project dir
-   - `project.creation_mode` — `auto` (pipeline runs end-to-end) or `manual` (confirm each AI product)
-   - `project.language` — `zh-CN` or `en-US` (match user's language)
+   - `project.language` — `zh-CN` or `en-US` (match the user's language)
    - `project.video_style` — e.g., `documentary`, `knowledge_sharing`, `news_broadcast`, `product_intro`, `data_report`, `tutorial`
    - `project.target_audience` — e.g., `general`, `tech_enthusiasts`, `students`, `professionals`, `investors`
-   - `video.orientation` — `horizontal` or `vertical`
-   - `video.resolution` — `1080p` or `4k`
-   - `video.fps` — typically `24`
-   - `aigc.origin_image_width` / `origin_image_height` — AIGC image generation size (default 1280×720)
-   - `aigc.origin_video_width` / `origin_video_height` — AIGC video generation size (default 1280×720)
-   - `tts.backend` — `comfyui_indextts` or `http_server`
-   - `tts.voice_instruct` — **required**. Voice characteristics description (e.g., `男，中年，中音调` or `male, middle-aged, moderate pitch`)
-   - `tts.voice_file` — leave empty; auto-generated from `voice_instruct` in Step 5
-   - `content.duration` — `short` (1-3min) / `medium` (3-7min) / `long` (7-15min)
-   - `dependence_paths.remotion_template` — relative or absolute path to remotion-video-template
+   - Adjust `video.orientation` / `resolution`, `content.duration`,
+     `project.creation_mode`, and `tts.voice_instruct` as needed.
+     `tts.voice_instruct` is **required** (e.g., `男，中年，中音调` or
+     `male, middle-aged, moderate pitch`).
 
 3. Fields that can wait for later steps:
    - `tts.voice_file` — Step 5 (auto-generated from `voice_instruct`)
@@ -101,7 +101,7 @@ projects/
    - `subtitle.*` — defaults are fine
    - `rss_source_list` — Step 3
 
-4. **Reference:** [demo_projects/air_crash_documentary/project_config.yaml](demo_projects/air_crash_documentary/project_config.yaml)
+4. **Reference:** [demo_projects/project1/project_config.yaml](demo_projects/project1/project_config.yaml)
 
 5. **Validate:**
    ```bash
@@ -109,7 +109,8 @@ projects/
    ```
    Must exit 0 before proceeding.
 
-6. If `tts.voice_file` is empty, generate a reference voice:
+6. (Optional) `tts.voice_file` is empty by default and auto-generates in Step 5.
+   To pre-generate a reference voice now:
    ```bash
    comfyui-scheduler run -w ominivoice_voice_design -i '{"voice_instruct": "male, middle-aged, moderate pitch", "content": "This is a sample sentence for voice reference."}'
    ```
@@ -143,7 +144,7 @@ projects/
    topic: <chosen topic title>
    ```
 
-5. **Reference:** [demo_projects/air_crash_documentary/video1/video_config.yaml](demo_projects/air_crash_documentary/video1/video_config.yaml)
+5. **Reference:** [demo_projects/project1/video1/video_config.yaml](demo_projects/project1/video1/video_config.yaml)
 
 ---
 
@@ -238,7 +239,7 @@ projects/
 
 5. **One scene = one narration:** Each scene has exactly one nested `narration`. There is no `percent` splitting — the scene occupies its whole narration duration.
 
-6. **Reference:** [demo_projects/air_crash_documentary/video1/video_struct.yaml](demo_projects/air_crash_documentary/video1/video_struct.yaml)
+6. **Reference:** [demo_projects/project1/video1/video_struct.yaml](demo_projects/project1/video1/video_struct.yaml)
 
 7. **Validate:**
    ```bash
@@ -306,7 +307,7 @@ projects/
 6. Use `$taskN` placeholder in payload to reference dependent task output.
 
 7. Create `video_tasks.yaml`:
-   **Reference:** [demo_projects/air_crash_documentary/video1/video_tasks.yaml](demo_projects/air_crash_documentary/video1/video_tasks.yaml)
+   **Reference:** [demo_projects/project1/video1/video_tasks.yaml](demo_projects/project1/video1/video_tasks.yaml)
 
 8. **Validate:**
    ```bash
@@ -431,7 +432,7 @@ projects/
 
    If an icon name is not found in Lucide, it renders as `[name]` placeholder text.
 
-3. **Reference:** [demo_projects/air_crash_documentary/video1/remotion_sections.yaml](demo_projects/air_crash_documentary/video1/remotion_sections.yaml)
+3. **Reference:** [demo_projects/project1/video1/remotion_sections.yaml](demo_projects/project1/video1/remotion_sections.yaml)
 
 4. **Validate:**
    ```bash
