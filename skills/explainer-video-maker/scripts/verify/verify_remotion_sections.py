@@ -2,13 +2,14 @@
 """
 Validate remotion_sections.yaml for completeness and correctness.
 
+Nested structure:
+  stories[].section_list[] → {audio, scene_list[]}
+  scene_list[].scene[] → {total_frame, remotion_component, remotion_data, scene_id}
+
 Checks:
 - Required top-level fields: resolution, orientation, fps, theme, subtitle, stories
-- Each section has: total_frame, remotion_component, remotion_data, audio, scene_id
-- remotion_component is valid
-- remotion_data is valid JSON
-- Audio files exist
-- total_frame values are positive integers
+- Each narration section has audio and scene_list
+- Each scene has: total_frame (positive), remotion_component (valid), remotion_data (valid JSON)
 - Subtitle start/end frames are consistent
 
 Usage:
