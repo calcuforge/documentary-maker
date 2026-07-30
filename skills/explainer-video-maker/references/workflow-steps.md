@@ -264,9 +264,10 @@ projects/
    - `--timeout 3600` (default): per-TTS subprocess timeout (1h)
    This will:
    - Generate `speech.wav` for each narration unit
-   - Measure audio duration via ffprobe
+   - **Compress WAV → MP3 (128kbps)** to reduce Remotion render memory
+   - Measure audio duration via ffprobe (from WAV for accuracy)
    - Calculate `total_frame = ceil(duration × fps)`
-   - Update `video_struct.yaml` with `audio_path` and `total_frame`
+   - Update `video_struct.yaml` with `audio_path` (pointing to .mp3) and `total_frame`
 
 2. **Validate:**
    ```bash
@@ -360,7 +361,9 @@ projects/
      --project-config /abs/path/project_config.yaml \
      --video-struct /abs/path/video_struct.yaml
    ```
-   This upscales origin assets to target resolution and updates `asset_path`.
+   This upscales origin assets to target resolution, **compresses video assets
+   with h264 crf 18** (significantly reduces file size for Remotion render
+   without visible quality loss), and updates `asset_path`.
 
 3. **Validate:**
    ```bash

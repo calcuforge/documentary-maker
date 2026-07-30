@@ -257,6 +257,37 @@ def main() -> None:
 
     print(f"  Upscale: {upscaled} new, {skipped} skipped", file=sys.stderr)
 
+    # Compress video assets (h264 crf 18) to reduce memory during Remotion render
+    def _compress_video(filepath: str) -> None:
+        tmp = filepath + ".tmp.mp4"
+        try:
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", filepath, "-c:v", "libx264", "-crf", "18",
+                 "-preset", "fast", "-c:a", "aac", "-b:a", "128k",
+                 "-map_metadata", "-1", tmp],
+                capture_output=True, text=True, timeout=120,
+                check=True,
+            )
+            Path(tmp).replace(filepath)  # atomic replace
+        except subprocess.SubprocessError as e:
+            print(f"    WARNING: video compression failed for {filepath}: {e}", file=sys.stderr)
+            Path(tmp).unlink(missing_ok=True)
+
+    compressed = 0
+    for story in video_struct.get("stories", []):
+        for narration in story.get("narration_list", []):
+            for scene in narration.get("scene_list", []):
+                asset = scene.get("asset_path", "")
+                if not asset or not Path(asset).exists():
+                    continue
+                if scene.get("type") != "video":
+                    continue
+                if scene.get("is_aigc_scene"):
+                    _compress_video(asset)
+                    compressed += 1
+    if compressed:
+        print(f"  Compressed {compressed} video asset(s) (h264 crf 18)", file=sys.stderr)
+
     # Save updated video_struct
     save_yaml(video_struct, args.video_struct)
 
