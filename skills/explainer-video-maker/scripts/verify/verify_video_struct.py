@@ -12,6 +12,8 @@ Key validations:
 - narration content must not exceed MAX_NARRATION_CHARS (50) characters
 - All IDs (story / scene / narration) must be globally unique
 - remotion_component must be a valid component name
+- the chapter script (stories/{story_id}/script.md) must equal all of that
+  story's scene narrations merged together (compared ignoring whitespace)
 
 Usage:
     python verify_video_struct.py --video-struct /abs/path/video_struct.yaml
@@ -23,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -47,9 +50,22 @@ VALID_WORKFLOW_TYPES = [
 # A single narration must not exceed this many characters.
 MAX_NARRATION_CHARS = 50
 
+# Per-chapter narration script filename (written in Step 5).
+SCRIPT_FILENAME = "script.md"
 
-def validate(struct: dict) -> tuple[list[str], list[str]]:
-    """Return (errors, warnings)."""
+
+def _normalize(text: str) -> str:
+    """Strip all whitespace so scripts and merged narrations compare regardless
+    of paragraph/line formatting."""
+    return re.sub(r"\s+", "", text or "")
+
+
+def validate(struct: dict, video_dir: str | None = None) -> tuple[list[str], list[str]]:
+    """Return (errors, warnings).
+
+    If video_dir is given, also cross-checks that each story's chapter script
+    (stories/{story_id}/script.md) equals its scene narrations merged together.
+    """
     errors = []
     warnings = []
 
@@ -80,6 +96,7 @@ def validate(struct: dict) -> tuple[list[str], list[str]]:
         if not scene_list:
             errors.append(f"{prefix}: 'scene_list' is empty")
 
+        narration_contents = []  # in scene order, for the script merge check
         for sci, scene in enumerate(scene_list):
             scene_id = scene.get("id", "")
             s_prefix = f"{prefix}.scene_list[{sci}]"
@@ -142,6 +159,7 @@ def validate(struct: dict) -> tuple[list[str], list[str]]:
                 narration_ids.add(narration_id)
 
                 content = narration.get("content", "")
+                narration_contents.append(content)
                 if not content:
                     errors.append(f"{n_prefix}: 'content' (narration text) is required")
                 elif len(content) > MAX_NARRATION_CHARS:
@@ -149,6 +167,22 @@ def validate(struct: dict) -> tuple[list[str], list[str]]:
                         f"{n_prefix}: 'content' is {len(content)} chars, "
                         f"exceeds the {MAX_NARRATION_CHARS}-character limit"
                     )
+
+        # Cross-check: the chapter script must equal the merged scene narrations.
+        # (All narrations concatenated == script.md, compared ignoring whitespace.)
+        if video_dir is not None and story_id and scene_list:
+            merged = "".join(narration_contents)
+            script_path = Path(video_dir) / "stories" / story_id / SCRIPT_FILENAME
+            if not script_path.exists():
+                warnings.append(
+                    f"{prefix}: chapter script not found ({script_path}); "
+                    f"cannot verify narrations match the script"
+                )
+            elif _normalize(merged) != _normalize(script_path.read_text(encoding="utf-8")):
+                errors.append(
+                    f"{prefix}: merged scene narrations do NOT equal the chapter script "
+                    f"({script_path}). Concatenating all scene narrations must reproduce script.md exactly."
+                )
 
     return errors, warnings
 
@@ -162,7 +196,8 @@ def main() -> None:
     require_abs(args.video_struct)
 
     struct = load_yaml(args.video_struct)
-    errors, warnings = validate(struct)
+    video_dir = str(Path(args.video_struct).parent)
+    errors, warnings = validate(struct, video_dir)
 
     if errors:
         print(json.dumps({

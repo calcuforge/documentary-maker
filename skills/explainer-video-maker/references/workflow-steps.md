@@ -260,7 +260,9 @@ projects/
 **What to do:**
 
 1. Write the narration script (讲稿) for each chapter — the full spoken prose for
-   that chapter, which Step 6 will split into short scene narrations.
+   that chapter, which Step 6 will split into short scene narrations. The script
+   is the chapter's single source of narration: **all scene narrations merged
+   together must equal this script exactly** (see Step 6).
 
    **Write one chapter at a time, in multiple passes — do NOT write all chapters
    at once.** Finish one chapter's script before starting the next. Focusing on a
@@ -304,12 +306,18 @@ projects/
    chapter script (1 scene = 1 narration). Add the `scene_list` to the matching
    story in `video_struct.yaml`.
 
+   **Script = merged narrations (exact):** the chapter script is exactly the
+   concatenation of all its scene narrations, in order. **Merging every scene
+   narration must reproduce `script.md` verbatim** — do not add, drop, or reword
+   any text when splitting. `verify_video_struct.py` enforces this (it compares
+   the merged narrations against `script.md`, ignoring whitespace/paragraph
+   breaks, so you may format the script into paragraphs but not change the words).
+
    **Narration length:** each scene's narration MUST be **≤ 50 characters — a
    ceiling, not a target** (enforced by `verify_video_struct.py`). Aim for a
    substantive line of roughly **20-45 characters** and **vary the length**
    across scenes; do NOT reduce them all to 10-character fragments. If a passage
-   exceeds 50 characters, split it into multiple scenes. The scene narrations
-   should faithfully cover the chapter script.
+   exceeds 50 characters, split it into multiple scenes.
 
 2. For each scene, decide the expression method using
    [expression_intent_mapping.md](expression_intent_mapping.md):
