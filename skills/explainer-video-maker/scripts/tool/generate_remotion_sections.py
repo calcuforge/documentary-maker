@@ -26,8 +26,28 @@ sys.path.insert(0, str(SKILL_ROOT))
 from lib.yamlutil import load_yaml, save_yaml
 
 
+def split_text_to_sentences(text: str) -> list[str]:
+    """Split narration text into sentence-level chunks for subtitles."""
+    import re
+    # Split on Chinese/English sentence boundaries
+    parts = re.split(r'(?<=[。！？；\.\!\?;])\s*', text)
+    sentences = [s.strip() for s in parts if s.strip()]
+    # Merge very short fragments (< 8 chars) with the previous sentence
+    merged = []
+    for s in sentences:
+        if merged and len(s) < 8:
+            merged[-1] += s
+        else:
+            merged.append(s)
+    # If only one long sentence, split by comma
+    if len(merged) == 1 and len(merged[0]) > 60:
+        parts = re.split(r'(?<=[，,、])\s*', merged[0])
+        merged = [p.strip() for p in parts if p.strip()]
+    return merged if merged else [text]
+
+
 def build_subtitle_list(video_struct: dict, fps: int) -> list[dict]:
-    """Build subtitle list from narration content and frame positions."""
+    """Build subtitle list from narration content, split by sentence."""
     subtitles = []
     current_frame = 1
 
@@ -36,18 +56,48 @@ def build_subtitle_list(video_struct: dict, fps: int) -> list[dict]:
             total_frame = narration.get("total_frame", 0)
             content = narration.get("content", "")
             if total_frame > 0 and content:
-                subtitles.append({
-                    "text": content,
-                    "start_frame": current_frame,
-                    "end_frame": current_frame + total_frame - 1,
-                })
+                sentences = split_text_to_sentences(content)
+                # Distribute frames proportionally by character count
+                total_chars = sum(len(s) for s in sentences)
+                frame_cursor = current_frame
+                for sent in sentences:
+                    sent_frames = max(1, round(total_frame * len(sent) / total_chars))
+                    subtitles.append({
+                        "text": sent,
+                        "start_frame": frame_cursor,
+                        "end_frame": frame_cursor + sent_frames - 1,
+                    })
+                    frame_cursor += sent_frames
             current_frame += total_frame
 
     return subtitles
 
 
+def _to_relative(path: str, video_dir: str) -> str:
+    """Convert a path to be relative to video_dir (for Remotion public-dir).
+
+    If the path is already relative, return as-is.
+    If absolute, try to make it relative to video_dir.
+    """
+    if not path:
+        return ""
+    p = Path(path)
+    if not p.is_absolute():
+        return str(p)
+    try:
+        return str(p.relative_to(video_dir))
+    except ValueError:
+        # Path is outside video_dir — return as-is (Remotion may still resolve it)
+        return str(p)
+
+
 def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
-    """Build the stories/sections structure for remotion_sections.yaml."""
+    """Build the stories/sections structure for remotion_sections.yaml.
+
+    All paths (audio, assets) are relative to video_dir (--public-dir).
+    Audio is only attached to the FIRST section of each narration to
+    prevent duplicate playback.
+    """
     stories_out = []
 
     for story in video_struct.get("stories", []):
@@ -60,6 +110,11 @@ def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
             total_frame = narration.get("total_frame", 0)
             audio_path = narration.get("audio_path", "")
 
+            # Convert audio path to relative (for Remotion public-dir)
+            audio_rel = _to_relative(audio_path, video_dir)
+
+            is_first_section_in_narration = True
+
             for scene in narration.get("scene_list", []):
                 scene_id = scene.get("id", "")
                 percent = scene.get("percent", 100)
@@ -68,23 +123,21 @@ def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
                 # Calculate section frames from percent
                 section_frames = max(1, round(total_frame * percent / 100))
 
-                # Determine audio path (absolute)
-                audio_abs = audio_path
-                if audio_path and not Path(audio_path).is_absolute():
-                    audio_abs = str(Path(video_dir) / audio_path)
+                # Audio: only first section per narration carries the audio
+                section_audio = audio_rel if is_first_section_in_narration else ""
+                is_first_section_in_narration = False
 
-                # Build remotion_data placeholder
+                # Build remotion_data
                 asset_path = scene.get("asset_path", "")
                 data_content = scene.get("data", "")
                 text_content = scene.get("text", "")
 
                 remotion_data = {}
                 if component in ("AssetVideo", "AssetImage"):
-                    # For AIGC asset components, src points to the asset
-                    src = asset_path if asset_path else scene.get("origin_asset_path", "")
-                    remotion_data = {"src": src, "role": "background"}
+                    # Asset src relative to public-dir
+                    raw_src = asset_path if asset_path else scene.get("origin_asset_path", "")
+                    remotion_data = {"src": _to_relative(raw_src, video_dir), "role": "background"}
                 elif data_content:
-                    # Try to parse data as JSON
                     try:
                         remotion_data = json.loads(data_content) if isinstance(data_content, str) else data_content
                     except (json.JSONDecodeError, TypeError):
@@ -96,7 +149,7 @@ def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
                     "total_frame": section_frames,
                     "remotion_component": component,
                     "remotion_data": json.dumps(remotion_data, ensure_ascii=False) if remotion_data else "{}",
-                    "audio": audio_abs,
+                    "audio": section_audio,
                     "scene_id": scene_id,
                 }
                 section_list.append(section)

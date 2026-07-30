@@ -42,6 +42,9 @@ tts:
   http:
       url: ${BACKEND_PROXY_ENDPOINT}/v1/audio/speech
       speed: 1.0              # 0.25–4.0, passed as form field
+      headers:                # custom HTTP headers (optional)
+        Host-User-ID: ""
+        Host-User-Token: ""
 theme:
   # These override the matching fields in themes/<category>.yaml.
   # Explicit fields here win; everything else falls back to the theme preset.

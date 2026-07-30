@@ -130,28 +130,31 @@ def main() -> None:
     parser.add_argument("--output", default="", help="Output JSON file path (optional, prints to stdout if omitted)")
     parser.add_argument("--max-results", type=int, default=10, help="Max results to return")
     parser.add_argument("--timeout", type=int, default=30000, help="Page load timeout (ms)")
+    parser.add_argument("--offline", action="store_true",
+                        help="Skip browser search, only use built-in feed suggestions (no Playwright needed)")
     args = parser.parse_args()
 
     all_results: list[dict] = []
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        )
-        page = context.new_page()
+    if not args.offline:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            )
+            page = context.new_page()
 
-        # Search RSSHub
-        all_results.extend(search_rsshub(page, args.query, args.timeout))
+            # Search RSSHub
+            all_results.extend(search_rsshub(page, args.query, args.timeout))
 
-        # Search Feedly (non-China)
-        if not is_china_network():
-            all_results.extend(search_feedly(page, args.query, args.timeout))
+            # Search Feedly (non-China)
+            if not is_china_network():
+                all_results.extend(search_feedly(page, args.query, args.timeout))
 
-        browser.close()
+            browser.close()
 
-    # Add offline suggestions as fallback
-    if len(all_results) < 3:
+    # Add offline suggestions as fallback (or primary in --offline mode)
+    if len(all_results) < 3 or args.offline:
         all_results.extend(suggest_common_feeds(args.query))
 
     # Deduplicate by URL

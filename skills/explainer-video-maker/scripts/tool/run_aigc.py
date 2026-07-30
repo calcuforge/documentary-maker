@@ -130,6 +130,7 @@ def main() -> None:
     errors = []
     total_tasks = sum(len(g.get("tasks", [])) for g in task_groups)
     completed = 0
+    struct_changed = False
 
     import time
     started_at = time.time()
@@ -206,15 +207,17 @@ def main() -> None:
                         print(f"    SKIP task {result['ordinal']} (already exists)", file=sys.stderr)
                     else:
                         completed += 1
-                    # Update video_struct origin_asset_path
+                    # Update video_struct origin_asset_path (skip if unchanged)
                     ctx = find_scene_context(video_struct, result["scene_id"])
-                    if ctx:
+                    if ctx and ctx["scene"].get("origin_asset_path") != result["path"]:
                         ctx["scene"]["origin_asset_path"] = result["path"]
+                        struct_changed = True
 
         print(f"  Group {group_ordinal}: {completed} new, {skipped} skipped", file=sys.stderr)
 
-    # Save updated video_struct
-    save_yaml(video_struct, args.video_struct)
+    # Save updated video_struct only if something changed
+    if struct_changed:
+        save_yaml(video_struct, args.video_struct)
 
     # Report
     if errors:

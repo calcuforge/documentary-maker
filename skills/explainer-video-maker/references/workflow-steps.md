@@ -205,6 +205,16 @@ projects/
    - Each story has **narration units** (paragraphs of spoken text)
    - Each narration has **scene units** (visual elements)
 
+   **Content volume reference** (from `content.duration` in project_config.yaml):
+
+   | Duration | Stories | Narrations | Scenes | Approx. length |
+   |----------|---------|------------|--------|----------------|
+   | short (1-3min) | 1-2 | 3-5 | 5-10 | ~2 min |
+   | medium (3-7min) | 2-4 | 6-12 | 12-25 | ~5 min |
+   | long (7-15min) | 4-6 | 12-20 | 25-40 | ~10 min |
+
+   Each narration unit should be 2-5 sentences (roughly 10-30 seconds of speech).
+
 2. For each scene, decide the expression method using
    [expression_intent_mapping.md](expression_intent_mapping.md):
    - **AIGC scenes** (`is_aigc_scene: true`): need AI-generated imagery/video

@@ -198,11 +198,11 @@ def main() -> None:
     # HTTP server config
     http_config = tts_config.get("http", {})
     http_url = http_config.get("url", "")
-    http_headers = {}
-    # Support env var headers
-    if "Host-User-ID" in os.environ:
+    # Headers: project_config tts.http.headers → env vars fallback
+    http_headers = dict(http_config.get("headers", {}))
+    if not http_headers.get("Host-User-ID") and "Host-User-ID" in os.environ:
         http_headers["Host-User-ID"] = os.environ["Host-User-ID"]
-    if "Host-User-Token" in os.environ:
+    if not http_headers.get("Host-User-Token") and "Host-User-Token" in os.environ:
         http_headers["Host-User-Token"] = os.environ["Host-User-Token"]
 
     # Collect narration units
