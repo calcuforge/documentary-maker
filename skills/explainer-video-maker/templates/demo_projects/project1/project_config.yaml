@@ -61,6 +61,7 @@ theme:
   transition_duration: 12 # frames @ fps
 content:
   duration: medium # short (2-5min) / medium (8-12min) / long (15-20min)
+  min_story_chars: 500 # 每个章节讲稿（stories/{story_id}/script.md）的最少字数，verify_story_scripts.py 校验
 render:
   concurrency: 1 # Remotion render concurrency (number of parallel browser tabs). Increase to speed up rendering on multi-core machines.
 dependence_paths:

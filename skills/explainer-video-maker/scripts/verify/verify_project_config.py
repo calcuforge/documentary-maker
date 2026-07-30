@@ -109,6 +109,10 @@ def validate(config: dict) -> list[str]:
     duration = content.get("duration", "")
     if duration and duration not in VALID_DURATIONS:
         errors.append(f"[content.duration] invalid '{duration}'. Valid: {VALID_DURATIONS}")
+    min_chars = content.get("min_story_chars")
+    if min_chars is not None:
+        if not isinstance(min_chars, int) or min_chars <= 0:
+            errors.append(f"[content.min_story_chars] must be a positive integer, got '{min_chars}'")
 
     # --- dependence_paths ---
     deps = config.get("dependence_paths", {})

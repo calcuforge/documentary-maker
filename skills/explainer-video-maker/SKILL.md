@@ -44,7 +44,7 @@ narration's audio duration determines the scene's total frame count.
 - [Prerequisites](#prerequisites)
 - [Project Management](#project-management)
 - [Execution Modes](#execution-modes) — Auto (default) vs Manual
-- [Workflow (9 Steps)](#workflow)
+- [Workflow (11 Steps)](#workflow)
 - [Hard Rules](#hard-rules)
 - [References](#references)
 
@@ -118,6 +118,7 @@ projects/
 │   │   │   └── result2.md         # Research result 2
 │   │   └── stories/
 │   │       ├── story1/
+│   │       │   ├── script.md      # Chapter narration script (Step 5)
 │   │       │   └── narration1/
 │   │       │       ├── speech.wav # Narration audio
 │   │       │       └── scenes/
@@ -138,7 +139,7 @@ Detailed structure reference: [templates/demo_projects/](templates/demo_projects
 
 ### Auto Mode (default)
 
-The agent makes **all decisions autonomously** across all 9 steps. No user
+The agent makes **all decisions autonomously** across all 11 steps. No user
 interaction is required until the final video is ready. Infer sensible
 defaults from the user's request (language, style, audience, duration).
 
@@ -176,21 +177,25 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | 1 | Project initialization | `scripts/tool/init_project.py`, `scripts/verify/verify_project_config.py` | `project_config.yaml` |
 | 2 | Define topic | — (agent research) | `video_config.yaml` |
 | 3 | Topic research | `scripts/search_provider/search.py`, `scripts/search_provider/search_rss.py` | `search_results/*.md` |
-| 4 | Design video structure | `scripts/verify/verify_video_struct.py` | `video_struct.yaml` |
-| 5 | TTS + frame calculation | `scripts/tool/run_tts.py`, `scripts/verify/verify_audio.py` | `speech.wav` per scene |
-| 6 | Plan AIGC tasks | `scripts/verify/verify_video_tasks.py` | `video_tasks.yaml` |
-| 7 | Execute AIGC tasks | `scripts/tool/run_aigc.py`, `scripts/tool/run_upscale.py`, `scripts/verify/verify_aigc_assets.py` | `scenes/` assets |
-| 8 | Generate remotion config | `scripts/tool/generate_remotion_sections.py`, `scripts/verify/verify_remotion_sections.py` | `remotion_sections.yaml` |
-| 9 | Render video | `scripts/tool/render.py` | `result.mp4` |
+| 4 | Design chapter list | `scripts/verify/verify_stories.py` | `video_struct.yaml` (stories only) |
+| 5 | Write chapter scripts | `scripts/verify/verify_story_scripts.py` | `stories/{story_id}/script.md` |
+| 6 | Design scene list | `scripts/verify/verify_video_struct.py` | `video_struct.yaml` (full structure) |
+| 7 | TTS + frame calculation | `scripts/tool/run_tts.py`, `scripts/verify/verify_audio.py` | `speech.wav` per scene |
+| 8 | Plan AIGC tasks | `scripts/verify/verify_video_tasks.py` | `video_tasks.yaml` |
+| 9 | Execute AIGC tasks | `scripts/tool/run_aigc.py`, `scripts/tool/run_upscale.py`, `scripts/verify/verify_aigc_assets.py` | `scenes/` assets |
+| 10 | Generate remotion config | `scripts/tool/generate_remotion_sections.py`, `scripts/verify/verify_remotion_sections.py` | `remotion_sections.yaml` |
+| 11 | Render video | `scripts/tool/render.py` | `result.mp4` |
 
 **Mandatory validation gates:**
 
 - After Step 1: `verify_project_config.py` must exit 0
-- After Step 4: `verify_video_struct.py` must exit 0 (re-do step if not)
-- After Step 5: `verify_audio.py` must exit 0
-- After Step 6: `verify_video_tasks.py` must exit 0
-- After Step 7: `verify_aigc_assets.py` must exit 0
-- After Step 8: `verify_remotion_sections.py` must exit 0
+- After Step 4: `verify_stories.py` must exit 0 (re-do step if not)
+- After Step 5: `verify_story_scripts.py` must exit 0
+- After Step 6: `verify_video_struct.py` must exit 0
+- After Step 7: `verify_audio.py` must exit 0
+- After Step 8: `verify_video_tasks.py` must exit 0
+- After Step 9: `verify_aigc_assets.py` must exit 0
+- After Step 10: `verify_remotion_sections.py` must exit 0
 
 ---
 
@@ -218,7 +223,7 @@ Load on demand — do NOT load all at once:
 | File | Load when |
 |------|-----------|
 | [references/workflow-steps.md](references/workflow-steps.md) | **Always** — detailed per-step instructions |
-| [references/natural-narration.md](references/natural-narration.md) | Step 4 — writing narration content |
+| [references/natural-narration.md](references/natural-narration.md) | Step 5 — writing chapter narration scripts |
 | [references/search-providers.md](references/search-providers.md) | Step 3 — topic research |
-| [references/expression_intent_mapping.md](references/expression_intent_mapping.md) | Step 4 — choosing scene types and components |
+| [references/expression_intent_mapping.md](references/expression_intent_mapping.md) | Step 6 — choosing scene types and components |
 | [templates/demo_projects/](templates/demo_projects/) | Any step — reference for config file structure |

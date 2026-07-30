@@ -4,7 +4,7 @@
 
 ## Overview
 
-The pipeline produces narration-driven explainer videos through 9 steps.
+The pipeline produces narration-driven explainer videos through 11 steps.
 Audio drives visuals: narration audio length determines frame counts.
 
 Structure hierarchy: **Story → Scene** (each scene carries one narration)
@@ -26,17 +26,18 @@ projects/
 │   │   ├── search_results/        # Step 3 — research artifacts
 │   │   │   ├── result1.md
 │   │   │   └── result2.md
-│   │   ├── video_struct.yaml      # Step 4 — video structure definition
-│   │   ├── stories/               # Step 5+7 — audio & AIGC assets
+│   │   ├── video_struct.yaml      # Step 4 (chapters) + Step 6 (scenes)
+│   │   ├── stories/               # Step 5 (scripts), Step 7 (audio), Step 9 (AIGC)
 │   │   │   └── {story_id}/
+│   │   │       ├── script.md          # Step 5 — chapter narration script
 │   │   │       └── {narration_id}/
 │   │   │           ├── speech.wav
 │   │   │           └── scenes/
 │   │   │               ├── origin_{scene_id}.{png|mp4}
 │   │   │               └── {scene_id}.{png|mp4}
-│   │   ├── video_tasks.yaml       # Step 6 — AIGC task list
-│   │   ├── remotion_sections.yaml # Step 8 — render config
-│   │   └── result.mp4             # Step 9 — final video
+│   │   ├── video_tasks.yaml       # Step 8 — AIGC task list
+│   │   ├── remotion_sections.yaml # Step 10 — render config
+│   │   └── result.mp4             # Step 11 — final video
 ```
 
 ---
@@ -108,7 +109,7 @@ projects/
    voice attributes if the user wants a different voice.
 
 3. Fields that can wait for later steps:
-   - `tts.voice_file` — Step 5 (auto-generated from `voice_instruct`)
+   - `tts.voice_file` — Step 7 (auto-generated from `voice_instruct`)
    - `theme.*` / `subtitle.*` — defaults are fine; adjust only if the user requests
    - `rss_source_list` — Step 3
 
@@ -120,7 +121,7 @@ projects/
    ```
    Must exit 0 before proceeding.
 
-6. (Optional) `tts.voice_file` is empty by default and auto-generates in Step 5.
+6. (Optional) `tts.voice_file` is empty by default and auto-generates in Step 7.
    To pre-generate a reference voice now:
    ```bash
    comfyui-scheduler run -w ominivoice_voice_design -i '{"voice_instruct": "male, middle-aged, moderate pitch", "content": "This is a sample sentence for voice reference."}'
@@ -213,16 +214,16 @@ projects/
 
 ---
 
-## Step 4: Design Video Structure
+## Step 4: Design Chapter List
 
 **When:** After research is complete.
 
 **What to do:**
 
-1. Based on research, design the video structure:
-   - Divide content into **stories** (chapters/sections)
-   - Each story has **scene units** (visual elements)
-   - Each scene carries exactly one **narration** (the spoken text for that scene)
+1. Based on research, divide the content into **stories** (chapters/sections).
+   Lay out the whole `stories` list in one go — just each story's `id` + `name`.
+   This is cheap and locks in the overall narrative arc; the scene-level detail
+   comes later (Step 6).
 
    **Content volume reference** (from `content.duration` in project_config.yaml).
    Since 1 scene = 1 narration, the scene count equals the narration count:
@@ -233,46 +234,99 @@ projects/
    | medium (8-12min) | 5-7     | 25-30                 | ~10 min        |
    | long (15-20min) | 8-12    | 50-60                 | ~18 min        |
 
-   **Narration length:** each scene's narration MUST be **≤ 50 characters — a
-   ceiling, not a target** (enforced by `verify_video_struct.py`). Aim for a
-   substantive line of roughly **20-45 characters** and **vary the length**
-   across scenes; do NOT reduce them all to 10-character fragments. If a passage
-   exceeds 50 characters, split it into multiple scenes.
+2. Create `video_struct.yaml` with the chapter list ONLY — no `scene_list` yet:
+   ```yaml
+   stories:
+     - id: story1
+       name: <chapter title>
+     - id: story2
+       name: <chapter title>
+   ```
 
-   **Build the structure in segments — do NOT generate everything at once:**
-   - **First pass (all at once):** lay out the whole `stories` list in one go —
-     just each story's `id` + `name`. This is cheap and locks in the overall arc.
-   - **Second pass (one story at a time):** then design the `scene_list` for
-     **one story at a time** — its scenes, narrations, and expression methods —
-     and finish it before moving to the next story. Do NOT generate every scene
-     of every story in a single pass. Focusing on one story at a time produces
-     richer, more detailed scenes and narrations.
+3. **Reference:** [demo_projects/project1/video1/video_struct.yaml](demo_projects/project1/video1/video_struct.yaml)
 
-2. For each scene, decide the expression method using
-   [expression_intent_mapping.md](expression_intent_mapping.md):
-   - **AIGC scenes** (`is_aigc_scene: true`): need AI-generated imagery/video
-   - **Data/text scenes** (`is_aigc_scene: false`): filled with text/data directly into Remotion components
+4. **Validate:**
+   ```bash
+   python3 "${SKILL_DIR}/scripts/verify/verify_stories.py" --video-struct /abs/path/video_struct.yaml
+   ```
+   If it fails, fix and re-validate. Do NOT proceed until exit 0.
 
-3. **Write narration content** — MUST follow [natural-narration.md](natural-narration.md):
-   - **≤ 50 characters per narration (a ceiling, not a target)** — aim for ~20-45
-     chars that carry a full thought, vary length across scenes, and do NOT make
-     them all tiny fragments; split longer text into more scenes
+---
+
+## Step 5: Write Chapter Narration Scripts
+
+**When:** After the chapter list passes validation.
+
+**What to do:**
+
+1. Write the narration script (讲稿) for each chapter — the full spoken prose for
+   that chapter, which Step 6 will split into short scene narrations.
+
+   **Write one chapter at a time, in multiple passes — do NOT write all chapters
+   at once.** Finish one chapter's script before starting the next. Focusing on a
+   single chapter produces richer, more detailed narration.
+
+2. Save each chapter's script to `stories/{story_id}/script.md` (one file per
+   chapter, under the video directory).
+
+3. **Each script MUST meet `content.min_story_chars`** (project_config.yaml,
+   default **500** characters). A chapter script should be a complete, substantive
+   narration — not a thin outline.
+
+4. **Writing style — MUST follow [natural-narration.md](natural-narration.md):**
    - No AI filler phrases
    - No rule-of-three abuse
    - Vary sentence length
    - State facts directly
    - Write for the ear, not the eye
 
-4. Create `video_struct.yaml`, working **one story's `scene_list` at a time**
-   (per the segmented approach above). Fill these fields per scene:
+5. **Reference:** [demo_projects/project1/video1/stories/story1/script.md](demo_projects/project1/video1/stories/story1/script.md)
+
+6. **Validate:**
+   ```bash
+   python3 "${SKILL_DIR}/scripts/verify/verify_story_scripts.py" \
+     --video-struct /abs/path/video_struct.yaml \
+     --project-config /abs/path/project_config.yaml
+   ```
+   If it fails (script missing or below the minimum), fix and re-validate. Do NOT
+   proceed until exit 0.
+
+---
+
+## Step 6: Design Scene List from Scripts
+
+**When:** After all chapter scripts pass validation.
+
+**What to do:**
+
+1. Working **one chapter at a time**, split that chapter's `script.md` into
+   **scenes**. Each scene carries exactly one **narration** — a short slice of the
+   chapter script (1 scene = 1 narration). Add the `scene_list` to the matching
+   story in `video_struct.yaml`.
+
+   **Narration length:** each scene's narration MUST be **≤ 50 characters — a
+   ceiling, not a target** (enforced by `verify_video_struct.py`). Aim for a
+   substantive line of roughly **20-45 characters** and **vary the length**
+   across scenes; do NOT reduce them all to 10-character fragments. If a passage
+   exceeds 50 characters, split it into multiple scenes. The scene narrations
+   should faithfully cover the chapter script.
+
+2. For each scene, decide the expression method using
+   [expression_intent_mapping.md](expression_intent_mapping.md):
+   - **AIGC scenes** (`is_aigc_scene: true`): need AI-generated imagery/video
+   - **Data/text scenes** (`is_aigc_scene: false`): filled with text/data directly into Remotion components
+
+3. Fill the scene fields, supplementing display data and text from the research
+   and the chapter script:
    - Fill NOW: `id`, `intent`, `is_aigc_scene`, `type`, `remotion_component`, `visual_content`, `data`, `text`, `workflows`, `narration.id`, `narration.content`
    - Leave EMPTY (auto-filled later): `asset_path`, `origin_asset_path`, `narration.total_frame`, `narration.audio_path`
 
-5. **One scene = one narration:** Each scene has exactly one nested `narration`. There is no `percent` splitting — the scene occupies its whole narration duration.
+4. **One scene = one narration:** each scene has exactly one nested `narration`.
+   There is no `percent` splitting — the scene occupies its whole narration duration.
 
-6. **Reference:** [demo_projects/project1/video1/video_struct.yaml](demo_projects/project1/video1/video_struct.yaml)
+5. **Reference:** [demo_projects/project1/video1/video_struct.yaml](demo_projects/project1/video1/video_struct.yaml)
 
-7. **Validate:**
+6. **Validate:**
    ```bash
    python3 "${SKILL_DIR}/scripts/verify/verify_video_struct.py" --video-struct /abs/path/video_struct.yaml
    ```
@@ -280,7 +334,7 @@ projects/
 
 ---
 
-## Step 5: TTS Synthesis + Frame Calculation
+## Step 7: TTS Synthesis + Frame Calculation
 
 **When:** After video_struct.yaml passes validation.
 
@@ -313,7 +367,7 @@ projects/
 
 ---
 
-## Step 6: Plan AIGC Tasks
+## Step 8: Plan AIGC Tasks
 
 **When:** After TTS is complete and frames are calculated.
 
@@ -354,7 +408,7 @@ projects/
 
 ---
 
-## Step 7: Execute AIGC Tasks
+## Step 9: Execute AIGC Tasks
 
 **When:** After video_tasks.yaml passes validation.
 
@@ -413,7 +467,7 @@ projects/
 
 ---
 
-## Step 8: Generate Remotion Rendering Config
+## Step 10: Generate Remotion Rendering Config
 
 **When:** After all assets are verified.
 
@@ -481,7 +535,7 @@ projects/
 
 ---
 
-## Step 9: Render Video
+## Step 11: Render Video
 
 **When:** After remotion_sections.yaml passes validation.
 
@@ -534,12 +588,14 @@ Per-step artifact summary:
 | 1 | `project_config.yaml`, `voice_file.wav` (if generated) |
 | 2 | `video_config.yaml` (show the chosen topic) |
 | 3 | `search_results/result{N}.md` (list all, count of results) |
-| 4 | `video_struct.yaml` (story/scene counts; each scene = one narration) |
-| 5 | `speech.wav` files (count, total duration) |
-| 6 | `video_tasks.yaml` (task group count, total tasks) |
-| 7 | `scenes/origin_*` + upscaled files (count) |
-| 8 | `remotion_sections.yaml` (section count) |
-| 9 | `result.mp4` (file size, duration) |
+| 4 | `video_struct.yaml` (story count — chapter list) |
+| 5 | `stories/{story_id}/script.md` (count; each meets `min_story_chars`) |
+| 6 | `video_struct.yaml` (scene count; each scene = one narration) |
+| 7 | `speech.wav` files (count, total duration) |
+| 8 | `video_tasks.yaml` (task group count, total tasks) |
+| 9 | `scenes/origin_*` + upscaled files (count) |
+| 10 | `remotion_sections.yaml` (section count) |
+| 11 | `result.mp4` (file size, duration) |
 
 ---
 
@@ -555,9 +611,11 @@ where to resume:
 | Files present | Resume from |
 |--------------|-------------|
 | `video_config.yaml` only | Step 3 |
-| + `search_results/` | Step 4 |
-| + `video_struct.yaml` (no audio) | Step 4 validation → Step 5 |
-| + audio files + frames set | Step 6 |
-| + `video_tasks.yaml` | Step 7 |
-| + `scenes/` with assets | Step 8 |
-| + `remotion_sections.yaml` | Step 9 |
+| + `search_results/` | Step 4 (design chapters) |
+| + `video_struct.yaml` (chapters only, no scripts) | Step 5 (write scripts) |
+| + `stories/*/script.md` (scripts, no scenes yet) | Step 6 (design scenes) |
+| + `video_struct.yaml` (full scenes, no audio) | Step 7 (TTS) |
+| + audio files + frames set | Step 8 (plan AIGC) |
+| + `video_tasks.yaml` | Step 9 (execute AIGC) |
+| + `scenes/` with assets | Step 10 (generate remotion) |
+| + `remotion_sections.yaml` | Step 11 (render) |

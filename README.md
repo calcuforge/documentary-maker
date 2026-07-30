@@ -7,17 +7,19 @@ explanation.
 
 ## How It Works
 
-The skill guides an AI coding agent through a 9-step pipeline:
+The skill guides an AI coding agent through an 11-step pipeline:
 
 1. **Project initialization** — create project config
 2. **Topic definition** — auto-select or user-specified topic
 3. **Topic research** — browser search, RSS feeds, custom providers
-4. **Video structure design** — stories → scenes (each scene carries one narration)
-5. **TTS synthesis** — generate narration audio, calculate frame counts
-6. **AIGC task planning** — design prompts, choose workflows
-7. **AIGC execution** — generate images/videos via ComfyUI, upscale
-8. **Remotion config generation** — build rendering configuration
-9. **Video rendering** — render final MP4 via remotion-video-template
+4. **Chapter list design** — divide content into stories (chapters)
+5. **Chapter script writing** — one chapter's narration script at a time
+6. **Scene list design** — split each script into scenes (each scene = one narration)
+7. **TTS synthesis** — generate narration audio, calculate frame counts
+8. **AIGC task planning** — design prompts, choose workflows
+9. **AIGC execution** — generate images/videos via ComfyUI, upscale
+10. **Remotion config generation** — build rendering configuration
+11. **Video rendering** — render final MP4 via remotion-video-template
 
 Audio drives visuals: each scene carries exactly one narration, and that
 narration's audio duration determines the scene's total frame count.
@@ -50,6 +52,8 @@ explainer-video-maker/
     │   │   └── render.py           # Video renderer
     │   └── verify/                 # Validation scripts
     │       ├── verify_project_config.py
+    │       ├── verify_stories.py
+    │       ├── verify_story_scripts.py
     │       ├── verify_video_struct.py
     │       ├── verify_audio.py
     │       ├── verify_video_tasks.py

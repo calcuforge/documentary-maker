@@ -51,6 +51,9 @@ theme:
   transition_duration: 12 # frames @ fps
 content:
   duration: medium
+  # min_story_chars: minimum character count for each chapter's narration script
+  #   (stories/{story_id}/script.md). Enforced by verify_story_scripts.py (Step 5).
+  min_story_chars: 500
 render:
   concurrency: 1 # Remotion render concurrency (parallel browser tabs). Increase to speed up rendering.
 dependence_paths:
