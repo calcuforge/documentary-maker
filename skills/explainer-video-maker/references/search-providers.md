@@ -21,11 +21,11 @@ Uses Playwright (Chromium) to visit search engines and encyclopedias.
 
 ```bash
 python3 "${SKILL_DIR}/scripts/search_provider/search.py" \
-  --query "search terms" \
+  --query "法航447空难" \
   --output /abs/path/search_results/result1.md \
-  [--sources bing,baike] \
-  [--max-pages 3] \
-  [--visit-top 3] \
+  [--sources baidu,baike,bing] \
+  [--max-pages 5] \
+  [--visit-top 5] \
   [--timeout 30000]
 ```
 
@@ -33,14 +33,19 @@ python3 "${SKILL_DIR}/scripts/search_provider/search.py" \
 |--------|---------|-------------|
 | `--query` | (required) | Search query |
 | `--output` | (required) | Output .md file (absolute path) |
-| `--sources` | auto (locale) | Comma-separated: `bing`, `google`, `baike`, `wikipedia` |
-| `--max-pages` | 3 | Max results per source |
-| `--visit-top` | 3 | Number of top results to visit for full content |
+| `--sources` | auto (locale) | Comma-separated: `baidu`, `bing`, `sogou`, `google`, `baike`, `wikipedia` |
+| `--max-pages` | 5 | Max results per search engine |
+| `--visit-top` | 5 | Number of top results to visit for full content |
 | `--timeout` | 30000 | Page load timeout (ms) |
 
-**Locale auto-detection:**
-- China network → `bing` + `baike`
-- Other → `google` + `wikipedia`
+**Locale auto-detection (default sources):**
+- China network → `baidu` + `baike` + `bing` (uses cn.bing.com)
+- International → `google` + `wikipedia` + `bing`
+
+**Baike search strategy** (3 fallback levels):
+1. Baidu site-restricted search (`site:baike.baidu.com {query}`)
+2. Baike's own search page (`baike.baidu.com/search?word=`)
+3. Direct URL access (`baike.baidu.com/item/{query}`)
 
 ---
 
