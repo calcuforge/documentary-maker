@@ -381,9 +381,11 @@ projects/
      --output /abs/path/remotion_sections.yaml
    ```
 
-2. **Fill `remotion_data` for each section.** The script generates the structure
-   but `remotion_data` may need enrichment. Consult the remotion-video-template
-   README.md for each component's expected data format:
+2. **Fill `remotion_data` for each scene.** The generated structure is nested:
+   each `section_list` entry is a narration unit (`audio` + `scene_list`), and
+   each `scene_list` entry is a visual scene. The script auto-populates
+   `remotion_data` for AssetVideo/AssetImage and data/text scenes, but complex
+   components may need enrichment. Consult the remotion-video-template README.md:
 
    | Component | Key Fields |
    |-----------|-----------|

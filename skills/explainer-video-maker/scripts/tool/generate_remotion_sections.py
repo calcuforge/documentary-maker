@@ -101,9 +101,13 @@ def _to_relative(path: str, video_dir: str) -> str:
 def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
     """Build the stories/sections structure for remotion_sections.yaml.
 
-    All paths (audio, assets) are relative to video_dir (--public-dir).
-    Audio is only attached to the FIRST section of each narration to
-    prevent duplicate playback.
+    New nested structure — each section_list entry represents a narration unit:
+      section_list[]:
+        - audio: path/to/speech.wav    # shared across all scenes
+          scene_list[]:                 # visual scenes under this narration
+            - remotion_component, remotion_data, total_frame, scene_id
+
+    All paths are relative to video_dir (--public-dir).
     """
     stories_out = []
 
@@ -113,26 +117,18 @@ def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
         section_list = []
 
         for narration in story.get("narration_list", []):
-            narration_id = narration.get("id", "")
             total_frame = narration.get("total_frame", 0)
             audio_path = narration.get("audio_path", "")
-
-            # Convert audio path to relative (for Remotion public-dir)
             audio_rel = _to_relative(audio_path, video_dir)
 
-            is_first_section_in_narration = True
-
+            scene_list_out = []
             for scene in narration.get("scene_list", []):
                 scene_id = scene.get("id", "")
                 percent = scene.get("percent", 100)
                 component = scene.get("remotion_component", "")
 
-                # Calculate section frames from percent
-                section_frames = max(1, round(total_frame * percent / 100))
-
-                # Audio: only first section per narration carries the audio
-                section_audio = audio_rel if is_first_section_in_narration else ""
-                is_first_section_in_narration = False
+                # Calculate scene frames from percent
+                scene_frames = max(1, round(total_frame * percent / 100))
 
                 # Build remotion_data
                 asset_path = scene.get("asset_path", "")
@@ -141,7 +137,6 @@ def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
 
                 remotion_data = {}
                 if component in ("AssetVideo", "AssetImage"):
-                    # Asset src relative to public-dir
                     raw_src = asset_path if asset_path else scene.get("origin_asset_path", "")
                     remotion_data = {"src": _to_relative(raw_src, video_dir), "role": "background"}
                 elif data_content:
@@ -152,14 +147,17 @@ def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
                 elif text_content:
                     remotion_data = {"text": text_content}
 
-                section = {
-                    "total_frame": section_frames,
+                scene_list_out.append({
                     "remotion_component": component,
                     "remotion_data": json.dumps(remotion_data, ensure_ascii=False) if remotion_data else "{}",
-                    "audio": section_audio,
+                    "total_frame": scene_frames,
                     "scene_id": scene_id,
-                }
-                section_list.append(section)
+                })
+
+            section_list.append({
+                "audio": audio_rel,
+                "scene_list": scene_list_out,
+            })
 
         stories_out.append({
             "story_name": story_name,

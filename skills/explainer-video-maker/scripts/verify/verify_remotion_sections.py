@@ -89,13 +89,13 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
                 if start > end:
                     errors.append(f"[subtitle.list[{i}]] start_frame ({start}) > end_frame ({end})")
 
-    # Stories
+    # Stories — nested structure: section_list[].{audio, scene_list[]}
     stories = config.get("stories", [])
     if not stories:
         errors.append("[stories] list is empty or missing")
         return errors, warnings
 
-    total_sections = 0
+    total_scenes = 0
     for si, story in enumerate(stories):
         s_prefix = f"stories[{si}]"
 
@@ -109,48 +109,55 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
             errors.append(f"{s_prefix}: 'section_list' is empty")
 
         for sci, section in enumerate(section_list):
-            total_sections += 1
             sec_prefix = f"{s_prefix}.section_list[{sci}]"
 
-            # total_frame
-            total_frame = section.get("total_frame")
-            if total_frame is None:
-                errors.append(f"{sec_prefix}: 'total_frame' is required")
-            elif not isinstance(total_frame, (int, float)) or total_frame <= 0:
-                errors.append(f"{sec_prefix}: 'total_frame' must be positive, got {total_frame}")
-
-            # remotion_component
-            component = section.get("remotion_component", "")
-            if not component:
-                errors.append(f"{sec_prefix}: 'remotion_component' is required")
-            elif component not in VALID_COMPONENTS:
-                errors.append(f"{sec_prefix}: invalid component '{component}'. Valid: {VALID_COMPONENTS}")
-
-            # remotion_data
-            remotion_data = section.get("remotion_data", "")
-            if not remotion_data:
-                warnings.append(f"{sec_prefix}: 'remotion_data' is empty")
-            elif isinstance(remotion_data, str):
-                try:
-                    parsed = json.loads(remotion_data)
-                    if not parsed:
-                        warnings.append(f"{sec_prefix}: 'remotion_data' is empty JSON '{{}}'")
-                except json.JSONDecodeError as e:
-                    errors.append(f"{sec_prefix}: invalid JSON in remotion_data: {e}")
-
-            # audio
+            # audio (narration-level)
             audio = section.get("audio", "")
             if not audio:
                 warnings.append(f"{sec_prefix}: 'audio' path is empty")
-            elif not Path(audio).exists():
-                warnings.append(f"{sec_prefix}: audio file not found: {audio}")
 
-            # scene_id
-            if not section.get("scene_id"):
-                warnings.append(f"{sec_prefix}: 'scene_id' is empty")
+            # scene_list
+            scene_list = section.get("scene_list", [])
+            if not scene_list:
+                errors.append(f"{sec_prefix}: 'scene_list' is empty or missing")
+                continue
 
-    if total_sections == 0:
-        errors.append("No sections found in any story")
+            for scni, scene in enumerate(scene_list):
+                total_scenes += 1
+                scn_prefix = f"{sec_prefix}.scene_list[{scni}]"
+
+                # total_frame
+                total_frame = scene.get("total_frame")
+                if total_frame is None:
+                    errors.append(f"{scn_prefix}: 'total_frame' is required")
+                elif not isinstance(total_frame, (int, float)) or total_frame <= 0:
+                    errors.append(f"{scn_prefix}: 'total_frame' must be positive, got {total_frame}")
+
+                # remotion_component
+                component = scene.get("remotion_component", "")
+                if not component:
+                    errors.append(f"{scn_prefix}: 'remotion_component' is required")
+                elif component not in VALID_COMPONENTS:
+                    errors.append(f"{scn_prefix}: invalid component '{component}'. Valid: {VALID_COMPONENTS}")
+
+                # remotion_data
+                remotion_data = scene.get("remotion_data", "")
+                if not remotion_data:
+                    warnings.append(f"{scn_prefix}: 'remotion_data' is empty")
+                elif isinstance(remotion_data, str):
+                    try:
+                        parsed = json.loads(remotion_data)
+                        if not parsed:
+                            warnings.append(f"{scn_prefix}: 'remotion_data' is empty JSON '{{}}'")
+                    except json.JSONDecodeError as e:
+                        errors.append(f"{scn_prefix}: invalid JSON in remotion_data: {e}")
+
+                # scene_id
+                if not scene.get("scene_id"):
+                    warnings.append(f"{scn_prefix}: 'scene_id' is empty")
+
+    if total_scenes == 0:
+        errors.append("No scenes found in any story")
 
     return errors, warnings
 
