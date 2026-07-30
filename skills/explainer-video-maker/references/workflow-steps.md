@@ -12,6 +12,13 @@ Structure hierarchy: **Story → Scene** (each scene carries one narration)
 - Each scene has exactly one nested `narration` (1 scene = 1 narration)
 - The narration audio duration determines the scene's total frame count
 
+**Working principle — batch by story:** whenever a step creates a *large number*
+of items, do it **one story at a time** rather than all at once — e.g., writing
+chapter scripts (Step 5), splitting scenes and filling their `data`/`text`
+fields (Step 6), and planning AIGC tasks (Step 8). Finish one story completely
+before moving to the next; this keeps each batch focused and produces richer,
+more consistent content.
+
 ### Project Output Layout
 
 All pipeline artifacts live under the workspace `projects/` directory:
@@ -301,10 +308,12 @@ projects/
 
 **What to do:**
 
-1. Working **one chapter at a time**, split that chapter's `script.md` into
-   **scenes**. Each scene carries exactly one **narration** — a short slice of the
-   chapter script (1 scene = 1 narration). Add the `scene_list` to the matching
-   story in `video_struct.yaml`.
+1. Working **one chapter at a time**, fully design that chapter's scenes before
+   moving to the next chapter — split its `script.md` into **scenes**, decide
+   each scene's expression method (step 2), and fill all scene fields including
+   `data`/`text` (step 3). Each scene carries exactly one **narration** — a short
+   slice of the chapter script (1 scene = 1 narration). Add the `scene_list` to
+   the matching story in `video_struct.yaml`.
 
    **Script = merged narrations (exact):** the chapter script is exactly the
    concatenation of all its scene narrations, in order. **Merging every scene
@@ -325,7 +334,9 @@ projects/
    - **Data/text scenes** (`is_aigc_scene: false`): filled with text/data directly into Remotion components
 
 3. Fill the scene fields, supplementing display data and text from the research
-   and the chapter script:
+   and the chapter script. **Do this per story** — complete the current story's
+   scenes (including all `data`/`text`) before moving to the next; do NOT fill
+   `data`/`text` for every story in one bulk pass:
    - Fill NOW: `id`, `intent`, `is_aigc_scene`, `type`, `remotion_component`, `visual_content`, `data`, `text`, `workflows`, `narration.id`, `narration.content`
    - Leave EMPTY (auto-filled later): `asset_path`, `origin_asset_path`, `narration.total_frame`, `narration.audio_path`
 
