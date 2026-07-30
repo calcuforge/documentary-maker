@@ -70,9 +70,12 @@ projects/
 
 **What to do:**
 
-1. Create project directory under `projects/`:
+1. Create project directory under `projects/`. The directory name MUST be the
+   video category (`video_style` value). If it already exists, append a number:
    ```
-   projects/{project_name}/
+   projects/documentary/       # first documentary project
+   projects/documentary2/      # second (different params)
+   projects/knowledge_sharing/ # different category
    ```
 
 2. Create `project_config.yaml` — fill these fields NOW:

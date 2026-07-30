@@ -73,11 +73,15 @@ External dependencies:
 
 **All projects MUST live under the workspace `projects/` directory.**
 
+**Project directory naming:** Use the video category name (i.e., `video_style`
+value) as the directory name. If a directory with that name already exists,
+append a numeric suffix: `documentary`, `documentary2`, `documentary3`, ...
+
 | Situation | Action |
 |-----------|--------|
-| First video request | Run Step 1: create a new project |
+| First video request | Run Step 1: create `projects/{video_style}/` |
 | Same category + same parameters | Reuse existing project, create a new `video{N}/` subdirectory |
-| Different category or parameters | Run Step 1: create a new project |
+| Different category or parameters | Run Step 1: create a new project directory |
 
 To determine reuse: compare `project.video_style`, `project.target_audience`,
 and `video.resolution`/`video.orientation`. If all match, reuse.
