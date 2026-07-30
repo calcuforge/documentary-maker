@@ -33,7 +33,7 @@ from urllib.parse import quote
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL_ROOT))
 
-from lib.htmltext import strip_html, truncate
+from lib.htmltext import clean_text, strip_html, truncate
 from lib.net import is_china_network
 
 try:
@@ -301,6 +301,54 @@ def search_google(page, query: str, max_results: int, timeout: int) -> list[dict
     return results[:max_results]
 
 
+# ── Snippet quality filter ──────────────────────────────────────────
+# Title patterns that indicate a result is boilerplate, not content.
+
+_TITLE_NOISE_RE = re.compile(
+    r"^(?:登录|登錄|注册|註冊|验证码|验证碼|安全验证|"
+    r"人机验证|请(?:输入|稍候|点击)|"
+    r"Log\s*in|Sign\s*up|Register|Captcha|"
+    r"404|403|500|Not\s*Found|Error|"
+    r"页面不存在|页面未找到|出错了|"
+    r"网站地图|站点地图|Sitemap)",
+    re.IGNORECASE,
+)
+
+
+def _is_noise_snippet(snippet: str) -> bool:
+    """Quick check: is this snippet just boilerplate?"""
+    if not snippet or len(snippet) < 15:
+        return True
+    # Snippets that are just UI labels or navigation
+    boilerplate_markers = [
+        "登录", "注册", "下载APP", "扫码", "关注微信",
+        "Log in", "Sign up", "Download the app",
+        "Cookie", "cookie", "GDPR", "隐私政策",
+        "All rights reserved", "版权所有",
+        "Share on", "分享到", "转发",
+    ]
+    for marker in boilerplate_markers:
+        if snippet.strip() == marker:
+            return True
+    return False
+
+
+def _filter_search_results(results: list[dict]) -> list[dict]:
+    """Filter search results: remove boilerplate titles and noise snippets."""
+    filtered = []
+    for r in results:
+        title = r.get("title", "")
+        snippet = r.get("content", "")
+        # Skip boilerplate titles
+        if _TITLE_NOISE_RE.match(title.strip()):
+            continue
+        # Skip noise snippets
+        if _is_noise_snippet(snippet):
+            continue
+        filtered.append(r)
+    return filtered
+
+
 # ═══════════════════════════════════════════════════════════════════
 #  Encyclopedias
 # ═══════════════════════════════════════════════════════════════════
@@ -429,7 +477,7 @@ def _extract_baike_content(page, url: str, timeout: int) -> str:
         if header_texts:
             content = f"[Sections: {' | '.join(header_texts)}]\n\n{content}"
 
-        return truncate(content, 6000) if content else ""
+        return truncate(clean_text(content), 6000) if content else ""
     except Exception as e:
         print(f"WARNING: Baike content extraction failed for {url}: {e}", file=sys.stderr)
     return ""
@@ -457,7 +505,7 @@ def search_wikipedia(page, query: str, timeout: int) -> list[dict]:
                     "source": f"wikipedia-{lang}",
                     "title": f"Wikipedia ({lang.upper()}): {query}",
                     "url": url,
-                    "content": truncate(content, 5000),
+                    "content": truncate(clean_text(content), 5000),
                 })
                 break  # Found in one language, stop
         except Exception as e:
@@ -471,12 +519,81 @@ def search_wikipedia(page, query: str, timeout: int) -> list[dict]:
 #  Page Content Extraction
 # ═══════════════════════════════════════════════════════════════════
 
+# CSS selectors for DOM elements to remove before text extraction.
+# These cover navigation, ads, sidebars, cookie banners, social shares,
+# comments, and other non-content boilerplate.
+_NOISE_SELECTORS = [
+    # Navigation
+    "nav", "header", "footer",
+    "[role='navigation']", "[role='banner']", "[role='contentinfo']",
+    ".nav", ".navbar", ".navigation", ".menu", ".top-nav", ".main-nav",
+    ".header", ".footer", ".site-header", ".site-footer",
+    # Sidebars
+    "aside", ".sidebar", ".side-bar", ".side_bar",
+    "#sidebar", "[class*='sidebar']",
+    # Cookie / consent
+    ".cookie", ".consent", ".gdpr",
+    "#cookie-banner", "#cookie-consent", ".cookie-banner", ".cookie-notice",
+    "[class*='cookie']", "[class*='consent']", "[class*='gdpr']",
+    # Ads
+    ".advertisement", ".advert", ".ad-container",
+    "[class*='ad-']", "[class*='ads-']", "[id*='google_ads']",
+    "[aria-label*='广告']", "[aria-label*='advertisement']",
+    ".sponsored", ".promoted", "[class*='sponsor']",
+    # Social / sharing
+    ".share", ".social", ".social-share", ".social-links",
+    ".sharing", ".share-bar", ".share-buttons",
+    "[class*='share']", "[class*='social']",
+    # Related / recommended
+    ".related", ".related-posts", ".related-articles",
+    ".recommend", ".suggest", ".you-may-like", ".also-like",
+    "[class*='related']", "[class*='recommend']",
+    # Comments
+    ".comment", ".comments", "#comments", "#comment-area",
+    ".disqus", "#disqus_thread", ".fb-comments",
+    # Breadcrumbs
+    ".breadcrumb", ".breadcrumbs", "[class*='breadcrumb']",
+    # Popups / modals / overlays
+    ".popup", ".modal", ".overlay", ".lightbox",
+    "[class*='popup']", "[class*='modal']",
+    # Misc non-content
+    ".pagination", ".pager", "[class*='pagination']",
+    ".newsletter", ".subscribe", ".subscription",
+    ".login-form", ".register-form", "#login", "#register",
+    ".search-box", ".search-form", "#search",
+    "script", "style", "noscript", "link", "meta",
+]
+
+
+def _remove_noise_elements(page) -> None:
+    """Remove noisy DOM elements from the current page in-place.
+
+    Uses Playwright's `page.evaluate()` to delete matching elements
+    before text extraction. This prevents nav text, cookie banners,
+    ads, and other boilerplate from polluting extracted content.
+    """
+    selector_list = ", ".join(_NOISE_SELECTORS)
+    try:
+        page.evaluate(f"""
+            () => {{
+                const elements = document.querySelectorAll("{selector_list}");
+                for (const el of elements) {{
+                    el.remove();
+                }}
+            }}
+        """)
+    except Exception:
+        pass  # DOM manipulation failure is non-fatal
+
 
 def visit_page(page, url: str, timeout: int) -> str:
-    """Visit a URL and extract main text content."""
+    """Visit a URL, strip noise elements, and extract cleaned main text."""
     try:
         page.goto(url, timeout=timeout, wait_until="domcontentloaded")
         page.wait_for_timeout(2000)
+
+        # Remove noise elements from the DOM before extraction
+        _remove_noise_elements(page)
 
         # Try common content selectors (ordered by specificity)
         selectors = [
@@ -498,14 +615,14 @@ def visit_page(page, url: str, timeout: int) -> str:
             if el:
                 text = el.inner_text().strip()
                 if len(text) > 200:
-                    return truncate(text, 5000)
+                    return truncate(clean_text(text), 5000)
 
         # Fallback: body text
         body = page.query_selector("body")
         if body:
             text = body.inner_text().strip()
             if len(text) > 200:
-                return truncate(text, 4000)
+                return truncate(clean_text(text), 4000)
     except Exception as e:
         print(f"WARNING: Failed to visit {url}: {e}", file=sys.stderr)
     return ""
@@ -623,6 +740,7 @@ def main() -> None:
                 else:
                     print(f"WARNING: Unknown source '{source}', skipping.", file=sys.stderr)
                     continue
+                batch = _filter_search_results(batch)
                 for r in batch:
                     r["_weight"] = weight
                     r["_orig_query"] = sub_query
