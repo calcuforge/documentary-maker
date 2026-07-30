@@ -21,17 +21,19 @@ subtitle:
     - text: "1956年，人工智能这一概念首次被提出"
       start_frame: 1
       end_frame: 100
-stories:
+stories: # 对应video_struct.yaml中的stories
   - story_name: 人工智能的崛起 #章节标题
     story_id: story1
-    section_list:
-        - total_frame: 60
-          remotion_component: AssetVideo # 如QuoteBlock
-          remotion_data: '{"src":"stories/story1/narration1/scenes/scene1.mp4","role":"background"}' # 展示内容的结构化数据（用于填充到组件），json格式
-          audio: stories/story1/narration1/speech.wav # 旁白音频
-          scene_id: scene1 # 对应画面单元ID
-        - total_frame: 40
-          remotion_component: StatCounter
-          remotion_data: '{"heading":"AI Milestone","items":[{"value":1956,"suffix":"","label":"AI concept proposed","icon":"lightbulb"}]}'
-          audio: stories/story1/narration1/speech.wav
-          scene_id: scene2
+    section_list: # 对应video_struct.yaml中的narration_list
+        - audio: stories/story1/narration1/speech.wav # 旁白音频
+          scene_list: # 对应video_struct.yaml中的scene_list
+            - remotion_component: AssetVideo # 如QuoteBlock
+              remotion_data: '{"src":"stories/story1/narration1/scenes/scene1.mp4","role":"background"}' # 展示内容的结构化数据（用于填充到组件），json格式
+              total_frame: 60
+              scene_id: scene1 # 对应画面单元ID
+        - audio: stories/story1/narration1/speech.wav
+          scene_list:
+            - remotion_component: StatCounter
+              remotion_data: '{"heading":"AI Milestone","items":[{"value":1956,"suffix":"","label":"AI concept proposed","icon":"lightbulb"}]}'
+              scene_id: scene4 # 对应画面单元ID
+              total_frame: 40
