@@ -322,15 +322,16 @@ projects/
 
 **What to do:**
 
-1. Run AIGC generation:
+1. Run AIGC generation **(use `--total-timeout 7200` for safety — video generation may take 1-2h per task, set higher for many tasks)**:
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/run_aigc.py" \
      --project-config /abs/path/project_config.yaml \
      --video-struct /abs/path/video_struct.yaml \
-     --video-tasks /abs/path/video_tasks.yaml
+     --video-tasks /abs/path/video_tasks.yaml \
+     --total-timeout 7200
    ```
    - `--timeout 1800` (default): per-task subprocess timeout (30min per task)
-   - `--total-timeout 7200` (default): entire script wall-clock timeout (2h)
+   - `--total-timeout 7200` (default): entire script wall-clock timeout (2h). **Increase for longer videos with many tasks.**
    - Executes task groups in order, resolves `$taskN` dependencies,
      saves outputs as `origin_{scene_id}.{ext}`, and updates `origin_asset_path`.
    - Already-completed tasks are automatically skipped (resume-safe).
