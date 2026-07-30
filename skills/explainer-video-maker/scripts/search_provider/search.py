@@ -702,7 +702,23 @@ def main() -> None:
     page_contents: dict[str, str] = {}
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        # Stability flags to reduce renderer crashes:
+        #   --disable-dev-shm-usage  : avoid /dev/shm overflow in Docker/Linux
+        #   --disable-gpu            : skip GPU process (common crash source headless)
+        #   --no-first-run           : skip first-run wizard
+        #   --disable-extensions     : no extension interference
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--no-first-run",
+                "--disable-extensions",
+                "--disable-background-networking",
+                "--disable-sync",
+                "--no-default-browser-check",
+            ],
+        )
         context = browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -710,7 +726,42 @@ def main() -> None:
             ),
             locale="zh-CN" if is_china_network() else "en-US",
         )
-        page = context.new_page()
+
+        def _fresh_page():
+            """Create or re-create a page, handling browser crash recovery."""
+            nonlocal browser, context
+            try:
+                browser.browser_type  # cheap health check
+            except Exception:
+                print("WARNING: Browser process lost, restarting...", file=sys.stderr)
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=[
+                        "--disable-dev-shm-usage", "--disable-gpu",
+                        "--no-first-run", "--disable-extensions",
+                        "--disable-background-networking", "--disable-sync",
+                        "--no-default-browser-check",
+                    ],
+                )
+                context = browser.new_context(
+                    user_agent=(
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                    ),
+                    locale="zh-CN" if is_china_network() else "en-US",
+                )
+            return context.new_page()
+
+        page = _fresh_page()
+
+        def _ensure_page_alive() -> None:
+            """Check if the page is still usable; recreate if the pipe is broken."""
+            nonlocal page
+            try:
+                page.url  # cheap health check — raises if renderer died
+            except Exception:
+                print("WARNING: Page connection lost, recreating...", file=sys.stderr)
+                page = _fresh_page()
 
         # Generate sub-queries for Chinese compound keywords
         if args.no_decompose:
@@ -725,6 +776,7 @@ def main() -> None:
         for qi, sub_query in enumerate(queries):
             weight = 1.0 if qi == 0 else max(0.5, 1.0 - qi * 0.25)
             for source in sources:
+                _ensure_page_alive()
                 if source == "baidu":
                     batch = search_baidu(page, sub_query, args.max_pages, args.timeout)
                 elif source == "bing":
@@ -785,6 +837,7 @@ def main() -> None:
             # Skip baike URLs (already extracted in search_baike)
             if "baike.baidu.com" in url and r["source"] == "baike":
                 continue
+            _ensure_page_alive()
             content = visit_page(page, url, args.timeout)
             if content:
                 page_contents[url] = content
