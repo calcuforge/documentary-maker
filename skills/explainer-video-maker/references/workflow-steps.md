@@ -87,25 +87,29 @@ projects/
      project directory and `project_config.yaml` locations. `data.agent_supplement`
      lists the fields left empty for you to fill.
 
-2. **Edit the created `project_config.yaml` directly** to supply the
-   request-dependent fields and adjust defaults to match the request:
-   - `project.name` — descriptive project name
+2. **Edit the created `project_config.yaml` directly.** **Only fill the fields
+   the template leaves empty (or placeholder) — do NOT modify the pre-filled
+   default fields unless the user explicitly asks for a different value.**
+
+   **Fill these** (empty / placeholder in the template):
+   - `project.name` — replace the `my-project` placeholder with a descriptive name
    - `project.language` — `zh-CN` or `en-US` (match the user's language)
    - `project.video_style` — e.g., `documentary`, `knowledge_sharing`, `news_broadcast`, `product_intro`, `data_report`, `tutorial`
    - `project.target_audience` — e.g., `general`, `tech_enthusiasts`, `students`, `professionals`, `investors`
    - `dependence_paths.remotion_template` / `dependence_paths.comfyui_scheduler`
      — **required for validation**; paths to remotion-video-template and
      comfyui-scheduler (relative to the repo root, or absolute)
-   - Adjust `video.orientation` / `resolution`, `content.duration`,
-     `project.creation_mode`, and `tts.voice_instruct` as needed.
-     `tts.voice_instruct` is **required** (e.g., `男，中年，中音调` or
-     `male, middle-aged, moderate pitch`). See
-     `comfyui-scheduler/doc/workflow.md` for the valid voice attributes.
+
+   **Leave these as-is** (sensible defaults — change only on the user's request):
+   `video.orientation` / `resolution` / `fps`, `aigc.*` dimensions and `seed`,
+   `tts.backend` / `speed` / `voice_instruct`, `theme.*`, `content.duration`,
+   `render.concurrency`, `subtitle.*`. `tts.voice_instruct` is already pre-filled
+   (e.g., `男，中年，中音调`); see `comfyui-scheduler/doc/workflow.md` for valid
+   voice attributes if the user wants a different voice.
 
 3. Fields that can wait for later steps:
    - `tts.voice_file` — Step 5 (auto-generated from `voice_instruct`)
-   - `theme.*` — defaults are fine initially, customize before Step 8
-   - `subtitle.*` — defaults are fine
+   - `theme.*` / `subtitle.*` — defaults are fine; adjust only if the user requests
    - `rss_source_list` — Step 3
 
 4. **Reference:** [demo_projects/project1/project_config.yaml](demo_projects/project1/project_config.yaml)
