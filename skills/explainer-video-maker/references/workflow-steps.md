@@ -254,12 +254,14 @@ projects/
 
 **What to do:**
 
-1. Run TTS synthesis:
+1. Run TTS synthesis **(use `--timeout 3600` for safety — TTS may take several minutes per narration)**:
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/run_tts.py" \
      --project-config /abs/path/project_config.yaml \
-     --video-struct /abs/path/video_struct.yaml
+     --video-struct /abs/path/video_struct.yaml \
+     --timeout 3600
    ```
+   - `--timeout 3600` (default): per-TTS subprocess timeout (1h)
    This will:
    - Generate `speech.wav` for each narration unit
    - Measure audio duration via ffprobe

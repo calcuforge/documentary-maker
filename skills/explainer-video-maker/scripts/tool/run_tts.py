@@ -73,9 +73,9 @@ def synth_comfyui_indextts(
     cmd = ["comfyui-scheduler", "run", "-w", "index_tts_2", "-i", inputs]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=tts_timeout)
     except subprocess.TimeoutExpired:
-        raise RuntimeError(f"TTS timed out for: {content[:50]}...")
+        raise RuntimeError(f"TTS timed out after {tts_timeout}s for: {content[:50]}...")
     except FileNotFoundError:
         raise RuntimeError("comfyui-scheduler not found on PATH")
 
@@ -95,12 +95,11 @@ def synth_comfyui_indextts(
     if not files:
         raise RuntimeError("No output files from TTS")
 
-    # Download the output file
+    # Download the output file (supports http:// and file:// URLs)
     file_url = files[0].get("url", "")
     if not file_url:
         raise RuntimeError("No URL in TTS output file")
 
-    # Download the output file (supports http:// and file:// URLs)
     from lib.net import download_file
     download_file(file_url, output_path, timeout=60)
 
@@ -177,9 +176,9 @@ def _run_voice_design(voice_instruct: str, output_path: str) -> str:
     cmd = ["comfyui-scheduler", "run", "-w", "ominivoice_voice_design", "-i", inputs]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=tts_timeout)
     except subprocess.TimeoutExpired:
-        raise RuntimeError("Voice design timed out")
+        raise RuntimeError(f"Voice design timed out after {tts_timeout}s")
     except FileNotFoundError:
         raise RuntimeError("comfyui-scheduler not found on PATH")
 
@@ -213,6 +212,7 @@ def main() -> None:
     parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
     parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
     parser.add_argument("--workers", type=int, default=3, help="Concurrent TTS workers")
+    parser.add_argument("--timeout", type=int, default=3600, help="Per-TTS subprocess timeout in seconds (default 1h)")
     parser.add_argument("--force", action="store_true", help="Re-generate even if audio exists")
     args = parser.parse_args()
 
@@ -223,6 +223,7 @@ def main() -> None:
     project_config = load_yaml(args.project_config)
     video_struct = load_yaml(args.video_struct)
 
+    tts_timeout = args.timeout
     tts_config = project_config.get("tts", {})
     backend = tts_config.get("backend", "comfyui_indextts")
     speed = tts_config.get("speed", 1.0)
