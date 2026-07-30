@@ -312,8 +312,10 @@ projects/
      --video-struct /abs/path/video_struct.yaml \
      --video-tasks /abs/path/video_tasks.yaml
    ```
-   This executes task groups in order, resolves `$taskN` dependencies,
-   saves outputs as `origin_{scene_id}.{ext}`, and updates `origin_asset_path`.
+   - `--timeout 1800` (default): per-task subprocess timeout (30min per task)
+   - `--total-timeout 7200` (default): entire script wall-clock timeout (2h)
+   - Executes task groups in order, resolves `$taskN` dependencies,
+     saves outputs as `origin_{scene_id}.{ext}`, and updates `origin_asset_path`.
 
 2. Run upscale (if quality_tier requires it):
    ```bash

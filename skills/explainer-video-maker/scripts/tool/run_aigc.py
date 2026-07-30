@@ -104,7 +104,10 @@ def main() -> None:
     parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml")
     parser.add_argument("--video-tasks", required=True, help="Path to video_tasks.yaml")
     parser.add_argument("--workers", type=int, default=2, help="Concurrent tasks per group")
-    parser.add_argument("--timeout", type=int, default=600, help="Per-task timeout (seconds)")
+    parser.add_argument("--timeout", type=int, default=1800,
+                        help="Per-task subprocess timeout in seconds (default 30min)")
+    parser.add_argument("--total-timeout", type=int, default=7200,
+                        help="Total script wall-clock timeout in seconds (default 2h)")
     parser.add_argument("--force", action="store_true", help="Force re-execute even if output already exists")
     args = parser.parse_args()
 
@@ -128,9 +131,17 @@ def main() -> None:
     total_tasks = sum(len(g.get("tasks", [])) for g in task_groups)
     completed = 0
 
+    import time
+    started_at = time.time()
+
     print(f"Executing {total_tasks} AIGC tasks in {len(task_groups)} group(s)...", file=sys.stderr)
 
     for group in task_groups:
+        # Check total timeout before starting each group
+        elapsed = time.time() - started_at
+        if elapsed > args.total_timeout:
+            print(f"  Total timeout ({args.total_timeout}s) exceeded after {elapsed:.0f}s — stopping", file=sys.stderr)
+            break
         workflow_code = group.get("workflow_code", "")
         tasks = group.get("tasks", [])
         group_ordinal = group.get("task_group_ordinal", 0)
