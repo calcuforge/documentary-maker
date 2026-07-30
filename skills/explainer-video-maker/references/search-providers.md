@@ -75,13 +75,13 @@ python3 "${SKILL_DIR}/scripts/search_provider/search_rss.py" \
 
 ## RSS Source Discovery
 
-### tool/search_rss.py — Find RSS Feeds
+### tool/search_rss_discovery.py — Find RSS Feeds
 
 Searches for RSS feeds matching a topic. Useful when `rss_source_list` in
 project_config.yaml has no suitable feeds.
 
 ```bash
-python3 "${SKILL_DIR}/scripts/tool/search_rss.py" \
+python3 "${SKILL_DIR}/scripts/tool/search_rss_discovery.py" \
   --query "GPU pricing news" \
   [--output /abs/path/rss_sources.json] \
   [--max-results 10]

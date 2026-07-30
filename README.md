@@ -37,10 +37,10 @@ explainer-video-maker/
     │   │   └── htmltext.py         # HTML-to-text extraction
     │   ├── search_provider/        # Extensible search components
     │   │   ├── search.py           # Browser search (Playwright)
-    │   │   └── search_rss.py       # RSS feed search (curl + Playwright)
+    │   │   ├── search_rss.py       # RSS feed fetcher (curl + Playwright)
     │   ├── tool/                   # Pipeline tool scripts
     │   │   ├── check_prereqs.py    # Prerequisite checker
-    │   │   ├── search_rss.py       # RSS source discovery
+    │   │   ├── search_rss_discovery.py  # RSS source discovery
     │   │   ├── run_tts.py          # TTS synthesis + frame calculation
     │   │   ├── run_aigc.py         # AIGC task execution
     │   │   ├── run_upscale.py      # Asset upscaling

@@ -180,7 +180,7 @@ projects/
      ```
    - If no suitable feeds, discover them:
      ```bash
-     python3 "${SKILL_DIR}/scripts/tool/search_rss.py" \
+     python3 "${SKILL_DIR}/scripts/tool/search_rss_discovery.py" \
        --query "GPU pricing news" \
        --output /abs/path/rss_sources.json
      ```

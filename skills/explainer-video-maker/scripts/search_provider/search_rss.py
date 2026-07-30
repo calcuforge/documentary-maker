@@ -23,7 +23,6 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-# Add skill root to path for lib imports
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL_ROOT))
 
@@ -81,7 +80,7 @@ def parse_feed(xml_text: str) -> list[dict]:
     # Atom
     if not articles:
         ns = {"atom": "http://www.w3.org/2005/Atom"}
-        for entry in root.iter("{http://www.w3.org/2005/Atom}entry"):
+        for entry in root.findall("atom:entry", ns):
             title = entry.findtext("atom:title", "", ns).strip()
             link_el = entry.find("atom:link", ns)
             link = link_el.get("href", "") if link_el is not None else ""
@@ -116,7 +115,8 @@ def visit_article(page, url: str, timeout: int) -> str:
     try:
         page.goto(url, timeout=timeout, wait_until="domcontentloaded")
         page.wait_for_timeout(2000)
-        for selector in ["article", "main", ".post-content", ".article-body", ".entry-content", ".content"]:
+        for selector in ["article", "main", ".post-content", ".article-body",
+                         ".entry-content", ".content", "#article_content"]:
             el = page.query_selector(selector)
             if el:
                 text = el.inner_text()
@@ -168,7 +168,6 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=30000, help="Page load timeout (ms)")
     args = parser.parse_args()
 
-    # Fetch and parse feed
     xml_text = fetch_feed(args.feed_url)
     articles = parse_feed(xml_text)
 
@@ -176,20 +175,17 @@ def main() -> None:
         print(f"ERROR: No articles found in feed: {args.feed_url}", file=sys.stderr)
         sys.exit(1)
 
-    # Filter by keywords
     keywords = [k.strip() for k in args.keywords.split(",") if k.strip()] if args.keywords else []
     if keywords:
         articles = filter_by_keywords(articles, keywords)
 
-    # Limit
     articles = articles[: args.max_articles]
 
-    # Visit articles with Playwright
     contents: dict[str, str] = {}
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
         )
         page = context.new_page()
         for a in articles:
@@ -200,7 +196,6 @@ def main() -> None:
                     contents[link] = content
         browser.close()
 
-    # Write output
     md = format_markdown(args.feed_url, articles, contents)
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
