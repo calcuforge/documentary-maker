@@ -10,18 +10,21 @@ Usage:
     python search.py --query "GPU pricing 2025" --sources google,wikipedia --output /abs/path/result.md
 
 Options:
-    --query     Search query (required)
-    --output    Output markdown file path (absolute path, required)
-    --sources   Comma-separated source list (default: auto-detect by locale)
-                Available: baidu, bing, sogou, google, baike, wikipedia
-    --max-pages Max results to extract per search engine (default: 5)
-    --timeout   Page load timeout in ms (default: 30000)
-    --visit-top Number of top results to visit for full content (default: 5)
+    --query            Search query (required)
+    --output           Output markdown file path (absolute path, required)
+    --sources          Comma-separated source list (default: auto-detect by locale)
+                       Available: baidu, bing, sogou, google, baike, wikipedia
+    --max-pages        Max results to extract per search engine per sub-query (default: 5)
+    --timeout          Page load timeout in ms (default: 30000)
+    --visit-top        Number of top results to visit for full content (default: 5)
+    --no-decompose     Disable Chinese compound query decomposition
+    --decompose-depth  Max sub-queries generated from decomposition (default: 2, range: 1-4)
 """
 
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 from urllib.parse import quote
@@ -38,6 +41,107 @@ try:
 except ImportError:
     print("ERROR: playwright is not installed. Run: pip install playwright && playwright install chromium", file=sys.stderr)
     sys.exit(1)
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  Chinese Compound Query Decomposition
+# ═══════════════════════════════════════════════════════════════════
+
+# Common Chinese modifier/question suffixes that add specificity but
+# aren't part of the core topic. Stripping them yields broader queries
+# that search engines handle better.
+# Chinese modifier suffixes that can be stripped to get the core topic.
+# Ordered longest-first so compound suffixes like "原因分析" match before
+# their constituents ("原因", "分析").
+_SUFFIX_LIST = [
+    "原因分析", "深度分析", "趋势分析", "前景分析",
+    "的解决方案", "的优缺点", "的利弊", "的影响",
+    "的意义", "的作用", "的发展", "的历史",
+    "的特点", "的功能", "的好处", "的坏处",
+    "的重点", "的难点", "的未来", "的趋势",
+    "的前景", "的现状", "的进展", "的排名",
+    "的对比", "的原因", "的分析", "的方法",
+    "的原理", "的对策", "的措施", "的最新",
+    "全过程", "始末", "详解", "解读",
+    "案例", "教程", "攻略", "指南", "介绍", "说明",
+    "揭秘", "揭密", "真相",
+    "原因", "分析", "原理", "方法", "深度",
+    "趋势", "进展", "最新", "现状",
+    "是什么", "为什么", "有哪些", "怎么办",
+    "如何", "怎么",
+]
+
+
+def _is_mostly_chinese(text: str) -> bool:
+    """Check if text is primarily CJK characters."""
+    cjk = sum(1 for c in text if "\u4e00" <= c <= "\u9fff")
+    return len(text) > 0 and cjk / len(text) > 0.35
+
+
+def _strip_suffixes(query: str) -> str:
+    """Iteratively strip known modifier suffixes from the END of the query."""
+    result = query
+    changed = True
+    while changed:
+        changed = False
+        for suffix in _SUFFIX_LIST:
+            if result.endswith(suffix) and len(result) - len(suffix) >= 3:
+                result = result[:-len(suffix)]
+                changed = True
+                break
+    return result
+
+
+def _decompose_query(query: str, max_sub_queries: int = 3) -> list[str]:
+    """Break a Chinese compound query into progressively broader sub-queries.
+
+    "法航447空难原因分析" -> ["法航447空难原因分析", "法航447空难", "法航447"]
+    "如何看待2025年AI发展趋势" -> ["如何看待2025年AI发展趋势", "AI发展趋势", "AI 发展"]
+
+    Non-Chinese queries are returned as-is.
+    """
+    if not _is_mostly_chinese(query):
+        return [query]
+
+    sub_queries = [query]
+
+    # Step 1: strip known modifier suffixes from the end
+    shortened = _strip_suffixes(query)
+    if shortened != query and len(shortened) >= 4 and shortened not in sub_queries:
+        sub_queries.append(shortened)
+
+    # Step 2: if still long, keep just the first subject+number cluster
+    # e.g. "2025年AI行业发展趋势深度分析" -> "AI行业发展趋势"
+    if len(shortened) > 8:
+        broad = shortened[:8]
+        m = re.match(r"^([\u4e00-\u9fff]{1,8}\d{0,6})", shortened)
+        if m:
+            broad = m.group(1)
+        if broad != shortened and broad not in sub_queries and len(broad) >= 3:
+            sub_queries.append(broad)
+
+    # Step 3: add space-separated variant for mixed Chinese-alphanumeric
+    if re.search(r"[\u4e00-\u9fff][a-zA-Z0-9]", query) or re.search(r"[a-zA-Z0-9][\u4e00-\u9fff]", query):
+        spaced = re.sub(r"([\u4e00-\u9fff])([a-zA-Z0-9])", r"\1 \2", query)
+        spaced = re.sub(r"([a-zA-Z0-9])([\u4e00-\u9fff])", r"\1 \2", spaced)
+        if spaced != query and spaced not in sub_queries:
+            sub_queries.append(spaced)
+
+    return sub_queries[:max_sub_queries]
+
+
+def _dedup_key(title: str) -> str:
+    """Build a dedup key from a result title.
+
+    For Chinese titles, use more characters since each CJK character
+    carries more semantic weight than a Latin letter.
+    """
+    clean = title.strip()
+    if _is_mostly_chinese(clean):
+        # Chinese: use first 60 chars (~30 CJK chars, covers most titles fully)
+        return clean[:60]
+    else:
+        return clean.lower()[:50]
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -459,6 +563,10 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=30000, help="Page load timeout (ms)")
     parser.add_argument("--visit-top", type=int, default=5,
                         help="Number of top results to visit for full content")
+    parser.add_argument("--no-decompose", action="store_true",
+                        help="Disable Chinese compound query decomposition")
+    parser.add_argument("--decompose-depth", type=int, default=2,
+                        help="Max sub-queries generated from decomposition (1-4)")
     args = parser.parse_args()
 
     from lib.net import require_abs
@@ -487,31 +595,64 @@ def main() -> None:
         )
         page = context.new_page()
 
-        for source in sources:
-            if source == "baidu":
-                all_results.extend(search_baidu(page, args.query, args.max_pages, args.timeout))
-            elif source == "bing":
-                all_results.extend(search_bing(page, args.query, args.max_pages, args.timeout))
-            elif source == "sogou":
-                all_results.extend(search_sogou(page, args.query, args.max_pages, args.timeout))
-            elif source == "google":
-                all_results.extend(search_google(page, args.query, args.max_pages, args.timeout))
-            elif source == "baike":
-                all_results.extend(search_baike(page, args.query, args.timeout))
-            elif source == "wikipedia":
-                all_results.extend(search_wikipedia(page, args.query, args.timeout))
-            else:
-                print(f"WARNING: Unknown source '{source}', skipping.", file=sys.stderr)
+        # Generate sub-queries for Chinese compound keywords
+        if args.no_decompose:
+            queries = [args.query]
+        else:
+            depth = max(1, min(args.decompose_depth, 4))
+            queries = _decompose_query(args.query, max_sub_queries=depth)
+        if len(queries) > 1:
+            print(f"INFO: Decomposed '{args.query}' → {queries[1:]}", file=sys.stderr)
 
-        # Deduplicate by title similarity (keep first occurrence)
-        seen_titles: set[str] = set()
-        unique_results: list[dict] = []
+        # Search with each sub-query; weight=1.0 for original, lower for derived
+        for qi, sub_query in enumerate(queries):
+            weight = 1.0 if qi == 0 else max(0.5, 1.0 - qi * 0.25)
+            for source in sources:
+                if source == "baidu":
+                    batch = search_baidu(page, sub_query, args.max_pages, args.timeout)
+                elif source == "bing":
+                    batch = search_bing(page, sub_query, args.max_pages, args.timeout)
+                elif source == "sogou":
+                    batch = search_sogou(page, sub_query, args.max_pages, args.timeout)
+                elif source == "google":
+                    batch = search_google(page, sub_query, args.max_pages, args.timeout)
+                elif source == "baike":
+                    batch = search_baike(page, sub_query, args.timeout)
+                elif source == "wikipedia":
+                    batch = search_wikipedia(page, sub_query, args.timeout)
+                else:
+                    print(f"WARNING: Unknown source '{source}', skipping.", file=sys.stderr)
+                    continue
+                for r in batch:
+                    r["_weight"] = weight
+                    r["_orig_query"] = sub_query
+                all_results.extend(batch)
+
+        # Deduplicate: for each dedup key, keep the result with the highest weight
+        best_by_key: dict[str, tuple[dict, float]] = {}
         for r in all_results:
-            key = r["title"].strip().lower()[:40]
-            if key not in seen_titles:
-                seen_titles.add(key)
-                unique_results.append(r)
-        all_results = unique_results
+            key = _dedup_key(r["title"])
+            weight = r.get("_weight", 1.0)
+            if key not in best_by_key or weight > best_by_key[key][1]:
+                best_by_key[key] = (r, weight)
+            # If same weight, prefer the one with more content
+            elif weight == best_by_key[key][1]:
+                existing_len = len(best_by_key[key][0].get("content", ""))
+                this_len = len(r.get("content", ""))
+                if this_len > existing_len:
+                    best_by_key[key] = (r, weight)
+
+        # Sort: higher weight first, then by content length as tiebreaker
+        all_results = sorted(
+            [r for r, _ in best_by_key.values()],
+            key=lambda r: (r.get("_weight", 1.0), len(r.get("content", ""))),
+            reverse=True,
+        )
+
+        # Strip internal fields before output
+        for r in all_results:
+            r.pop("_weight", None)
+            r.pop("_orig_query", None)
 
         # Visit top results for full page content
         visited = 0
