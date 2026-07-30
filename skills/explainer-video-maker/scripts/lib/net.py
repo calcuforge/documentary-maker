@@ -57,6 +57,42 @@ def get_encyclopedia_url() -> str:
     return "https://en.wikipedia.org"
 
 
+def download_file(url: str, output_path: str, timeout: int = 120) -> str:
+    """Download a file from a URL to output_path.
+
+    Supports both http(s):// and file:// URLs.
+    Returns the output path on success, raises RuntimeError on failure.
+    """
+    from pathlib import Path
+    from urllib.parse import urlparse, unquote
+
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    parsed = urlparse(url)
+
+    if parsed.scheme == "file":
+        # Local file — just copy
+        src = unquote(parsed.path)
+        # Handle Windows paths: file:///C:/... → C:/...
+        if src.startswith("/") and len(src) > 2 and src[2] == ":":
+            src = src[1:]
+        if not os.path.exists(src):
+            raise RuntimeError(f"Local file not found: {src}")
+        import shutil
+        shutil.copy2(src, output_path)
+        return output_path
+
+    elif parsed.scheme in ("http", "https"):
+        import requests
+        resp = requests.get(url, timeout=timeout)
+        resp.raise_for_status()
+        with open(output_path, "wb") as f:
+            f.write(resp.content)
+        return output_path
+
+    else:
+        raise RuntimeError(f"Unsupported URL scheme '{parsed.scheme}': {url}")
+
+
 def run_command(
     cmd: list[str],
     cwd: Optional[str] = None,

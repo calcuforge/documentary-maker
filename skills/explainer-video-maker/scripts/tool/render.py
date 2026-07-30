@@ -96,18 +96,23 @@ def main() -> None:
         return
 
     # Render
+    concurrency = project_config.get("render", {}).get("concurrency", 1)
+
     cmd = [
         "node", str(render_script),
         sections_path,
         "--public-dir", public_dir,
         "--output", output_path,
     ]
+    if concurrency and concurrency > 1:
+        cmd.extend(["--concurrency", str(concurrency)])
 
     print(f"Rendering video...", file=sys.stderr)
     print(f"  Config: {sections_path}", file=sys.stderr)
     print(f"  Public dir: {public_dir}", file=sys.stderr)
     print(f"  Output: {output_path}", file=sys.stderr)
     print(f"  Template: {template_path}", file=sys.stderr)
+    print(f"  Concurrency: {concurrency}", file=sys.stderr)
 
     try:
         result = subprocess.run(

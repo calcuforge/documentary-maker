@@ -100,14 +100,9 @@ def synth_comfyui_indextts(
     if not file_url:
         raise RuntimeError("No URL in TTS output file")
 
-    # Download via requests
-    import requests
-    resp = requests.get(file_url, timeout=60)
-    resp.raise_for_status()
-
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "wb") as f:
-        f.write(resp.content)
+    # Download the output file (supports http:// and file:// URLs)
+    from lib.net import download_file
+    download_file(file_url, output_path, timeout=60)
 
     return output_path
 

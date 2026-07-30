@@ -87,18 +87,13 @@ def run_single_task(
     if not files:
         raise RuntimeError("No output files from workflow")
 
-    # Download the output file
+    # Download the output file (supports http:// and file:// URLs)
     file_url = files[0].get("url", "")
     if not file_url:
         raise RuntimeError("No URL in output")
 
-    import requests
-    resp = requests.get(file_url, timeout=120)
-    resp.raise_for_status()
-
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "wb") as f:
-        f.write(resp.content)
+    from lib.net import download_file
+    download_file(file_url, output_path)
 
     return output_path
 

@@ -118,13 +118,8 @@ def upscale_asset(
     if not file_url:
         raise RuntimeError("No URL in upscale output")
 
-    import requests
-    resp = requests.get(file_url, timeout=120)
-    resp.raise_for_status()
-
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "wb") as f:
-        f.write(resp.content)
+    from lib.net import download_file
+    download_file(file_url, output_path)
 
     return output_path
 
