@@ -99,7 +99,8 @@ projects/
    - Adjust `video.orientation` / `resolution`, `content.duration`,
      `project.creation_mode`, and `tts.voice_instruct` as needed.
      `tts.voice_instruct` is **required** (e.g., `男，中年，中音调` or
-     `male, middle-aged, moderate pitch`).
+     `male, middle-aged, moderate pitch`). See
+     `comfyui-scheduler/doc/workflow.md` for the valid voice attributes.
 
 3. Fields that can wait for later steps:
    - `tts.voice_file` — Step 5 (auto-generated from `voice_instruct`)

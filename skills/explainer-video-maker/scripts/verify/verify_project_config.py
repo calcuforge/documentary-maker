@@ -89,7 +89,8 @@ def validate(config: dict) -> list[str]:
         # voice_instruct is required (voice_file can be empty — auto-generated in Step 5)
         voice_instruct = tts.get("voice_instruct", "")
         if not voice_instruct:
-            errors.append("[tts.voice_instruct] is required — describe the target voice (e.g., '男，中年，中音调')")
+            errors.append("[tts.voice_instruct] is required — describe the target voice "
+                          "(e.g., '男，中年，中音调'); see comfyui-scheduler/doc/workflow.md for valid attributes")
 
         # If http_server backend, check http config
         if backend == "http_server":

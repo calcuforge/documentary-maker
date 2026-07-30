@@ -31,6 +31,7 @@ tts:
   voice_file: ""
   # voice_instruct: REQUIRED. Describes the target voice characteristics.
   #   zh-CN: "男，中年，中音调"   en-US: "male, middle-aged, moderate pitch"
+  #   See comfyui-scheduler/doc/workflow.md for the valid voice attributes.
   voice_instruct: "男，中年，中音调"
   # HTTP TTS server config (only used when backend: http_server).
   # Protocol: POST multipart/form-data (fields: input, speed, voice_file).
@@ -61,7 +62,7 @@ subtitle:
   # font_size: adjust based on resolution and orientation. Do NOT go too small.
   #   1080p horizontal → 20-24    1080p vertical → 28-34
   #   4K horizontal   → 36-44    4K vertical   → 48-56
-  font_size: 24
+  font_size: 32
   primary_color: "&H00333333"
   outline_color: "&H00FFFFFF"
   outline: 2
