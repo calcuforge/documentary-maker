@@ -74,11 +74,12 @@ External dependencies:
 **All projects MUST live under the workspace `projects/` directory.**
 
 **Project directory naming:** `scripts/tool/init_project.py` creates the project
-directory from the `scripts/project_config_tpl.yaml` template, named after the
-template's `project.name`. If the name already exists, a numeric suffix is
-appended automatically: `my-project`, `my-project2`, `my-project3`, ... After
-creation, edit `project_config.yaml` to set the actual `project.name` and
-`project.video_style`.
+directory from the `scripts/project_config_tpl.yaml` template, named via its
+`--project-dir-name` argument (convention: the `video_style` value). If the name
+already exists, a numeric suffix is appended automatically: `documentary`,
+`documentary2`, `documentary3`, ... After creation, edit `project_config.yaml`
+to set the actual `project.name`, `project.video_style`, and other
+request-dependent fields.
 
 | Situation | Action |
 |-----------|--------|

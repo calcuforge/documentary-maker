@@ -73,13 +73,16 @@ projects/
 1. **Generate the project skeleton with the init script.** All default field
    values live in the template `scripts/project_config_tpl.yaml` (nothing is
    hardcoded in the script). The script copies the template into a new project
-   directory under `projects/`, fills `project.project_root_path`, and writes
-   `project_config.yaml`:
+   directory under `projects/`, fills `project.project_root_path` (the only
+   field it sets), and writes `project_config.yaml`:
    ```bash
-   python3 "${SKILL_DIR}/scripts/tool/init_project.py" --projects-dir /abs/path/projects
+   python3 "${SKILL_DIR}/scripts/tool/init_project.py" \
+     --projects-dir /abs/path/projects \
+     --project-dir-name air_crash_documentary
    ```
-   - The project directory is named after `project.name` in the template
-     (a numeric suffix is appended if it exists: `my-project`, `my-project2`, ...).
+   - `--project-dir-name` is the project directory name (convention: the
+     `video_style` category). A numeric suffix is appended if it already exists
+     (`air_crash_documentary`, `air_crash_documentary2`, ...).
    - The JSON output's `data.project_dir` and `data.project_config` give the created
      project directory and `project_config.yaml` locations. `data.agent_supplement`
      lists the fields left empty for you to fill.
@@ -90,6 +93,9 @@ projects/
    - `project.language` — `zh-CN` or `en-US` (match the user's language)
    - `project.video_style` — e.g., `documentary`, `knowledge_sharing`, `news_broadcast`, `product_intro`, `data_report`, `tutorial`
    - `project.target_audience` — e.g., `general`, `tech_enthusiasts`, `students`, `professionals`, `investors`
+   - `dependence_paths.remotion_template` / `dependence_paths.comfyui_scheduler`
+     — **required for validation**; paths to remotion-video-template and
+     comfyui-scheduler (relative to the repo root, or absolute)
    - Adjust `video.orientation` / `resolution`, `content.duration`,
      `project.creation_mode`, and `tts.voice_instruct` as needed.
      `tts.voice_instruct` is **required** (e.g., `男，中年，中音调` or
