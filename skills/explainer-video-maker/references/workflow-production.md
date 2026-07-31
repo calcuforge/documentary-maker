@@ -347,6 +347,19 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
 
 3. Verify the output file exists and is non-empty.
 
+4. **If the render fails or is interrupted:** `render.py` writes the full
+   Remotion/Node output to `render.log` (same directory as the output video).
+   **Always read `render.log` first** to diagnose the cause — do NOT re-run
+   blindly. Common failure patterns:
+
+   | Symptom in render.log | Likely cause | Fix |
+   |----------------------|-------------|-----|
+   | `JavaScript heap out of memory` | Too many parallel segments or very long composition | Reduce `render.segment_workers` in project_config.yaml |
+   | `ENOENT: no such file` on an asset/audio path | Missing or mis-pathed file in remotion_sections.yaml | Check `src` / `audio` paths; re-run Step 10 (AIGC) or Step 11 (remotion config) |
+   | `FFmpeg ... error` during concat | A segment failed to render, producing a corrupt partial file | Look earlier in the log for the segment's error; fix and re-render |
+   | `timeout` / process killed | Render exceeded `--timeout` (default 1h) | Increase `--timeout`, or reduce video length / complexity |
+   | `Cannot find module` / bundler error | `node_modules` missing or stale in remotion-video-template | Run `npm install` in the template directory |
+
 ---
 
 ## Step Completion Reporting (Manual Mode)
