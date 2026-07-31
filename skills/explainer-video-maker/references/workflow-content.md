@@ -118,6 +118,13 @@
      `narration.total_frame`, `narration.audio_path`.
    - **Do NOT change `narration.content`** — it must stay equal to its `script.md`
      line (`verify_video_struct.py` enforces this).
+   - **Data/text fields are data points, not sentences.** For `data`-component
+     scenes, the `data` JSON's `label`/`title`/`suffix`/`headers` fields must be
+     short labels (a few words, no sentence punctuation); the narrative sentence
+     stays whole in `narration.content`. Do not create a `StatCounter`/`DataBar`
+     scene just because the narration contains a number — only when the metric
+     is the scene's point. See [special-rules.md](special-rules.md) general
+     rules 4–5. (`verify_remotion_data` rejects sentence punctuation in labels.)
 
 3. **One scene = one narration:** each scene has exactly one nested `narration`
    (already created from the script line). The scene occupies its whole narration

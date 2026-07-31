@@ -25,6 +25,27 @@ footage, not a static card. When a rule conflicts with a cheaper default
 3. **Vary the first scene of each chapter.** Each story's opening scene should
    use a different component/visual approach than the previous story's opener,
    so chapters feel distinct.
+4. **On-screen data fields hold data points, never sentences.** In data/text
+   components (`StatCounter`, `DataBar`, `DataTable`, `IconCard`, `FeatureGrid`,
+   `Timeline`, `FlowChart`), the structured fields (`value`, `suffix`, `label`,
+   `title`, `headers`, `rows`, etc.) must contain **concise metrics and short
+   labels** — a few words at most, no sentence punctuation (，。；！？、). The
+   full narrative sentence — the complete thought the viewer hears — belongs
+   ONLY in `narration.content`. Never fracture one sentence across a big number
+   and a label field; that renders as a number floating above a broken
+   half-sentence (the #1 cause of "incoherent data" displays).
+   - ✓ StatCounter → `value: 30`, `suffix: "天"`, `label: "搜救时长"`; and
+     `narration.content: "最初的几轮搜索一无所获，黑匣子的信号在三十天后才出现。"`
+   - ✗ StatCounter → `value: 30`, `suffix: "天"`, `label: "最初的几轮搜索一无所获，黑匣子的信号也在"` (narration leaked into the label).
+   `verify_remotion_data` (validate-remotion-data.mjs) rejects sentence
+   punctuation in these fields, so a leak fails the gate.
+5. **A number inside a sentence ≠ a StatCounter scene.** Do not pick
+   `StatCounter`/`DataBar` just because the narration contains a number. Use
+   them only when the **metric itself is the point of the scene** (the
+   narration is essentially "X reached N" / "N people …"). If the number is
+   incidental to a story sentence (e.g. "the signal returned after 30 days"),
+   make it a visual scene (`KenBurnsImage`/`AssetVideo`/`AssetImage`) and keep
+   the whole sentence as narration.
 
 ---
 

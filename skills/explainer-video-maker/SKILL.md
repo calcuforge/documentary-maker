@@ -215,6 +215,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | **Audio-master clock** | Each scene's narration audio duration determines that scene's total frames. `total_frame = ceil(audio_duration × fps)`. Never hand-estimate. |
 | **One scene = one narration** | Every scene carries exactly one nested `narration`. There is no separate narration layer and no `percent` splitting. |
 | **Script = merged narrations** | A chapter's `script.md` MUST equal all its scene narrations concatenated in order. Splitting a script into scenes must not add/drop/reword text. Enforced by `verify_video_struct.py`. |
+| **Data fields ≠ narration** | In data/text components, `label`/`title`/`suffix`/`headers` hold SHORT labels only — never a narration sentence (no sentence punctuation). The full sentence stays in `narration.content`. Don't make a `StatCounter`/`DataBar` just because narration contains a number. Enforced by `verify_remotion_data`. |
 | **Locale-aware search** | Detect network locale. China → use Baidu Baike, Bing; elsewhere → Wikipedia, Google. |
 | **Playwright for web** | All website access uses Playwright Chromium (headless), except where `curl` is explicitly specified (RSS feeds). |
 | **Anti-slop narration** | Narration text MUST follow [references/natural-narration.md](references/natural-narration.md). No AI-sounding filler, no rhetorical hooks, no rule-of-three abuse. |
