@@ -34,15 +34,16 @@ projects/
 │   │   │   ├── result1.md
 │   │   │   └── result2.md
 │   │   ├── video_struct.yaml      # Step 4 (chapters) + Step 6 (scenes)
-│   │   ├── stories/               # Step 5 (scripts), Step 7 (audio), Step 9 (AIGC)
+│   │   ├── stories/               # Step 5 (scripts), Step 7 (audio), Step 8 (prompts), Step 9 (AIGC)
 │   │   │   └── {story_id}/
 │   │   │       ├── script.md          # Step 5 — chapter narration script
 │   │   │       └── {narration_id}/
 │   │   │           ├── speech.wav
 │   │   │           └── scenes/
+│   │   │               ├── video_prompt.yaml          # Step 8a — structured video prompt
 │   │   │               ├── origin_{scene_id}.{png|mp4}
 │   │   │               └── {scene_id}.{png|mp4}
-│   │   ├── video_tasks.yaml       # Step 8 — AIGC task list
+│   │   ├── video_tasks.yaml       # Step 8b — AIGC task list
 │   │   ├── remotion_sections.yaml # Step 10 — render config
 │   │   └── result.mp4             # Step 11 — final video
 ```
@@ -400,19 +401,65 @@ projects/
 
 ---
 
-## Step 8: Plan AIGC Tasks
+## Step 8: Design AIGC Prompts and Plan Tasks
 
 **When:** After TTS is complete and frames are calculated.
 
-**What to do:**
+This step has two parts: **8a** designs structured video prompts (saved per
+scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompts.
 
-1. **Plan tasks one story at a time** (consistent with Steps 5-6) — do NOT plan
-   all stories' tasks in a single pass. For the current story, identify its
-   scenes where `is_aigc_scene: true`, design and append their tasks to
-   `video_tasks.yaml`, then move on to the next story.
+### Step 8a — Design Structured Video Prompts
 
-2. For each AIGC scene in the current story, design:
-   - **Prompt:** Based on `visual_content`, craft an effective generation prompt
+1. Review `video_struct.yaml` — identify all scenes where `is_aigc_scene: true`.
+   For each AIGC scene, based on its `intent` and `visual_content`, design a
+   structured video prompt and save it to
+   `stories/{story_id}/{narration_id}/scenes/video_prompt.yaml`:
+
+   ```yaml
+   video_prompt:
+     type: text_to_video  # text_to_video / image_to_video / text_to_image
+     common:
+       subject:    {main: "...", description: "..."}
+       scene:      {location: "...", environment: "..."}
+       time:       {period: "...", lighting: "..."}
+       style:      {visual: "...", color: "...", quality: "..."}
+       action:     {description: "..."}
+       camera:     {shot: "...", movement: "...", angle: "..."}
+     text_to_video:
+       prompt: "<one-sentence prompt>"
+       negative: ["term1", "term2"]
+     image_to_video:
+       motion:
+         type: camera_and_object_motion
+         camera: {movement: "..."}
+         object: {movement: "..."}
+     text_to_image:
+       prompt: "<one-sentence prompt>"
+       negative: ["term1", "term2"]
+   ```
+
+   - For video scenes (`type: video`): include both `text_to_video` and
+     `image_to_video` sections (one prompt file covers both workflow tasks).
+   - For image scenes (`type: image`): include only the `text_to_image` section.
+   - Work **one story at a time** (consistent with Steps 5-6).
+
+2. **Reference:** [demo video_prompt.yaml](demo_projects/project1/video1/stories/story1/narration1/scenes/video_prompt.yaml)
+
+### Step 8b — Plan AIGC Tasks
+
+1. **Plan tasks one story at a time** — do NOT plan all stories' tasks in a
+   single pass. For the current story, identify its AIGC scenes, generate their
+   prompts, and append the tasks to `video_tasks.yaml`.
+
+2. For each AIGC scene in the current story:
+   - **Generate the flat prompt** by calling `build_video_prompt.py` on the
+     scene's `video_prompt.yaml` (call once per task type for scenes with both
+     t2v and i2v tasks):
+     ```bash
+     python3 "${SKILL_DIR}/scripts/tool/build_video_prompt.py" \
+       --prompt-yaml /abs/path/to/video_prompt.yaml --type text_to_video
+     ```
+     Use the output `data.prompt` in the task payload's `prompt` field.
    - **Workflow pipeline:** Choose from available workflows (see `comfyui-scheduler/doc/workflow.md`):
      - `z_image_fp16` — text-to-image
      - `ltx2.3_t2v_int8` — text-to-video

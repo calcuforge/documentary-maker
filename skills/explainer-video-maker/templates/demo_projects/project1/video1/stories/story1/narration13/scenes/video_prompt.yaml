@@ -1,0 +1,38 @@
+video_prompt:
+  type: text_to_video
+
+  common:
+    subject:
+      main: "现代城市夜景"
+      description: "万家灯火与数据流交织，高楼大厦林立"
+    scene:
+      location: "现代都市天际线"
+      environment: "高楼大厦，霓虹灯，数据流光在建筑间穿梭"
+    time:
+      period: "当代夜晚"
+      lighting: "城市霓虹与暖色灯光交织"
+    style:
+      visual: "电影级城市夜景"
+      color: "暖色调与科技蓝交织"
+      quality: "8K, ultra realistic"
+    action:
+      description: "城市灯火闪烁，数据流在建筑间持续流动"
+    camera:
+      shot: "aerial wide shot"
+      movement: "slow aerial pan right"
+      angle: "high angle"
+
+  text_to_video:
+    prompt: "现代城市夜景，万家灯火与数据流交织，温暖而宏大"
+    negative:
+      - "低质量"
+      - "模糊"
+      - "变形"
+
+  image_to_video:
+    motion:
+      type: camera_and_object_motion
+      camera:
+        movement: "slow aerial pan right"
+      object:
+        movement: "数据流在建筑间持续流动，灯火微微闪烁"

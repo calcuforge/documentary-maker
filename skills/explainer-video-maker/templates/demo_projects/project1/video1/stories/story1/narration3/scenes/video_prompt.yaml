@@ -1,0 +1,30 @@
+video_prompt:
+  type: text_to_image
+
+  common:
+    subject:
+      main: "1960年代计算机实验室"
+      description: "科学家在大型机前工作，操作打孔卡片"
+    scene:
+      location: "大学计算机实验室"
+      environment: "大型主机，成排的打孔卡片，操作台"
+    time:
+      period: "1960年代"
+      lighting: "明亮的室内灯光"
+    style:
+      visual: "复古乐观风格"
+      color: "明亮暖色调"
+      quality: "8K, ultra realistic"
+    action:
+      description: "科学家在大型机前操作打孔卡片"
+    camera:
+      shot: "wide shot"
+      movement: "static"
+      angle: "slightly elevated"
+
+  text_to_image:
+    prompt: "1960年代计算机实验室，科学家在大型机前工作，明亮乐观色调"
+    negative:
+      - "低质量"
+      - "模糊"
+      - "变形"

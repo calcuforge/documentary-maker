@@ -47,6 +47,7 @@ explainer-video-maker/
     │   │   ├── generate_scene_list.py  # Build scene/narration skeleton from script.md lines
     │   │   ├── search_rss_discovery.py  # RSS source discovery
     │   │   ├── run_tts.py          # TTS synthesis + frame calculation
+    │   │   ├── build_video_prompt.py  # Flatten structured video_prompt.yaml into a prompt string
     │   │   ├── run_aigc.py         # AIGC task execution
     │   │   ├── run_upscale.py      # Asset upscaling
     │   │   ├── generate_remotion_sections.py  # Remotion config generator

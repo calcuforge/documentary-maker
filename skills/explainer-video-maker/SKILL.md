@@ -122,6 +122,7 @@ projects/
 │   │       │   └── narration1/
 │   │       │       ├── speech.wav # Narration audio
 │   │       │       └── scenes/
+│   │       │           ├── video_prompt.yaml  # Structured video prompt (Step 8a)
 │   │       │           ├── origin_scene1.png  # AIGC raw output
 │   │       │           ├── scene1.png         # Upscaled asset
 │   │       │           ├── origin_scene2.mp4
@@ -181,7 +182,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | 5 | Write chapter scripts | `scripts/verify/verify_story_scripts.py` | `stories/{story_id}/script.md` |
 | 6 | Design scene list | `scripts/tool/generate_scene_list.py`, `scripts/verify/verify_video_struct.py` | `video_struct.yaml` (full structure) |
 | 7 | TTS + frame calculation | `scripts/tool/run_tts.py`, `scripts/verify/verify_audio.py` | `speech.wav` per scene |
-| 8 | Plan AIGC tasks | `scripts/verify/verify_video_tasks.py` | `video_tasks.yaml` |
+| 8 | Design AIGC prompts + plan tasks | `scripts/tool/build_video_prompt.py`, `scripts/verify/verify_video_tasks.py` | `video_prompt.yaml` per scene, `video_tasks.yaml` |
 | 9 | Execute AIGC tasks | `scripts/tool/run_aigc.py`, `scripts/tool/run_upscale.py`, `scripts/verify/verify_aigc_assets.py` | `scenes/` assets |
 | 10 | Generate remotion config | `scripts/tool/generate_remotion_sections.py`, `scripts/verify/verify_remotion_sections.py` | `remotion_sections.yaml` |
 | 11 | Render video | `scripts/tool/render.py` | `result.mp4` |
