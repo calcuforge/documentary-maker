@@ -33,6 +33,64 @@ sys.path.insert(0, str(SKILL_ROOT))
 
 from lib.yamlutil import load_yaml, save_yaml
 
+
+def build_search_query(visual_content: str, intent: str) -> str:
+    """Build a short, keyword-style search query.
+
+    Stock search engines work best with 2-5 precise keywords, not full
+    sentences. Prefer `intent` (typically a short label like "时代氛围渲染")
+    as the base, and append key nouns from `visual_content` if useful.
+    """
+    # Use intent as the primary query — it is a concise expression label
+    query = (intent or "").strip()
+    # If visual_content is short enough, use it directly (it may be keywords)
+    vc = (visual_content or "").strip()
+    if vc and len(vc) <= 30:
+        query = vc
+    elif not query and vc:
+        # Fall back to first 30 chars of visual_content
+        query = vc[:30]
+    return query
+
+
+def trim_video(filepath: str, target_duration_s: float) -> None:
+    """Trim a video to exactly target_duration_s using ffmpeg (stream copy).
+
+    If the video is already <= target duration, does nothing.
+    """
+    import subprocess
+
+    # Probe actual duration
+    try:
+        probe = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-print_format", "json",
+             "-show_format", filepath],
+            capture_output=True, text=True, timeout=30,
+        )
+        if probe.returncode != 0:
+            return
+        info = json.loads(probe.stdout)
+        actual = float(info.get("format", {}).get("duration", 0))
+    except Exception:
+        return
+
+    if actual <= target_duration_s + 0.1:
+        return  # already short enough
+
+    tmp = filepath + ".trim.mp4"
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", filepath,
+             "-t", f"{target_duration_s:.3f}",
+             "-c", "copy", "-map_metadata", "-1", tmp],
+            capture_output=True, text=True, timeout=60,
+            check=True,
+        )
+        Path(tmp).replace(filepath)
+    except Exception as e:
+        print(f"    WARNING: video trim failed: {e}", file=sys.stderr)
+        Path(tmp).unlink(missing_ok=True)
+
 # Provider names recognized in stock_media.sources[].provider
 VALID_PROVIDERS = {"pexels", "pixabay", "unsplash"}
 
@@ -113,6 +171,7 @@ def search_pexels(query: str, media_type: str, target_w: int, target_h: int,
                         "url": best.get("link", ""),
                         "width": best.get("width", 0),
                         "height": best.get("height", 0),
+                        "duration_s": v.get("duration", 0),
                         "license": "Pexels License (free)",
                         "page_url": v.get("url", ""),
                     })
@@ -176,6 +235,7 @@ def search_pixabay(query: str, media_type: str, target_w: int, target_h: int,
                         "url": best["url"],
                         "width": best.get("width", 0),
                         "height": best.get("height", 0),
+                        "duration_s": v.get("duration", 0),
                         "license": "Pixabay License (free)",
                         "page_url": v.get("pageURL", ""),
                     })
@@ -270,18 +330,30 @@ def search_all_providers(query: str, media_type: str, target_w: int, target_h: i
     return all_results
 
 
-def pick_best(results: list[dict], target_w: int, target_h: int) -> dict | None:
-    """Pick the result closest to (but >=) the target resolution."""
+def pick_best(results: list[dict], target_w: int, target_h: int,
+              min_duration_s: float = 0) -> dict | None:
+    """Pick the best result considering resolution and (for video) duration.
+
+    For video: prefer the SHORTEST clip that is >= min_duration_s and covers
+    the target resolution — this minimises download time. Falls back to the
+    longest available if no clip is long enough.
+    """
     if not results:
         return None
 
     def score(r):
         w, h = r.get("width", 0), r.get("height", 0)
-        # Prefer results >= target; penalize those smaller
-        covers = (w >= target_w and h >= target_h)
+        covers_res = (w >= target_w and h >= target_h)
         area = w * h
-        # Sort: covers first, then by area (closest to target)
-        return (not covers, abs(area - target_w * target_h))
+
+        dur = r.get("duration_s", 0)
+        if min_duration_s > 0 and dur > 0:
+            covers_dur = dur >= min_duration_s
+            # Prefer: covers res + dur → closest resolution → SHORTEST duration
+            return (not covers_res, not covers_dur, abs(area - target_w * target_h), dur)
+
+        # Image or no duration info: resolution only
+        return (not covers_res, abs(area - target_w * target_h))
 
     return min(results, key=score)
 
@@ -301,6 +373,7 @@ def collect_stock_scenes(video_struct: dict) -> list[dict]:
                     "visual_content": scene.get("visual_content", ""),
                     "intent": scene.get("intent", ""),
                     "type": scene.get("type", "image"),
+                    "total_frame": narration.get("total_frame", 0),
                     "origin_asset_path": scene.get("origin_asset_path", ""),
                     "scene_ref": scene,
                 })
@@ -332,6 +405,7 @@ def main() -> None:
         return
 
     target_w, target_h = get_target_dims(project_config)
+    fps = project_config.get("video", {}).get("fps", 24)
     video_dir = Path(args.video_struct).parent
 
     scenes = collect_stock_scenes(video_struct)
@@ -366,12 +440,16 @@ def main() -> None:
             print(f"  SKIP {scene_id} (already exists)", file=sys.stderr)
             continue
 
-        # Build search query from visual_content + intent
-        query = s["visual_content"] or s["intent"] or scene_id
-        print(f"  Search {scene_id}: '{query[:60]}...' ({media_type})", file=sys.stderr)
+        # Build a short keyword query (stock engines prefer 2-5 precise words)
+        query = build_search_query(s["visual_content"], s["intent"]) or scene_id
+        # For video scenes, compute the minimum clip duration from narration frames
+        total_frame = s.get("total_frame", 0)
+        min_dur = (total_frame / fps) if (media_type == "video" and total_frame > 0) else 0
+        dur_hint = f", min {min_dur:.1f}s" if min_dur > 0 else ""
+        print(f"  Search {scene_id}: '{query}' ({media_type}{dur_hint})", file=sys.stderr)
 
         results = search_all_providers(query, media_type, target_w, target_h, sources)
-        best = pick_best(results, target_w, target_h)
+        best = pick_best(results, target_w, target_h, min_duration_s=min_dur)
 
         if not best or not best.get("url"):
             errors.append(f"{scene_id}: no results found for '{query[:50]}'")
@@ -388,8 +466,14 @@ def main() -> None:
             continue
 
         downloaded += 1
-        print(f"    OK: {best['provider']} {best.get('width', '?')}x{best.get('height', '?')} "
+        dur_info = f" {best.get('duration_s', 0):.1f}s" if best.get("duration_s") else ""
+        print(f"    OK: {best['provider']} {best.get('width', '?')}x{best.get('height', '?')}{dur_info} "
               f"-> {origin_path.name}", file=sys.stderr)
+
+        # Trim video to exactly the scene duration (align to total_frame/fps)
+        if media_type == "video" and min_dur > 0:
+            trim_video(str(origin_path), min_dur)
+            print(f"    Trimmed to {min_dur:.1f}s", file=sys.stderr)
 
         # Update video_struct
         s["scene_ref"]["origin_asset_path"] = str(origin_path)
