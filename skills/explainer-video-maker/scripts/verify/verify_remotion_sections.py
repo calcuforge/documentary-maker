@@ -34,7 +34,7 @@ VALID_COMPONENTS = [
     "QuoteBlock", "FeatureGrid", "IconCard", "ComparisonCard",
     "StatCounter", "DataBar", "Timeline", "FlowChart",
     "CodeBlock", "DataTable", "DiagramReveal", "AnimationDemo",
-    "AssetImage", "AssetVideo",
+    "AssetImage", "AssetVideo", "KenBurnsImage",
 ]
 
 VALID_RESOLUTIONS = ["1080P", "4K", "1080p", "4k"]
