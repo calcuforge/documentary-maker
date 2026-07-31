@@ -53,7 +53,7 @@ def main() -> None:
     parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
     parser.add_argument("--output", required=True, help="Output video file path (absolute)")
     parser.add_argument("--studio", action="store_true", help="Launch Studio instead of rendering")
-    parser.add_argument("--timeout", type=int, default=1800, help="Render timeout (seconds, default 30min)")
+    parser.add_argument("--timeout", type=int, default=3600, help="Render timeout (seconds, default 1h)")
     args = parser.parse_args()
 
     from lib.net import require_abs
@@ -125,36 +125,57 @@ def main() -> None:
     print(f"  Segment frames: {segment_frames or '(default)'}", file=sys.stderr)
     print(f"  Segment workers: {segment_workers or '(default)'}", file=sys.stderr)
 
+    # Write render output to a log file instead of capturing via pipes.
+    # capture_output=True buffers ALL stdout/stderr in memory — for a long
+    # segmented render this can be tens of MB and causes pipe-buffer
+    # deadlocks or OOM on Windows. A log file avoids both problems.
+    log_path = Path(output_path).parent / "render.log"
+    print(f"  Log: {log_path}", file=sys.stderr)
+
     try:
-        result = subprocess.run(
-            cmd,
-            cwd=str(template_path),
-            capture_output=True,
-            text=True,
-            timeout=args.timeout,
-        )
+        with open(log_path, "w", encoding="utf-8", errors="replace") as log_file:
+            proc = subprocess.run(
+                cmd,
+                cwd=str(template_path),
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                timeout=args.timeout,
+            )
     except subprocess.TimeoutExpired:
         print(json.dumps({
             "status": "error",
             "msg": f"Render timed out after {args.timeout}s",
-            "data": {},
+            "data": {"log": str(log_path)},
         }, ensure_ascii=False, indent=2))
         sys.exit(1)
 
-    if result.returncode != 0:
+    if proc.returncode != 0:
+        # Read the tail of the log for error diagnostics
+        log_tail = ""
+        try:
+            log_text = log_path.read_text(encoding="utf-8", errors="replace")
+            log_tail = log_text[-3000:] if log_text else ""
+        except OSError:
+            pass
         print(json.dumps({
             "status": "error",
             "msg": "Render failed",
-            "data": {"stderr": result.stderr[-2000:] if result.stderr else "", "stdout": result.stdout[-1000:] if result.stdout else ""},
+            "data": {"log": str(log_path), "log_tail": log_tail},
         }, ensure_ascii=False, indent=2))
         sys.exit(1)
 
     # Verify output exists
     if not Path(output_path).exists():
+        log_tail = ""
+        try:
+            log_text = log_path.read_text(encoding="utf-8", errors="replace")
+            log_tail = log_text[-1000:] if log_text else ""
+        except OSError:
+            pass
         print(json.dumps({
             "status": "error",
             "msg": f"Output file not created: {output_path}",
-            "data": {"stdout": result.stdout[-500:]},
+            "data": {"log": str(log_path), "log_tail": log_tail},
         }, ensure_ascii=False, indent=2))
         sys.exit(1)
 
