@@ -37,28 +37,18 @@ image could achieve a similar result at a fraction of the cost:
 KenBurnsImage is likely sufficient. If the scene's value comes from **action, movement,
 or a process unfolding**, AssetVideo is necessary.
 
-### When to use Stock Media (asset_generation_method: stock)
+### Stock media (asset_generation_method: stock)
 
-Stock media (searched from Pexels / Pixabay / Unsplash) is appropriate for scenes
-where the visual is **generic and non-specific** — the narration describes a mood
-or context, not a precise visual event. It is faster and cheaper than AIGC, and
-often higher quality for real-world imagery.
+Stock media (searched from Pexels / Pixabay / Unsplash) is an alternative to
+AIGC for **generic, non-specific** visuals. It is controlled by two switches in
+`project_config.yaml` → `stock_media` and documented in **separate files that
+you load only when the matching switch is on**:
 
-| Use stock media when… | Use AIGC when… |
-|----------------------|---------------|
-| Generic environment: cityscape, nature, lab interior, office | Specific historical event or person must be depicted accurately |
-| Atmosphere / mood backdrop (tension, optimism, nostalgia) | Visual must match narration details precisely (specific product, specific data) |
-| Abstract concept illustration (technology, progress, future) | Consistent character/object appearance across multiple scenes |
-| Real-world footage look (documentary B-roll feel) | Stylized or artistic rendering required |
-| No brand-specific or copyrighted content needed | Brand-specific or fictional content |
+- **Stock images** (`search_image: true`) → [stock_image_mapping.md](stock_image_mapping.md)
+- **Stock video** (`search_video: true`, default **false**) → [stock_video_mapping.md](stock_video_mapping.md)
 
-**Component choice for stock assets:**
-- Stock **image** → `AssetImage` (static) or `KenBurnsImage` (cinematic zoom/pan)
-- Stock **video** → `AssetVideo`
-
-**Resolution:** the search script targets the project's final resolution
-(`video.resolution`). If no exact match exists, it downloads the largest
-available and the upscale step (Step 10) enlarges it to target.
+If a switch is off, do not use that stock type — fall back to the AIGC rows in
+the tables below.
 
 ---
 
@@ -68,18 +58,14 @@ available and the upscale step (Step 10) enlarges it to target.
 |---|---|---|---|---|
 | Establish a scene | 1950s New York street | text-to-video | AssetVideo | Dynamic environments are more immersive than static images. |
 | Establish a scene (still + motion) | 1950s New York street | text-to-image | KenBurnsImage | Static generation with Ken Burns (zoom out + pan) costs far less than video. |
-| Establish a scene (stock) | 1950s New York street | stock search | KenBurnsImage / AssetVideo | Generic cityscape — stock photo/video is faster and more realistic than AIGC. |
 | Recreate historical scenes | Ancient Egyptian pyramid construction | text-to-video | AssetVideo | Historical events require dynamic visual reconstruction. |
 | Create emotional atmosphere | A city under tension before war | text-to-video | AssetVideo | Motion, lighting, and camera movement enhance emotional impact. |
 | Create emotional atmosphere (still) | A city under tension before war | text-to-image | KenBurnsImage | Subtle zoom-in + pan on a moody static image builds tension. |
-| Create emotional atmosphere (stock) | A city under tension before war | stock search | KenBurnsImage / AssetVideo | Real-world moody footage or photo; stock libraries have rich atmospheric content. |
 | Express abstract concepts | Artificial intelligence is changing the world | text-to-image → image-to-video | AssetVideo | Abstract ideas benefit from symbolic imagery and subtle animation. |
-| Express abstract concepts (stock) | Data center, server room | stock search | KenBurnsImage / AssetVideo | Generic tech environments are abundant in stock; no need for AIGC precision. |
 | Visualize future scenarios | A smart city in 2050 | text-to-image → image-to-video | AssetVideo | Future concepts require creative generation with cinematic motion. |
 | Express era transitions | Agricultural age to industrial age | text-to-video | AssetVideo | Long-term evolution is best represented through animated scenes. |
 | Show before-and-after changes | City before and after renovation | image-edit → first-last-frame-to-video | AssetVideo | Explicit start and end states make transition animation natural. |
 | Express memories | Childhood rural life | text-to-video | AssetVideo | Video better conveys nostalgia and emotional storytelling. |
-| Express memories (stock) | Rural landscape, old photographs | stock search | KenBurnsImage | Ken Burns on a nostalgic stock photo is the classic documentary memory look. |
 
 ---
 
@@ -131,10 +117,8 @@ available and the upscale step (Step 10) enlarges it to target.
 | Expression Intent | Example | Workflow Type | Remotion Component | Reason |
 |---|---|---|---|---|
 | Recreate a news event | Rocket launch | text-to-video | AssetVideo | Dynamic footage increases realism. |
-| Recreate a news event (stock) | Rocket launch, city skyline | stock search | AssetVideo | Stock news/B-roll footage is realistic and free; ideal for generic events. |
 | Introduce background | Historical context | text-to-image | AssetImage | Background information usually requires only a representative image. |
 | Introduce background (cinematic) | Historical context | text-to-image | KenBurnsImage | Slow zoom out reveals the wider context; pan moves across a scene. |
-| Introduce background (stock) | Historical context, cityscape | stock search | KenBurnsImage / AssetVideo | Stock libraries have abundant generic backgrounds; no AIGC needed. |
 | Show event timeline | Development of the incident | - | Timeline | News events naturally follow chronological order. |
 | Explain impact | Impact on supply chain | - | FlowChart | Cause-and-effect relationships are clearly visualized. |
 | Present expert opinions | Expert quotes | - | QuoteBlock | Quotations highlight authority and credibility. |
