@@ -1,0 +1,148 @@
+# Workflow Steps — Content Creation (Steps 5–7)
+
+> **When to load:** Step 5 through Step 7 — writing narration scripts, designing
+> scene lists, TTS synthesis, and frame calculation. Covers the transformation from
+> research into a fully-scored scene structure with audio.
+
+**Prerequisite:** [workflow-setup.md](workflow-setup.md) Steps 1–4 must be complete
+(`video_struct.yaml` with a validated chapter list and `search_results/` populated).
+
+---
+
+## Step 5: Write Chapter Narration Scripts
+
+**When:** After the chapter list passes validation.
+
+**What to do:**
+
+1. Write the narration script (讲稿) for each chapter using the format **one
+   narration per line** — each line is exactly one scene's narration (≤50
+   characters). Step 6 turns each line into a scene automatically, so the number
+   of lines = the number of scenes. The script is the chapter's single source of
+   narration: **all scene narrations merged together equal this script** (one
+   line = one narration).
+
+   ```text
+   1956年夏天，达特茅斯学院的一场研讨会，正式确立了人工智能这门学科的名字。
+   麦卡锡和明斯基等学者提出，要让机器去模拟人类的学习、推理和解决问题的能力。
+   早期的研究者满怀乐观，他们相信用不了几十年，就能造出真正会思考的机器。
+   ```
+
+   **Write one chapter at a time, in multiple passes — do NOT write all chapters
+   at once.** Finish one chapter's script before starting the next. Focusing on a
+   single chapter produces richer, more detailed narration.
+
+2. Save each chapter's script to `stories/{story_id}/script.md` (one file per
+   chapter, under the video directory). Write **only narration lines** — no
+   titles or headers; blank lines are allowed (ignored).
+
+3. **Each script MUST meet `content.min_story_chars`** (project_config.yaml,
+   default **500** characters). A chapter script should be a complete, substantive
+   narration — not a thin outline.
+
+4. **Writing style — MUST follow [natural-narration.md](natural-narration.md):**
+   - No AI filler phrases
+   - No rule-of-three abuse
+   - Vary sentence length
+   - State facts directly
+   - Write for the ear, not the eye
+
+5. **Reference:** [demo_projects/project1/video1/stories/story1/script.md](demo_projects/project1/video1/stories/story1/script.md)
+
+6. **Validate:**
+   ```bash
+   python3 "${SKILL_DIR}/scripts/verify/verify_story_scripts.py" \
+     --video-struct /abs/path/video_struct.yaml \
+     --project-config /abs/path/project_config.yaml
+   ```
+   If it fails (script missing or below the minimum), fix and re-validate. Do NOT
+   proceed until exit 0.
+
+---
+
+## Step 6: Design Scene List from Scripts
+
+**When:** After all chapter scripts pass validation.
+
+**What to do:**
+
+1. **Generate the narration skeleton with a script.** Run `generate_scene_list.py`
+   to turn each chapter's `script.md` (one narration per line) into the
+   `scene_list` in `video_struct.yaml` — one scene per line, each carrying that
+   line as its `narration.content`. The display fields are left empty for you to
+   fill next.
+   ```bash
+   python3 "${SKILL_DIR}/scripts/tool/generate_scene_list.py" --video-struct /abs/path/video_struct.yaml
+   ```
+   - One scene is created per non-empty line; scene/narration ids are assigned
+     globally and stay unique. Stories that already have a `scene_list` are
+     skipped (pass `--force` to regenerate).
+   - **Do NOT hand-write the `scene_list` / narrations** — let the script generate
+     them so they match `script.md` exactly. `verify_video_struct.py` checks that
+     merging all scene narrations reproduces `script.md`.
+
+   **Narration length:** each line (scene narration) MUST be **≤ 50 characters —
+   a ceiling, not a target**. Aim for a substantive line of roughly **20-45
+   characters** and **vary the length**; do NOT reduce them all to 10-character
+   fragments. If a line is too long, fix it in `script.md` and re-run the
+   generator with `--force`.
+
+2. **Fill the visuals, data and text — one story at a time.** Working one chapter
+   at a time, complete that story's scenes before moving to the next (do NOT fill
+   every story in one bulk pass). For each scene:
+   - Decide the expression method using
+     [expression_intent_mapping.md](expression_intent_mapping.md):
+     - **AIGC scenes** (`is_aigc_scene: true`): need AI-generated imagery/video
+     - **Data/text scenes** (`is_aigc_scene: false`): filled with text/data directly into Remotion components
+   - Fill the display fields from the research and the chapter script: `intent`,
+     `is_aigc_scene`, `type`, `remotion_component`, `visual_content`, `data`,
+     `text`, `workflows`.
+   - Leave EMPTY (auto-filled later): `asset_path`, `origin_asset_path`,
+     `narration.total_frame`, `narration.audio_path`.
+   - **Do NOT change `narration.content`** — it must stay equal to its `script.md`
+     line (`verify_video_struct.py` enforces this).
+
+3. **One scene = one narration:** each scene has exactly one nested `narration`
+   (already created from the script line). The scene occupies its whole narration
+   duration.
+
+4. **Reference:** [demo_projects/project1/video1/video_struct.yaml](demo_projects/project1/video1/video_struct.yaml)
+
+5. **Validate:**
+   ```bash
+   python3 "${SKILL_DIR}/scripts/verify/verify_video_struct.py" --video-struct /abs/path/video_struct.yaml
+   ```
+   If it fails, fix and re-validate. Do NOT proceed until exit 0.
+
+---
+
+## Step 7: TTS Synthesis + Frame Calculation
+
+**When:** After video_struct.yaml passes validation.
+
+**What to do:**
+
+1. Run TTS synthesis **(use `--timeout 3600` for safety — TTS may take several minutes per narration)**:
+   ```bash
+   python3 "${SKILL_DIR}/scripts/tool/run_tts.py" \
+     --project-config /abs/path/project_config.yaml \
+     --video-struct /abs/path/video_struct.yaml \
+     --timeout 3600
+   ```
+   - `--timeout 3600` (default): per-TTS subprocess timeout (1h)
+   This will:
+   - Generate `speech.wav` for each scene's narration
+   - **Compress WAV → MP3 (128kbps)** to reduce Remotion render memory
+   - Measure audio duration via ffprobe (from WAV for accuracy)
+   - Calculate `total_frame = ceil(duration × fps)`
+   - Update `video_struct.yaml` `narration.audio_path` (pointing to .mp3) and `narration.total_frame`
+
+   **Idempotent:** re-running skips narrations whose audio already exists
+   (reported as `skipped`) — safe to resume after an interruption. Pass
+   `--force` to regenerate ALL audio. Use `--force` after editing any
+   `narration.content`, otherwise the stale audio is kept.
+
+2. **Validate:**
+   ```bash
+   python3 "${SKILL_DIR}/scripts/verify/verify_audio.py" --video-struct /abs/path/video_struct.yaml
+   ```

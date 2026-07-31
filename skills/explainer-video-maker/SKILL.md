@@ -172,7 +172,10 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 
 ## Workflow
 
-> Detailed step-by-step instructions: [references/workflow-steps.md](references/workflow-steps.md)
+> Detailed step-by-step instructions:
+> - Steps 1–4 (Setup): [references/workflow-setup.md](references/workflow-setup.md)
+> - Steps 5–7 (Content): [references/workflow-content.md](references/workflow-content.md)
+> - Steps 8–11 (Production): [references/workflow-production.md](references/workflow-production.md)
 
 | # | Step | Key Script | Output |
 |---|------|-----------|--------|
@@ -228,7 +231,9 @@ Load on demand — do NOT load all at once:
 
 | File | Load when |
 |------|-----------|
-| [references/workflow-steps.md](references/workflow-steps.md) | **Always** — detailed per-step instructions |
+| [references/workflow-setup.md](references/workflow-setup.md) | Steps 1–4 — project init, topic, research, chapters |
+| [references/workflow-content.md](references/workflow-content.md) | Steps 5–7 — scripts, scene design, TTS |
+| [references/workflow-production.md](references/workflow-production.md) | Steps 8–11 — AIGC, remotion config, render |
 | [references/natural-narration.md](references/natural-narration.md) | Step 5 — writing chapter narration scripts |
 | [references/search-providers.md](references/search-providers.md) | Step 3 — topic research |
 | [references/expression_intent_mapping.md](references/expression_intent_mapping.md) | Step 6 — choosing scene types and components |
