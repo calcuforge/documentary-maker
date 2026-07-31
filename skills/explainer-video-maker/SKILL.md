@@ -189,7 +189,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | 8 | Search stock media | `scripts/search_provider/search_stock_media.py`, `scripts/verify/verify_stock_assets.py` | `scenes/origin_*` stock assets |
 | 9 | Design AIGC prompts + plan tasks | `scripts/tool/build_video_prompt.py`, `scripts/verify/verify_video_tasks.py` | `video_prompt.yaml` per scene, `video_tasks.yaml` |
 | 10 | Execute AIGC tasks | `scripts/tool/run_aigc.py`, `scripts/tool/run_upscale.py`, `scripts/verify/verify_aigc_assets.py` | `scenes/` assets |
-| 11 | Generate remotion config | `scripts/tool/generate_remotion_sections.py`, `scripts/verify/verify_remotion_sections.py` | `remotion_sections.yaml` |
+| 11 | Generate remotion config | `scripts/tool/generate_remotion_sections.py`, `scripts/verify/verify_remotion_sections.py`, `scripts/verify/verify_remotion_data.py` | `remotion_sections.yaml` |
 | 12 | Render video | `scripts/tool/render.py` | `result.mp4` |
 
 **Mandatory validation gates:**
@@ -202,7 +202,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 - After Step 8: `verify_stock_assets.py` must exit 0
 - After Step 9: `verify_video_tasks.py` must exit 0
 - After Step 10: `verify_aigc_assets.py` must exit 0
-- After Step 11: `verify_remotion_sections.py` must exit 0
+- After Step 11: `verify_remotion_sections.py` must exit 0, then `verify_remotion_data.py` must exit 0
 
 ---
 

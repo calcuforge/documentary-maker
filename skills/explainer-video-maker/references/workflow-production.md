@@ -297,11 +297,21 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
 
 3. **Reference:** [demo_projects/project1/video1/remotion_sections.yaml](demo_projects/project1/video1/remotion_sections.yaml)
 
-4. **Validate:**
+4. **Validate (structure):**
    ```bash
    python3 "${SKILL_DIR}/scripts/verify/verify_remotion_sections.py" \
      --remotion-sections /abs/path/remotion_sections.yaml
    ```
+
+5. **Validate (remotion_data per component):** calls remotion-video-template's
+   `validate-remotion-data.mjs` to check each scene's `remotion_data` against
+   the component's expected field schema (required fields, array items, enums):
+   ```bash
+   python3 "${SKILL_DIR}/scripts/verify/verify_remotion_data.py" \
+     --remotion-sections /abs/path/remotion_sections.yaml \
+     --project-config /abs/path/project_config.yaml
+   ```
+   Both validators must exit 0 before proceeding to Step 12.
 
 ---
 
