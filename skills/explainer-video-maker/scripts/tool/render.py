@@ -148,6 +148,20 @@ def main() -> None:
             "data": {"log": str(log_path)},
         }, ensure_ascii=False, indent=2))
         sys.exit(1)
+    except FileNotFoundError:
+        print(json.dumps({
+            "status": "error",
+            "msg": "node not found on PATH — install Node.js >= 18",
+            "data": {},
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
+    except OSError as e:
+        print(json.dumps({
+            "status": "error",
+            "msg": f"Failed to start render process: {e}",
+            "data": {"log": str(log_path)},
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
 
     if proc.returncode != 0:
         # Read the tail of the log for error diagnostics
