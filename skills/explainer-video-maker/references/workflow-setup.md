@@ -147,8 +147,30 @@ projects/
    ```
    Must exit 0 before proceeding.
 
-6. (Optional) `tts.voice_file` is empty by default and auto-generates in Step 7.
-   To pre-generate a reference voice now:
+6. **Environment connectivity check (ComfyUI + TTS).** Confirm the runtime
+   services the pipeline depends on are reachable before investing in later
+   steps. The check does a lightweight TCP connect (no HTTP, no workflow run) to
+   each registered ComfyUI node and to the TTS endpoint (for
+   `tts.backend: http_server`; the `comfyui_indextts` backend reuses the ComfyUI
+   nodes):
+   ```bash
+   python3 "${SKILL_DIR}/scripts/tool/check_environment.py" \
+     --project-config /abs/path/project_config.yaml
+   ```
+   - **Exit 0** → environment ready, proceed.
+   - **Exit 1** → read `data.guidance` and fix, then re-run. Typically:
+     - **ComfyUI unreachable** → start the ComfyUI server, or register a
+       reachable node: `comfyui-scheduler node add --id node1 --url http://<HOST>:8188`
+       (list current nodes with `comfyui-scheduler node list`).
+     - **TTS unreachable** → for `http_server`, start the TTS server / export the
+       required env var (e.g. `BACKEND_PROXY_ENDPOINT`); or set `tts.backend` to
+       `comfyui_indextts` in `project_config.yaml`.
+
+   Resolve any failure before continuing — AIGC (Step 9) and TTS (Step 7) cannot
+   run without a reachable backend.
+
+7. (Optional) `tts.voice_file` is empty by default and auto-generates during the
+   audio/TTS step (pipeline Step 7). To pre-generate a reference voice now:
    ```bash
    comfyui-scheduler run -w ominivoice_voice_design -i '{"voice_instruct": "male, middle-aged, moderate pitch", "content": "This is a sample sentence for voice reference."}'
    ```
