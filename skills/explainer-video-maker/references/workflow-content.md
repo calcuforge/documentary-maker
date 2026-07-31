@@ -95,6 +95,10 @@
      - **AIGC scenes** (`is_aigc_scene: true`, `asset_generation_method: aigc`): need AI-generated imagery/video
      - **Stock scenes** (`is_aigc_scene: true`, `asset_generation_method: stock`): search web stock media — only for generic, non-specific visuals (see expression_intent_mapping.md)
      - **Data/text scenes** (`is_aigc_scene: false`): filled with text/data directly into Remotion components
+   - **Apply style-specific constraints** from [special-rules.md](special-rules.md)
+     based on `project.video_style` (e.g. a documentary's first scene MUST be a
+     video; a product intro opens on the product's appearance). These rules
+     override the general mapping where they apply.
    - **Check `stock_media` flags before choosing stock:** read `project_config.yaml`
      → `stock_media.search_image` (default true) and `stock_media.search_video`
      (default false). If a flag is false, do NOT set `asset_generation_method: stock`

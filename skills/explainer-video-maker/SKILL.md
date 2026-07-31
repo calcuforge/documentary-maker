@@ -240,4 +240,5 @@ Load on demand — do NOT load all at once:
 | [references/natural-narration.md](references/natural-narration.md) | Step 5 — writing chapter narration scripts |
 | [references/search-providers.md](references/search-providers.md) | Step 3 — topic research |
 | [references/expression_intent_mapping.md](references/expression_intent_mapping.md) | Step 6 — choosing scene types and components |
+| [references/special-rules.md](references/special-rules.md) | Step 6 — style-specific scene constraints (e.g. documentary opens on video) |
 | [templates/demo_projects/](templates/demo_projects/) | Any step — reference for config file structure |
