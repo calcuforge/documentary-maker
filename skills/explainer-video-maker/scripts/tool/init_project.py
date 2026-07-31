@@ -80,21 +80,21 @@ def main() -> None:
     project_dir.mkdir(parents=True, exist_ok=False)
 
     # The only fields the script sets: the created directory's absolute path,
-    # and the two component-dependency paths (defaulted to the shared per-user
-    # dependency dir — see below). All other fields (incl. project.name) are
-    # left as-is to edit.
+    # and the two component-dependency paths (defaulted to the workspace's dep/
+    # dir — see below). All other fields (incl. project.name) are left as-is.
     config.setdefault("project", {})["project_root_path"] = str(project_dir)
 
-    # Default dependence_paths to the shared per-user dependency directory
-    # ~/.hermes/dependance (i.e. .hermes/dependance under $HOME; the $HOME
-    # prefix differs per environment, so we store it with a leading ~ to keep
-    # the config portable). The two component repos are cloned there. The agent
-    # overrides these only if the dependencies live somewhere else.
+    # Default dependence_paths to the workspace's dep/ directory (the workspace
+    # is the directory that contains projects/). These are stored as
+    # workspace-relative paths so the config stays portable across environments;
+    # the scripts resolve a relative path against the workspace at runtime. The
+    # two component repos are cloned there. The agent overrides these only if the
+    # dependencies live somewhere else.
     deps = config.setdefault("dependence_paths", {})
     if not deps.get("remotion_template"):
-        deps["remotion_template"] = "~/.hermes/dependance/remotion-video-template"
+        deps["remotion_template"] = "dep/remotion-video-template"
     if not deps.get("comfyui_scheduler"):
-        deps["comfyui_scheduler"] = "~/.hermes/dependance/comfyui-scheduler"
+        deps["comfyui_scheduler"] = "dep/comfyui-scheduler"
 
     config_path = project_dir / "project_config.yaml"
     save_yaml(config, config_path)

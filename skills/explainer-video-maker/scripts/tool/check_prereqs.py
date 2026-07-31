@@ -77,7 +77,7 @@ def check_comfyui_scheduler() -> list[str]:
     errors = []
     if shutil.which("comfyui-scheduler") is None:
         errors.append(
-            "comfyui-scheduler CLI not found. Install: pip install -e ../comfyui-scheduler"
+            "comfyui-scheduler CLI not found. Install: pip install -e dep/comfyui-scheduler"
         )
     return errors
 
@@ -92,10 +92,10 @@ def check_remotion_template(project_config: dict | None) -> list[str]:
     if not template_path:
         return errors
 
-    # Default location is the shared per-user dependency dir
-    # ~/.hermes/dependance (the $HOME prefix varies per environment, so expand
-    # a leading ~). A genuinely relative path resolves against the workspace
-    # (the directory that contains projects/).
+    # Default location is the workspace's dep/ directory (e.g.
+    # dep/remotion-video-template). A ~-prefixed or absolute path is used as-is
+    # (after ~ expansion); a genuinely relative path resolves against the
+    # workspace (the directory that contains projects/).
     template_path = os.path.expanduser(template_path)
     project_root = project_config.get("project", {}).get("project_root_path", "")
     if project_root and not os.path.isabs(template_path):

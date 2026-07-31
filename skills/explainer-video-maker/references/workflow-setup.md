@@ -124,16 +124,15 @@ projects/
    already pre-filled (e.g., `男，中年，中音调`); see `comfyui-scheduler/doc/workflow.md`
    for valid voice attributes if the user wants a different voice.
 
-   **`dependence_paths` is pre-filled by `init_project.py`** to the shared
-   per-user dependency directory as `~`-paths
-   (`~/.hermes/dependance/remotion-video-template` and
-   `~/.hermes/dependance/comfyui-scheduler`), expanded against `$HOME` at
-   runtime (the home prefix differs per environment). These are the locations
-   the dependencies should be cloned into (see SKILL.md "Installing the two
-   component dependencies" for the repo URLs and commands). Only edit these
-   paths if the dependencies actually live somewhere else; if they are not yet
-   installed, clone them into `~/.hermes/dependance` rather than changing the
-   paths.
+   **`dependence_paths` is pre-filled by `init_project.py`** to the workspace's
+   `dep/` directory as workspace-relative paths
+   (`dep/remotion-video-template` and `dep/comfyui-scheduler`), resolved against
+   the workspace (the directory that contains `projects/`) at runtime. These are
+   the locations the dependencies should be cloned into (see SKILL.md "Installing
+   the two component dependencies" for the repo URLs and commands). Only edit
+   these paths if the dependencies actually live somewhere else; if they are not
+   yet installed, clone them into the workspace `dep/` directory rather than
+   changing the paths.
 
 3. Fields that can wait for later steps:
    - `tts.voice_file` — Step 7 (auto-generated from `voice_instruct`)

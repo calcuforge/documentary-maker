@@ -85,10 +85,10 @@ render:
   # segment_frames: 600   # frames per render segment
   # segment_workers: 2    # max concurrent segment renders
 dependence_paths:
-  # Filled by init_project.py with ~-paths into the shared per-user dependency
-  # dir ~/.hermes/dependance (i.e. .hermes/dependance under $HOME; the $HOME
-  # prefix differs per environment, so the ~ is expanded at runtime). Override
-  # only if the dependencies live elsewhere.
+  # Filled by init_project.py with workspace-relative paths into the workspace's
+  # dep/ directory (e.g. dep/remotion-video-template). A relative path resolves
+  # against the workspace (the directory that contains projects/); a ~-path or
+  # absolute path is used as-is. Override only if the dependencies live elsewhere.
   # Repos: https://github.com/calcuforge/remotion-video-template.git
   #        https://github.com/calcuforge/comfyui-scheduler.git
   remotion_template: ""

@@ -66,38 +66,37 @@ External dependencies:
 - `ffmpeg`, `ffprobe` on PATH
 - Node.js >= 18, `npx`
 - The two **component dependencies** below (`comfyui-scheduler`,
-  `remotion-video-template`) — installed under `~/.hermes/dependance`
+  `remotion-video-template`) — installed under the workspace's `dep/` directory
 - A running ComfyUI server with default workflows imported
 
 ### Installing the two component dependencies
 
 `comfyui-scheduler` (the ComfyUI CLI) and `remotion-video-template` (the
 Remotion render backend) are separate repositories. Install them under the
-**shared per-user dependency directory `~/.hermes/dependance`** — i.e.
-`.hermes/dependance` under the user's home directory. The home prefix
-(`/home/<user>`, `/Users/<user>`, …) differs per environment, so configs store
-this location with a leading `~` (e.g. `~/.hermes/dependance/remotion-video-template`)
-and expand it at runtime. `init_project.py` pre-fills `dependence_paths` with
-these `~`-paths, so no manual path editing is normally needed.
+**workspace's `dep/` directory** — i.e. `dep/` inside the workspace root (the
+directory that contains `projects/`). Configs store these as workspace-relative
+paths (e.g. `dep/remotion-video-template`); the scripts resolve a relative path
+against the workspace at runtime. `init_project.py` pre-fills `dependence_paths`
+with these paths, so no manual path editing is normally needed.
 
 Repository URLs:
 - `comfyui-scheduler` — https://github.com/calcuforge/comfyui-scheduler.git
 - `remotion-video-template` — https://github.com/calcuforge/remotion-video-template.git
 
 ```bash
-mkdir -p ~/.hermes/dependance
-cd ~/.hermes/dependance
-git clone https://github.com/calcuforge/comfyui-scheduler.git
-git clone https://github.com/calcuforge/remotion-video-template.git
+# Run from the workspace root (the directory that contains projects/)
+mkdir -p dep
+git clone https://github.com/calcuforge/comfyui-scheduler.git dep/comfyui-scheduler
+git clone https://github.com/calcuforge/remotion-video-template.git dep/remotion-video-template
 
-pip install -e ~/.hermes/dependance/comfyui-scheduler          # comfyui-scheduler CLI on PATH
-( cd ~/.hermes/dependance/remotion-video-template && npm install )   # node_modules
+pip install -e dep/comfyui-scheduler          # comfyui-scheduler CLI on PATH
+( cd dep/remotion-video-template && npm install )   # node_modules
 ```
 
 If the dependencies already exist somewhere else, set
 `dependence_paths.remotion_template` / `dependence_paths.comfyui_scheduler` in
 `project_config.yaml` to their paths (a `~`-path, absolute, or relative to the
-workspace) instead of the `~/.hermes/dependance` default.
+workspace) instead of the `dep/` default.
 
 ---
 

@@ -33,14 +33,13 @@ from lib.yamlutil import load_yaml
 def resolve_template_path(project_config: dict) -> Path:
     """Resolve the remotion-video-template path from project config.
 
-    The default location is the shared per-user dependency dir
-    ~/.hermes/dependance/remotion-video-template (the $HOME prefix varies per
-    environment, so a leading ~ is expanded at runtime). A `~`-prefixed or
-    absolute path is used as-is (after ~ expansion); a genuinely relative path
-    resolves against the workspace (the directory that contains projects/).
+    The default location is the workspace's dep/ directory
+    (dep/remotion-video-template). A `~`-prefixed or absolute path is used as-is
+    (after ~ expansion); a genuinely relative path resolves against the workspace
+    (the directory that contains projects/).
     """
     dep = project_config.get("dependence_paths", {})
-    template_rel = dep.get("remotion_template", "~/.hermes/dependance/remotion-video-template")
+    template_rel = dep.get("remotion_template", "dep/remotion-video-template")
 
     expanded = os.path.expanduser(template_rel)
     if os.path.isabs(expanded):
