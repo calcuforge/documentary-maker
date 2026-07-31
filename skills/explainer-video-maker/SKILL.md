@@ -27,7 +27,7 @@ dependencies:
 metadata:
   requires:
     bins: [python3, ffmpeg, ffprobe, node, npx, comfyui-scheduler]
-    python: [requests, pyyaml, playwright]
+    # python packages: see requirements.txt (install with pip install -r)
 ---
 
 # Explainer Video Maker
@@ -44,7 +44,7 @@ narration's audio duration determines the scene's total frame count.
 - [Prerequisites](#prerequisites)
 - [Project Management](#project-management)
 - [Execution Modes](#execution-modes) — Auto (default) vs Manual
-- [Workflow (11 Steps)](#workflow)
+- [Workflow (12 Steps)](#workflow)
 - [Hard Rules](#hard-rules)
 - [References](#references)
 
@@ -60,12 +60,44 @@ python3 "${SKILL_DIR}/scripts/tool/check_prereqs.py"
 ```
 
 External dependencies:
-- Python >= 3.10, `requests`, `pyyaml`, `playwright` (+ `playwright install chromium`)
+- Python >= 3.10; install the Python packages from `${SKILL_DIR}/requirements.txt`
+  (`pip install -r "${SKILL_DIR}/requirements.txt"`), then the Playwright
+  browser (`playwright install chromium`)
 - `ffmpeg`, `ffprobe` on PATH
 - Node.js >= 18, `npx`
-- `comfyui-scheduler` CLI (`pip install -e ../comfyui-scheduler`)
+- The two **component dependencies** below (`comfyui-scheduler`,
+  `remotion-video-template`) — installed under `~/.hermes/dependance`
 - A running ComfyUI server with default workflows imported
-- `remotion-video-template/` with `node_modules/` installed (`npm install`)
+
+### Installing the two component dependencies
+
+`comfyui-scheduler` (the ComfyUI CLI) and `remotion-video-template` (the
+Remotion render backend) are separate repositories. Install them under the
+**shared per-user dependency directory `~/.hermes/dependance`** — i.e.
+`.hermes/dependance` under the user's home directory. The home prefix
+(`/home/<user>`, `/Users/<user>`, …) differs per environment, so configs store
+this location with a leading `~` (e.g. `~/.hermes/dependance/remotion-video-template`)
+and expand it at runtime. `init_project.py` pre-fills `dependence_paths` with
+these `~`-paths, so no manual path editing is normally needed.
+
+Repository URLs:
+- `comfyui-scheduler` — https://github.com/calcuforge/comfyui-scheduler.git
+- `remotion-video-template` — https://github.com/calcuforge/remotion-video-template.git
+
+```bash
+mkdir -p ~/.hermes/dependance
+cd ~/.hermes/dependance
+git clone https://github.com/calcuforge/comfyui-scheduler.git
+git clone https://github.com/calcuforge/remotion-video-template.git
+
+pip install -e ~/.hermes/dependance/comfyui-scheduler          # comfyui-scheduler CLI on PATH
+( cd ~/.hermes/dependance/remotion-video-template && npm install )   # node_modules
+```
+
+If the dependencies already exist somewhere else, set
+`dependence_paths.remotion_template` / `dependence_paths.comfyui_scheduler` in
+`project_config.yaml` to their paths (a `~`-path, absolute, or relative to the
+workspace) instead of the `~/.hermes/dependance` default.
 
 ---
 

@@ -85,8 +85,12 @@ render:
   # segment_frames: 600   # frames per render segment
   # segment_workers: 2    # max concurrent segment renders
 dependence_paths:
-  # remotion_template: relative to the explainer-video-maker repo root, or an
-  # absolute path. The template sits next to the repo root by default.
+  # Filled by init_project.py with ~-paths into the shared per-user dependency
+  # dir ~/.hermes/dependance (i.e. .hermes/dependance under $HOME; the $HOME
+  # prefix differs per environment, so the ~ is expanded at runtime). Override
+  # only if the dependencies live elsewhere.
+  # Repos: https://github.com/calcuforge/remotion-video-template.git
+  #        https://github.com/calcuforge/comfyui-scheduler.git
   remotion_template: ""
   comfyui_scheduler: ""
 subtitle:

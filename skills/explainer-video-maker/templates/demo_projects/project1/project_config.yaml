@@ -84,10 +84,13 @@ render:
   # segment_frames: 600   # 每个渲染分段的帧数
   # segment_workers: 2    # 同时渲染的分段数上限
 dependence_paths:
-  # remotion_template: relative to the explainer-video-maker repo root, or an
-  # absolute path. The template sits next to the repo root by default.
-  remotion_template: ../remotion-video-template
-  comfyui_scheduler: ../../comfyui-scheduler
+  # Pre-filled by init_project.py to the shared per-user dependency dir
+  # ~/.hermes/dependance (.hermes/dependance under $HOME; ~ expanded at runtime).
+  # Repos:
+  #   https://github.com/calcuforge/remotion-video-template.git
+  #   https://github.com/calcuforge/comfyui-scheduler.git
+  remotion_template: ~/.hermes/dependance/remotion-video-template
+  comfyui_scheduler: ~/.hermes/dependance/comfyui-scheduler
 subtitle:
   # font_size: adjust based on resolution and orientation. Do NOT go too small.
   #   1080p horizontal → 26-32    1080p vertical → 36-44

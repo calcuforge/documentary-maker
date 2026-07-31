@@ -92,10 +92,14 @@ def check_remotion_template(project_config: dict | None) -> list[str]:
     if not template_path:
         return errors
 
-    # Resolve relative to project_root_path or CWD
+    # Default location is the shared per-user dependency dir
+    # ~/.hermes/dependance (the $HOME prefix varies per environment, so expand
+    # a leading ~). A genuinely relative path resolves against the workspace
+    # (the directory that contains projects/).
+    template_path = os.path.expanduser(template_path)
     project_root = project_config.get("project", {}).get("project_root_path", "")
     if project_root and not os.path.isabs(template_path):
-        resolved = Path(project_root).parent / template_path
+        resolved = Path(project_root).parent.parent / template_path
     else:
         resolved = Path(template_path)
 

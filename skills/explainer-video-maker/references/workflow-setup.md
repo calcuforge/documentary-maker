@@ -116,9 +116,6 @@ projects/
    - `project.language` — `zh-CN` or `en-US` (match the user's language)
    - `project.video_style` — e.g., `documentary`, `knowledge_sharing`, `news_broadcast`, `product_intro`, `data_report`, `tutorial`
    - `project.target_audience` — e.g., `general`, `tech_enthusiasts`, `students`, `professionals`, `investors`
-   - `dependence_paths.remotion_template` / `dependence_paths.comfyui_scheduler`
-     — **required for validation**; paths to remotion-video-template and
-     comfyui-scheduler (relative to the repo root, or absolute)
 
    **Leave these as-is** (sensible defaults — change only on the user's request):
    `video.orientation` / `resolution` / `fps`, `aigc.*` dimensions and `seed`,
@@ -126,6 +123,17 @@ projects/
    `render.*` (segmented-render tuning), `subtitle.*`. `tts.voice_instruct` is
    already pre-filled (e.g., `男，中年，中音调`); see `comfyui-scheduler/doc/workflow.md`
    for valid voice attributes if the user wants a different voice.
+
+   **`dependence_paths` is pre-filled by `init_project.py`** to the shared
+   per-user dependency directory as `~`-paths
+   (`~/.hermes/dependance/remotion-video-template` and
+   `~/.hermes/dependance/comfyui-scheduler`), expanded against `$HOME` at
+   runtime (the home prefix differs per environment). These are the locations
+   the dependencies should be cloned into (see SKILL.md "Installing the two
+   component dependencies" for the repo URLs and commands). Only edit these
+   paths if the dependencies actually live somewhere else; if they are not yet
+   installed, clone them into `~/.hermes/dependance` rather than changing the
+   paths.
 
 3. Fields that can wait for later steps:
    - `tts.voice_file` — Step 7 (auto-generated from `voice_instruct`)
