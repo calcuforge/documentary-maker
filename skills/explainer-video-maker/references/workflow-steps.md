@@ -452,7 +452,17 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
    - For image scenes (`type: image`): include only the `text_to_image` section.
    - Work **one story at a time** (consistent with Steps 5-6).
 
-2. **Reference:** [demo video_prompt.yaml](demo_projects/project1/video1/stories/story1/narration1/scenes/video_prompt.yaml)
+2. **Cross-scene consistency — recurring subjects.** Before writing any prompt
+   files, scan ALL scenes across ALL stories to identify subjects that appear
+   more than once: recurring characters (e.g., "Einstein"), specific objects
+   (e.g., "a red 1965 Ford Mustang"), branded items, or consistent environments
+   (e.g., "a 1950s New York street"). For each recurring subject, write ONE
+   canonical `common.subject.description` and `common.style` block, then reuse
+   it **verbatim** across all scenes where that subject appears. Do NOT rephrase
+   or vary the wording — even small differences cause ComfyUI to produce
+   visually inconsistent outputs. This is mandatory for generated imagery; AIGC
+   models have no persistent identity across independent generations, so prompt
+   consistency is the only mechanism to approximate visual continuity.
 
 ### Step 8b — Plan AIGC Tasks
 

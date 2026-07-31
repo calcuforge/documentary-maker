@@ -217,6 +217,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | **Verify before proceed** | Each step's verify script must pass before moving to the next step. |
 | **Absolute paths** | All script path arguments (`--config`, `--video-struct`, `--output`, etc.) MUST be absolute paths. Scripts reject relative paths with an error. |
 | **Output confined to project** | ALL agent-produced files (search results, scripts, audio, AIGC assets, remotion configs, rendered video) MUST be written under the project directory's pre-defined resource dirs or its `tmp/` directory. Scripts that produce output files MUST expose a `--output` (or equivalent) parameter so output paths are explicit. NEVER write to system temp dirs (`/tmp`, `%TEMP%`, `TMPDIR`), the workspace root, or any path outside the project. |
+| **AIGC cross-scene consistency** | For subjects that appear across multiple AIGC scenes (recurring characters, specific objects, branded items, consistent environments), the `common.subject.description` and `common.style` fields in all their `video_prompt.yaml` files MUST use the SAME appearance description (same wording, same visual attributes). This prevents ComfyUI from generating visually inconsistent outputs for the same subject across scenes. If a character/object appears in N scenes, write the description once, then reuse it verbatim in all N prompt files. |
 
 ---
 
