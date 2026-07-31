@@ -57,7 +57,11 @@ content:
   #   (stories/{story_id}/script.md). Enforced by verify_story_scripts.py (Step 5).
   min_story_chars: 500
 render:
-  concurrency: 1 # Remotion render concurrency (parallel browser tabs). Increase to speed up rendering.
+  # Rendering is segmented: the video is split into frame-range segments, rendered
+  # in parallel (each at Remotion's default concurrency) and concatenated with
+  # ffmpeg. Both fields are optional — render-yaml.mjs defaults apply if unset.
+  segment_frames: 600 # frames per render segment
+  segment_workers: 2 # max segments rendered concurrently
 dependence_paths:
   # remotion_template: relative to the explainer-video-maker repo root, or an
   # absolute path. The template sits next to the repo root by default.

@@ -63,7 +63,9 @@ content:
   duration: medium # 仅控制章节数：short=2-3 章 / medium=5-7 章 / long=8-12 章
   min_story_chars: 500 # 每个章节讲稿（stories/{story_id}/script.md）的最少字数，verify_story_scripts.py 校验
 render:
-  concurrency: 1 # Remotion render concurrency (number of parallel browser tabs). Increase to speed up rendering on multi-core machines.
+  # 分段渲染：按 frame-range 分段并行渲染（每段用 Remotion 默认并发），再用 ffmpeg 拼接。两项可选，不填则用 render-yaml.mjs 默认值。
+  segment_frames: 600 # 每个渲染分段的帧数
+  segment_workers: 2 # 同时渲染的分段数上限
 dependence_paths:
   # remotion_template: relative to the explainer-video-maker repo root, or an
   # absolute path. The template sits next to the repo root by default.

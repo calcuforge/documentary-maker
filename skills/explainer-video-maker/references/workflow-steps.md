@@ -111,9 +111,9 @@ projects/
    **Leave these as-is** (sensible defaults — change only on the user's request):
    `video.orientation` / `resolution` / `fps`, `aigc.*` dimensions and `seed`,
    `tts.backend` / `speed` / `voice_instruct`, `theme.*`, `content.duration`,
-   `render.concurrency`, `subtitle.*`. `tts.voice_instruct` is already pre-filled
-   (e.g., `男，中年，中音调`); see `comfyui-scheduler/doc/workflow.md` for valid
-   voice attributes if the user wants a different voice.
+   `render.*` (segmented-render tuning), `subtitle.*`. `tts.voice_instruct` is
+   already pre-filled (e.g., `男，中年，中音调`); see `comfyui-scheduler/doc/workflow.md`
+   for valid voice attributes if the user wants a different voice.
 
 3. Fields that can wait for later steps:
    - `tts.voice_file` — Step 7 (auto-generated from `voice_instruct`)
@@ -584,6 +584,11 @@ projects/
      --project-config /abs/path/project_config.yaml \
      --output /abs/path/projects/{project}/video{N}/result.mp4
    ```
+   Rendering is **segmented**: the video is split into frame-range segments
+   (`render.segment_frames`, default 600), rendered in parallel
+   (`render.segment_workers`, default 2 — each segment uses Remotion's default
+   per-render concurrency), then concatenated with ffmpeg. This is automatic;
+   tune `render.*` in project_config.yaml only if needed.
 
 3. Verify the output file exists and is non-empty.
 

@@ -98,8 +98,13 @@ def main() -> None:
             pass
         return
 
-    # Render
-    concurrency = project_config.get("render", {}).get("concurrency", 1)
+    # Render — render-yaml.mjs splits the video into frame-range segments, renders
+    # them in parallel (each at Remotion's default concurrency) and concatenates
+    # them with ffmpeg. segment_frames / segment_workers are optional tuning knobs
+    # (render-yaml.mjs applies its own defaults when they are not set).
+    render_cfg = project_config.get("render", {})
+    segment_frames = render_cfg.get("segment_frames")
+    segment_workers = render_cfg.get("segment_workers")
 
     cmd = [
         "node", str(render_script),
@@ -107,15 +112,18 @@ def main() -> None:
         "--public-dir", public_dir,
         "--output", output_path,
     ]
-    if concurrency and concurrency > 1:
-        cmd.extend(["--concurrency", str(concurrency)])
+    if segment_frames:
+        cmd.extend(["--segment-frames", str(segment_frames)])
+    if segment_workers:
+        cmd.extend(["--segment-workers", str(segment_workers)])
 
     print(f"Rendering video...", file=sys.stderr)
     print(f"  Config: {sections_path}", file=sys.stderr)
     print(f"  Public dir: {public_dir}", file=sys.stderr)
     print(f"  Output: {output_path}", file=sys.stderr)
     print(f"  Template: {template_path}", file=sys.stderr)
-    print(f"  Concurrency: {concurrency}", file=sys.stderr)
+    print(f"  Segment frames: {segment_frames or '(default)'}", file=sys.stderr)
+    print(f"  Segment workers: {segment_workers or '(default)'}", file=sys.stderr)
 
     try:
         result = subprocess.run(
