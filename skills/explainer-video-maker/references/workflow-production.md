@@ -1,22 +1,79 @@
-# Workflow Steps — Production Phase (Steps 8–11)
+# Workflow Steps — Production Phase (Steps 8–12)
 
-> **When to load:** Step 8 through Step 11 — AIGC prompt design, task execution,
-> upscale, Remotion config generation, and final render. Also includes step
-> completion reporting and resumption logic.
+> **When to load:** Step 8 through Step 12 — stock media search, AIGC prompt design,
+> task execution, upscale, Remotion config generation, and final render. Also
+> includes step completion reporting and resumption logic.
 
 **Prerequisite:** [workflow-content.md](workflow-content.md) Steps 5–7 must be
 complete (all narration audio generated, `total_frame` fields populated).
 
 ---
 
-## Step 8: Design AIGC Prompts and Plan Tasks
+## Step 8: Search Stock Media
+
+**When:** After TTS is complete. Only runs if there are scenes with
+`asset_generation_method: stock` in `video_struct.yaml`.
+
+**Purpose:** Search and download stock photos/videos from web sources for scenes
+that show generic, non-specific visuals (atmosphere, mood, environment) where
+AIGC precision is unnecessary and stock media is faster and cheaper.
+
+**Prerequisite — configure sources:** Stock media search requires at least one
+provider configured in `project_config.yaml` → `stock_media.sources`, each with
+its `api_key` set directly in the config:
+
+```yaml
+stock_media:
+  sources:
+    - provider: pexels       # photos + videos
+      api_key: "your-key"
+    - provider: pixabay      # photos + videos
+      api_key: "your-key"
+    - provider: unsplash     # photos only
+      api_key: "your-key"
+```
+
+If no sources are configured (or all entries lack an `api_key`), this step is
+skipped entirely.
+
+**What to do:**
+
+1. Run the stock media search script:
+   ```bash
+   python3 "${SKILL_DIR}/scripts/search_provider/search_stock_media.py" \
+     --project-config /abs/path/project_config.yaml \
+     --video-struct /abs/path/video_struct.yaml
+   ```
+   - Iterates all scenes where `asset_generation_method: stock` and
+     `origin_asset_path` is empty.
+   - Builds a search query from each scene's `visual_content` + `intent`.
+   - Searches configured providers at the project's target resolution
+     (`video.resolution` / `video.orientation`).
+   - Downloads the best match to
+     `stories/{story_id}/{narration_id}/scenes/origin_{scene_id}.{ext}`.
+   - If the downloaded resolution >= target, sets `asset_path` directly
+     (no upscale needed). Otherwise leaves `asset_path` empty for Step 10.
+   - **Idempotent:** re-running skips scenes whose `origin_asset_path` already
+     exists. Pass `--force` to re-download all.
+
+2. **Validate:**
+   ```bash
+   python3 "${SKILL_DIR}/scripts/verify/verify_stock_assets.py" \
+     --video-struct /abs/path/video_struct.yaml
+   ```
+   Must exit 0 before proceeding. If scenes failed to download, check API keys
+   and network, then re-run the search script (it resumes from where it left off).
+
+---
+
+## Step 9: Design AIGC Prompts and Plan Tasks
 
 **When:** After TTS is complete and frames are calculated.
 
 This step has two parts: **8a** designs structured video prompts (saved per
 scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompts.
 
-### Step 8a — Design Structured Video Prompts
+### Step 9a — Design Structured Video Prompts
 
 1. Review `video_struct.yaml` — identify all scenes where `is_aigc_scene: true`.
    For each AIGC scene, based on its `intent` and `visual_content`, design a
@@ -69,7 +126,7 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
    models have no persistent identity across independent generations, so prompt
    consistency is the only mechanism to approximate visual continuity.
 
-### Step 8b — Plan AIGC Tasks
+### Step 9b — Plan AIGC Tasks
 
 1. **Plan tasks one story at a time** — do NOT plan all stories' tasks in a
    single pass. For the current story, identify its AIGC scenes, generate their
@@ -120,7 +177,7 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
 
 ---
 
-## Step 9: Execute AIGC Tasks
+## Step 10: Execute AIGC Tasks
 
 **When:** After video_tasks.yaml passes validation.
 
@@ -179,7 +236,7 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
 
 ---
 
-## Step 10: Generate Remotion Rendering Config
+## Step 11: Generate Remotion Rendering Config
 
 **When:** After all assets are verified.
 
@@ -248,7 +305,7 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
 
 ---
 
-## Step 11: Render Video
+## Step 12: Render Video
 
 **When:** After remotion_sections.yaml passes validation.
 
@@ -312,10 +369,11 @@ Per-step artifact summary:
 | 5 | `stories/{story_id}/script.md` (count; each meets `min_story_chars`) |
 | 6 | `video_struct.yaml` (scene count; each scene = one narration) |
 | 7 | `speech.wav` files (count, total duration) |
-| 8 | `video_tasks.yaml` (task group count, total tasks) |
-| 9 | `scenes/origin_*` + upscaled files (count) |
-| 10 | `remotion_sections.yaml` (section count) |
-| 11 | `result.mp4` (file size, duration) |
+| 8 | `scenes/origin_*` stock downloads (count, provider, resolution) |
+| 9 | `video_tasks.yaml` (task group count, total tasks) |
+| 10 | `scenes/origin_*` AIGC + upscaled files (count) |
+| 11 | `remotion_sections.yaml` (section count) |
+| 12 | `result.mp4` (file size, duration) |
 
 ---
 
@@ -335,7 +393,8 @@ where to resume:
 | + `video_struct.yaml` (chapters only, no scripts) | Step 5 (write scripts) |
 | + `stories/*/script.md` (scripts, no scenes yet) | Step 6 (design scenes) |
 | + `video_struct.yaml` (full scenes, no audio) | Step 7 (TTS) |
-| + audio files + frames set | Step 8 (plan AIGC) |
-| + `video_tasks.yaml` | Step 9 (execute AIGC) |
-| + `scenes/` with assets | Step 10 (generate remotion) |
-| + `remotion_sections.yaml` | Step 11 (render) |
+| + audio files + frames set | Step 8 (search stock media) |
+| + `scenes/` with stock assets (or no stock scenes) | Step 9 (plan AIGC) |
+| + `video_tasks.yaml` | Step 10 (execute AIGC) |
+| + `scenes/` with all assets | Step 11 (generate remotion) |
+| + `remotion_sections.yaml` | Step 12 (render) |

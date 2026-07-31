@@ -16,7 +16,7 @@ calls this script once per task type with the same prompt file).
 Output (JSON envelope): data.prompt contains the flat prompt string, and
 data.negative (if present) contains the negative-prompt list.
 
-The structured prompt format follows this schema (see Step 8a):
+The structured prompt format follows this schema (see Step 9a):
     video_prompt:
       type: text_to_video | image_to_video | text_to_image
       common:

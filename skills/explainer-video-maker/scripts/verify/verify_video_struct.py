@@ -6,7 +6,8 @@ Structure hierarchy: stories → scene_list → scene, with a nested `narration`
 property on each scene (1 scene corresponds to exactly 1 narration).
 
 Key validations:
-- is_aigc_scene=true → workflows and type must not be empty
+- is_aigc_scene=true + asset_generation_method=aigc → workflows and type must not be empty
+- is_aigc_scene=true + asset_generation_method=stock → type required, workflows may be empty
 - is_aigc_scene=false → data and text must not BOTH be empty
 - each scene has a narration with a non-empty content
 - narration content must not exceed MAX_NARRATION_CHARS (50) characters
@@ -38,7 +39,7 @@ VALID_COMPONENTS = [
     "QuoteBlock", "FeatureGrid", "IconCard", "ComparisonCard",
     "StatCounter", "DataBar", "Timeline", "FlowChart",
     "CodeBlock", "DataTable", "DiagramReveal", "AnimationDemo",
-    "AssetImage", "AssetVideo",
+    "AssetImage", "AssetVideo", "KenBurnsImage",
 ]
 
 VALID_SCENE_TYPES = ["image", "video", "none"]
@@ -118,23 +119,30 @@ def validate(struct: dict, video_dir: str | None = None) -> tuple[list[str], lis
             is_aigc = scene.get("is_aigc_scene", False)
 
             if is_aigc:
-                # AIGC scene: workflows and type required
+                # External-asset scene (AIGC or stock): type is always required
                 scene_type = scene.get("type", "")
                 if not scene_type or scene_type == "none":
                     errors.append(f"{s_prefix}: is_aigc_scene=true but 'type' is empty/none")
                 elif scene_type not in VALID_SCENE_TYPES:
                     errors.append(f"{s_prefix}: invalid type '{scene_type}'. Valid: {VALID_SCENE_TYPES}")
 
-                workflows = scene.get("workflows", [])
-                if not workflows:
-                    errors.append(f"{s_prefix}: is_aigc_scene=true but 'workflows' is empty")
+                gen_method = scene.get("asset_generation_method", "aigc")
+
+                if gen_method == "stock":
+                    # Stock scenes: workflows not required (no ComfyUI)
+                    pass
                 else:
-                    for wi, wf in enumerate(workflows):
-                        wt = wf.get("workflow_type", "")
-                        if not wt:
-                            errors.append(f"{s_prefix}.workflows[{wi}]: 'workflow_type' is required")
-                        elif wt not in VALID_WORKFLOW_TYPES:
-                            errors.append(f"{s_prefix}.workflows[{wi}]: invalid workflow_type '{wt}'. Valid: {VALID_WORKFLOW_TYPES}")
+                    # AIGC scenes: workflows required
+                    workflows = scene.get("workflows", [])
+                    if not workflows:
+                        errors.append(f"{s_prefix}: is_aigc_scene=true (aigc) but 'workflows' is empty")
+                    else:
+                        for wi, wf in enumerate(workflows):
+                            wt = wf.get("workflow_type", "")
+                            if not wt:
+                                errors.append(f"{s_prefix}.workflows[{wi}]: 'workflow_type' is required")
+                            elif wt not in VALID_WORKFLOW_TYPES:
+                                errors.append(f"{s_prefix}.workflows[{wi}]: invalid workflow_type '{wt}'. Valid: {VALID_WORKFLOW_TYPES}")
 
                 if not scene.get("visual_content"):
                     warnings.append(f"{s_prefix}: 'visual_content' is empty (recommended for AIGC scenes)")

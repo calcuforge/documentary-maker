@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """
-Verify that all externally-acquired assets (AIGC and stock) are present on disk.
+Verify that all stock-media scenes have downloaded assets.
 
-Checks scenes where is_aigc_scene=true (both asset_generation_method=aigc and
-asset_generation_method=stock):
-- origin_asset_path must be set and the file must exist (non-zero)
+Checks scenes where asset_generation_method == "stock":
+- origin_asset_path must be non-empty and the file must exist (non-zero)
 - Optionally checks asset_path (upscaled) with --check-upscaled
 
 Usage:
-    python verify_aigc_assets.py --video-struct /abs/path/video_struct.yaml
-    python verify_aigc_assets.py --video-struct /abs/path/video_struct.yaml --check-upscaled
+    python verify_stock_assets.py --video-struct /abs/path/video_struct.yaml
+    python verify_stock_assets.py --video-struct /abs/path/video_struct.yaml --check-upscaled
 
-Exit codes: 0 = all assets present, 1 = missing assets.
+Exit codes: 0 = all present, 1 = missing, 2 = warnings only.
 """
 
 from __future__ import annotations
@@ -33,19 +32,18 @@ def verify(struct: dict, check_upscaled: bool = False) -> tuple[list[str], list[
     warnings = []
 
     stories = struct.get("stories", [])
-    total_aigc = 0
+    total_stock = 0
     origin_missing = []
     upscaled_missing = []
 
     for story in stories:
         for scene in story.get("scene_list", []):
-            if not scene.get("is_aigc_scene", False):
+            if scene.get("asset_generation_method") != "stock":
                 continue
 
-            total_aigc += 1
+            total_stock += 1
             scene_id = scene.get("id", "?")
 
-            # Check origin_asset_path
             origin_path = scene.get("origin_asset_path", "")
             if not origin_path:
                 origin_missing.append(f"{scene_id}: origin_asset_path is empty")
@@ -54,7 +52,6 @@ def verify(struct: dict, check_upscaled: bool = False) -> tuple[list[str], list[
             elif Path(origin_path).stat().st_size == 0:
                 origin_missing.append(f"{scene_id}: file is empty: {origin_path}")
 
-            # Check upscaled asset_path
             if check_upscaled:
                 asset_path = scene.get("asset_path", "")
                 if not asset_path:
@@ -65,21 +62,21 @@ def verify(struct: dict, check_upscaled: bool = False) -> tuple[list[str], list[
                     upscaled_missing.append(f"{scene_id}: upscaled file is empty: {asset_path}")
 
     if origin_missing:
-        errors.append(f"Missing origin assets ({len(origin_missing)}/{total_aigc}):")
+        errors.append(f"Missing stock assets ({len(origin_missing)}/{total_stock}):")
         errors.extend(f"  - {m}" for m in origin_missing)
 
     if check_upscaled and upscaled_missing:
-        errors.append(f"Missing upscaled assets ({len(upscaled_missing)}/{total_aigc}):")
+        errors.append(f"Missing upscaled stock assets ({len(upscaled_missing)}/{total_stock}):")
         errors.extend(f"  - {m}" for m in upscaled_missing)
 
-    if total_aigc == 0:
-        warnings.append("No AIGC scenes found in video_struct.yaml")
+    if total_stock == 0:
+        warnings.append("No stock-media scenes found in video_struct.yaml")
 
     return errors, warnings
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Verify AIGC asset files")
+    parser = argparse.ArgumentParser(description="Verify stock-media asset files")
     parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
     parser.add_argument("--check-upscaled", action="store_true", help="Also verify asset_path (upscaled)")
     args = parser.parse_args()
@@ -93,21 +90,21 @@ def main() -> None:
     if errors:
         print(json.dumps({
             "status": "error",
-            "msg": f"AIGC asset verification failed",
+            "msg": "Stock asset verification failed",
             "data": {"errors": errors, "warnings": warnings},
         }, ensure_ascii=False, indent=2))
         sys.exit(1)
     elif warnings:
         print(json.dumps({
             "status": "warning",
-            "msg": f"AIGC assets verified with warnings",
+            "msg": "Stock assets verified with warnings",
             "data": {"warnings": warnings},
         }, ensure_ascii=False, indent=2))
         sys.exit(2)
     else:
         print(json.dumps({
             "status": "ok",
-            "msg": "All AIGC assets verified",
+            "msg": "All stock assets verified",
             "data": {},
         }, ensure_ascii=False, indent=2))
 

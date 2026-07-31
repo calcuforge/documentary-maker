@@ -17,6 +17,18 @@ aigc:
   origin_video_width: 960
   origin_video_height: 540
   seed: 0 # 全局随机种子
+stock_media:
+  # Stock media search sources (scenes with asset_generation_method: stock).
+  # Each entry: provider + api_key (configured directly, not via env vars).
+  # Default: empty — stock search disabled. Example:
+  #   sources:
+  #     - provider: pexels
+  #       api_key: "your-pexels-api-key"
+  #     - provider: pixabay
+  #       api_key: "your-pixabay-api-key"
+  #     - provider: unsplash    # photos only
+  #       api_key: "your-unsplash-access-key"
+  sources: []
 tts:
   # ── Backend selection ──────────────────────────────────────────────────
   #   comfyui_indextts — ComfyUI index_tts_2 workflow (default).

@@ -40,20 +40,22 @@ stories: # 故事单元列表
           content: 麦卡锡和明斯基等学者提出，要让机器去模拟人类的学习、推理和解决问题的能力。
           total_frame: 0
           audio_path: ""
-      # ── scene3-14：字段含义同 scene1（AIGC）/ scene2（非AIGC）──────────
-      - intent: 时代氛围渲染
-        id: scene3
-        data: ""
-        text: ""
-        visual_content: 1960年代充满信心的计算机实验室，科学家在大型机前工作，明亮乐观的色调
-        is_aigc_scene: true
-        asset_generation_method: aigc
-        type: image
-        remotion_component: AssetImage
-        origin_asset_path: ""
-        asset_path: ""
-        workflows:
-          - workflow_type: text_to_image
+      # ── scene3：网络素材（stock）画面示例 ─────────────────────────────────
+      # asset_generation_method: stock 表示从网络素材库搜索图片/视频，而非AIGC生成。
+      # 适用于表现非具体对象或抽象场景（如"60年代实验室氛围"），对图像准确度要求不高。
+      # is_aigc_scene 仍为 true（需要外部资产），但 workflows 为空（无需ComfyUI工作流）。
+      - intent: 时代氛围渲染  # 表达意图
+        id: scene3 # 画面ID，全局唯一
+        data: "" # 非AIGC画面展示的数据（stock画面留空）
+        text: "" # 非AIGC画面展示的文本（stock画面留空）
+        visual_content: 1960年代计算机实验室，大型机，科学家工作，复古色调 # 搜索关键词来源
+        is_aigc_scene: true # 需要外部资产（与aigc相同）
+        asset_generation_method: stock # 资产来源：stock（网络素材搜索）
+        type: image # 素材类型：image 或 video
+        remotion_component: KenBurnsImage # 渲染组件（stock图片推荐KenBurnsImage增加动感）
+        origin_asset_path: "" # 下载的素材文件路径（Step 8 自动填充）
+        asset_path: "" # 放大后的素材文件路径（Step 10 自动填充）
+        workflows: [] # stock素材无需ComfyUI工作流
         narration:
           id: narration3
           content: 早期的研究者满怀乐观，他们相信用不了几十年，就能造出真正会思考的机器。

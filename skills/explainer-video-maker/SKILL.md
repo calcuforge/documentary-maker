@@ -175,7 +175,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 > Detailed step-by-step instructions:
 > - Steps 1–4 (Setup): [references/workflow-setup.md](references/workflow-setup.md)
 > - Steps 5–7 (Content): [references/workflow-content.md](references/workflow-content.md)
-> - Steps 8–11 (Production): [references/workflow-production.md](references/workflow-production.md)
+> - Steps 8–12 (Production): [references/workflow-production.md](references/workflow-production.md)
 
 | # | Step | Key Script | Output |
 |---|------|-----------|--------|
@@ -186,10 +186,11 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | 5 | Write chapter scripts | `scripts/verify/verify_story_scripts.py` | `stories/{story_id}/script.md` |
 | 6 | Design scene list | `scripts/tool/generate_scene_list.py`, `scripts/verify/verify_video_struct.py` | `video_struct.yaml` (full structure) |
 | 7 | TTS + frame calculation | `scripts/tool/run_tts.py`, `scripts/verify/verify_audio.py` | `speech.wav` per scene |
-| 8 | Design AIGC prompts + plan tasks | `scripts/tool/build_video_prompt.py`, `scripts/verify/verify_video_tasks.py` | `video_prompt.yaml` per scene, `video_tasks.yaml` |
-| 9 | Execute AIGC tasks | `scripts/tool/run_aigc.py`, `scripts/tool/run_upscale.py`, `scripts/verify/verify_aigc_assets.py` | `scenes/` assets |
-| 10 | Generate remotion config | `scripts/tool/generate_remotion_sections.py`, `scripts/verify/verify_remotion_sections.py` | `remotion_sections.yaml` |
-| 11 | Render video | `scripts/tool/render.py` | `result.mp4` |
+| 8 | Search stock media | `scripts/search_provider/search_stock_media.py`, `scripts/verify/verify_stock_assets.py` | `scenes/origin_*` stock assets |
+| 9 | Design AIGC prompts + plan tasks | `scripts/tool/build_video_prompt.py`, `scripts/verify/verify_video_tasks.py` | `video_prompt.yaml` per scene, `video_tasks.yaml` |
+| 10 | Execute AIGC tasks | `scripts/tool/run_aigc.py`, `scripts/tool/run_upscale.py`, `scripts/verify/verify_aigc_assets.py` | `scenes/` assets |
+| 11 | Generate remotion config | `scripts/tool/generate_remotion_sections.py`, `scripts/verify/verify_remotion_sections.py` | `remotion_sections.yaml` |
+| 12 | Render video | `scripts/tool/render.py` | `result.mp4` |
 
 **Mandatory validation gates:**
 
@@ -198,9 +199,10 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 - After Step 5: `verify_story_scripts.py` must exit 0
 - After Step 6: `verify_video_struct.py` must exit 0
 - After Step 7: `verify_audio.py` must exit 0
-- After Step 8: `verify_video_tasks.py` must exit 0
-- After Step 9: `verify_aigc_assets.py` must exit 0
-- After Step 10: `verify_remotion_sections.py` must exit 0
+- After Step 8: `verify_stock_assets.py` must exit 0
+- After Step 9: `verify_video_tasks.py` must exit 0
+- After Step 10: `verify_aigc_assets.py` must exit 0
+- After Step 11: `verify_remotion_sections.py` must exit 0
 
 ---
 
@@ -222,6 +224,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | **Output confined to project** | ALL agent-produced files (search results, scripts, audio, AIGC assets, remotion configs, rendered video) MUST be written under the project directory's pre-defined resource dirs or its `tmp/` directory. Scripts that produce output files MUST expose a `--output` (or equivalent) parameter so output paths are explicit. NEVER write to system temp dirs (`/tmp`, `%TEMP%`, `TMPDIR`), the workspace root, or any path outside the project. |
 | **AIGC cross-scene consistency** | For subjects that appear across multiple AIGC scenes (recurring characters, specific objects, branded items, consistent environments), the `common.subject.description` and `common.style` fields in all their `video_prompt.yaml` files MUST use the SAME appearance description (same wording, same visual attributes). This prevents ComfyUI from generating visually inconsistent outputs for the same subject across scenes. If a character/object appears in N scenes, write the description once, then reuse it verbatim in all N prompt files. |
 | **Prefer KenBurnsImage over AssetVideo when motion isn't essential** | Text-to-video generation is slow and expensive. Before choosing `AssetVideo` for a scene, evaluate whether the scene's *action or process* is truly essential to the narrative, or whether *atmosphere/mood/context* is the goal. If atmosphere is enough, use `KenBurnsImage` (text-to-image + `zoom`/`pan`) instead — it achieves cinematic feel at a fraction of the cost. Reserve `AssetVideo` for scenes that genuinely require people moving, events unfolding, or dynamic processes. See `expression_intent_mapping.md` for a per-scenario substitution table. |
+| **Stock media for generic visuals** | For scenes showing generic, non-specific visuals (atmosphere, mood, environment — NOT specific people/events/products), prefer `asset_generation_method: stock` over AIGC. Stock search is faster, cheaper, and often more realistic for real-world imagery. Configure sources in `project_config.yaml` → `stock_media.sources` (each entry: `provider` + `api_key`). If no sources are configured, skip stock and fall back to AIGC. See `expression_intent_mapping.md` for when stock is appropriate. |
 
 ---
 
@@ -233,7 +236,7 @@ Load on demand — do NOT load all at once:
 |------|-----------|
 | [references/workflow-setup.md](references/workflow-setup.md) | Steps 1–4 — project init, topic, research, chapters |
 | [references/workflow-content.md](references/workflow-content.md) | Steps 5–7 — scripts, scene design, TTS |
-| [references/workflow-production.md](references/workflow-production.md) | Steps 8–11 — AIGC, remotion config, render |
+| [references/workflow-production.md](references/workflow-production.md) | Steps 8–12 — stock media, AIGC, remotion config, render |
 | [references/natural-narration.md](references/natural-narration.md) | Step 5 — writing chapter narration scripts |
 | [references/search-providers.md](references/search-providers.md) | Step 3 — topic research |
 | [references/expression_intent_mapping.md](references/expression_intent_mapping.md) | Step 6 — choosing scene types and components |

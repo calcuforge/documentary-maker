@@ -21,12 +21,25 @@ aigc:
   origin_video_width: 960
   origin_video_height: 540
   seed: 0 # global random seed
+stock_media:
+  # Stock media search sources for scenes with asset_generation_method: stock.
+  # Each entry specifies a provider and its API key (configured directly here).
+  # Default: empty list — stock media search is disabled.
+  # Example:
+  #   sources:
+  #     - provider: pexels
+  #       api_key: "your-pexels-api-key"
+  #     - provider: pixabay
+  #       api_key: "your-pixabay-api-key"
+  #     - provider: unsplash    # photos only
+  #       api_key: "your-unsplash-access-key"
+  sources: []
 tts:
   # backend: comfyui_indextts — ComfyUI index_tts_2 workflow (default).
   #          http_server      — HTTP multipart TTS server (see tts.http below).
   backend: comfyui_indextts
   speed: 1.0
-  # voice_file: empty at Step 1. If empty when running TTS (Step 5), the voice
+  # voice_file: empty at Step 1. If empty when running TTS (Step 7), the voice
   #   design workflow runs automatically using voice_instruct and updates this field.
   voice_file: ""
   # voice_instruct: REQUIRED. Describes the target voice characteristics.

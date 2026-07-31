@@ -25,7 +25,7 @@ root, or any path outside the project.
 **Working principle — batch by story:** whenever a step creates a *large number*
 of items, do it **one story at a time** rather than all at once — e.g., writing
 chapter scripts (Step 5), splitting scenes and filling their `data`/`text`
-fields (Step 6), and planning AIGC tasks (Step 8). Finish one story completely
+fields (Step 6), and planning AIGC tasks (Step 9). Finish one story completely
 before moving to the next; this keeps each batch focused and produces richer,
 more consistent content.
 
@@ -44,19 +44,19 @@ projects/
 │   │   │   ├── result1.md
 │   │   │   └── result2.md
 │   │   ├── video_struct.yaml      # Step 4 (chapters) + Step 6 (scenes)
-│   │   ├── stories/               # Step 5 (scripts), Step 7 (audio), Step 8 (prompts), Step 9 (AIGC)
+│   │   ├── stories/               # Step 5 (scripts), Step 7 (audio), Step 8 (stock), Step 9 (prompts), Step 10 (AIGC)
 │   │   │   └── {story_id}/
 │   │   │       ├── script.md          # Step 5 — chapter narration script
 │   │   │       └── {narration_id}/
 │   │   │           ├── speech.wav
 │   │   │           └── scenes/
-│   │   │               ├── video_prompt.yaml          # Step 8a — structured video prompt
+│   │   │               ├── video_prompt.yaml          # Step 9a — structured video prompt
 │   │   │               ├── origin_{scene_id}.{png|mp4}
 │   │   │               └── {scene_id}.{png|mp4}
-│   │   ├── video_tasks.yaml       # Step 8b — AIGC task list
+│   │   ├── video_tasks.yaml       # Step 9b — AIGC task list
 │   │   ├── tmp/                   # General temporary files (cache, discovery results, etc.)
-│   │   ├── remotion_sections.yaml # Step 10 — render config
-│   │   └── result.mp4             # Step 11 — final video
+│   │   ├── remotion_sections.yaml # Step 11 — render config
+│   │   └── result.mp4             # Step 12 — final video
 ```
 
 ---

@@ -86,7 +86,7 @@ def validate(config: dict) -> list[str]:
         if speed is not None:
             if not isinstance(speed, (int, float)) or not (0.25 <= speed <= 4.0):
                 errors.append(f"[tts.speed] must be 0.25-4.0, got '{speed}'")
-        # voice_instruct is required (voice_file can be empty — auto-generated in Step 5)
+        # voice_instruct is required (voice_file can be empty — auto-generated in Step 7)
         voice_instruct = tts.get("voice_instruct", "")
         if not voice_instruct:
             errors.append("[tts.voice_instruct] is required — describe the target voice "
