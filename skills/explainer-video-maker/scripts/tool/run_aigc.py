@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -31,6 +32,10 @@ SKILL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL_ROOT))
 
 from lib.yamlutil import load_yaml, save_yaml
+
+# Matches $taskN dependency placeholders inside a payload JSON string.
+# \d+ is greedy and bounded by non-digits, so $task1 never collides with $task10.
+PLACEHOLDER_RE = re.compile(r"\$task(\d+)")
 
 
 def find_scene_context(video_struct: dict, scene_id: str) -> dict | None:
@@ -227,14 +232,36 @@ def main() -> None:
             except json.JSONDecodeError as e:
                 return {"ordinal": ordinal, "error": f"Invalid payload JSON: {e}"}
 
-            # Replace $taskN placeholders with actual paths
-            dependent_task = task.get("dependent_task", 0)
-            if dependent_task and dependent_task in task_outputs:
-                dep_path = task_outputs[dependent_task]
-                # Replace placeholder in payload string
-                payload_json = json.dumps(payload, ensure_ascii=False)
-                payload_json = payload_json.replace(f"$task{dependent_task}", dep_path)
-                payload = json.loads(payload_json)
+            # Replace ALL $taskN placeholders with the producing task's output path.
+            # Groups run strictly in ascending task_group_ordinal order and each group
+            # fully completes before the next starts, so by the time group 2+ executes,
+            # task_outputs holds every earlier task's artifact path.
+            #
+            # Placeholders sit inside JSON string values, so the substituted path must
+            # be JSON-escaped (Windows paths carry backslashes that would otherwise form
+            # invalid \escapes and break json.loads). Resolve against task_outputs rather
+            # than the task's own dependent_task, so a payload may reference any number
+            # of dependencies.
+            payload_json = json.dumps(payload, ensure_ascii=False)
+            missing: list[int] = []
+
+            def _sub(match: re.Match[str]) -> str:
+                dep_ordinal = int(match.group(1))
+                dep_path = task_outputs.get(dep_ordinal)
+                if dep_path is None:
+                    missing.append(dep_ordinal)
+                    return match.group(0)
+                # json.dumps(...)[1:-1] -> escaped content safe to embed in a JSON string
+                return json.dumps(dep_path, ensure_ascii=False)[1:-1]
+
+            payload_json = PLACEHOLDER_RE.sub(_sub, payload_json)
+            if missing:
+                return {
+                    "ordinal": ordinal,
+                    "error": f"Unresolved $taskN placeholder(s) {sorted(set(missing))}: "
+                             f"no output recorded (dependency not executed or failed)",
+                }
+            payload = json.loads(payload_json)
 
             # Determine output path
             ctx = find_scene_context(video_struct, scene_id)
