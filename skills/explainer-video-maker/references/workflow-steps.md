@@ -585,10 +585,12 @@ projects/
      --output /abs/path/projects/{project}/video{N}/result.mp4
    ```
    Rendering is **segmented**: the video is split into frame-range segments
-   (`render.segment_frames`, default 600), rendered in parallel
-   (`render.segment_workers`, default 2 — each segment uses Remotion's default
-   per-render concurrency), then concatenated with ffmpeg. This is automatic;
-   tune `render.*` in project_config.yaml only if needed.
+   (default 600 frames each), rendered in parallel, then concatenated with
+   ffmpeg. The number of concurrent segment workers is **auto-sized from the CPU
+   count** — inside a container the cgroup v2 CPU limit is read, so rendering
+   stays within the container's quota (per-render concurrency is scaled to
+   match). This is all automatic; override via `render.segment_frames` /
+   `render.segment_workers` in project_config.yaml only if needed.
 
 3. Verify the output file exists and is non-empty.
 
