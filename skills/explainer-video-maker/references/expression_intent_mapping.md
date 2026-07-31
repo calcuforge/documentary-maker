@@ -1,6 +1,6 @@
 # AI Narration Video Production: Expression Intent Mapping
 
-## Choosing AssetImage vs KenBurnsImage
+## Choosing AssetImage vs KenBurnsImage vs AssetVideo
 
 When a scene uses a text-to-image workflow (or any static image), choose the Remotion component based on the Expression Intent:
 
@@ -13,6 +13,29 @@ When a scene uses a text-to-image workflow (or any static image), choose the Rem
 | Quick scene, short duration | **AssetImage** | Motion may not be noticeable in very short scenes |
 | Portrait / character introduction | **KenBurnsImage** (zoom="in") | Cinematic zoom draws focus to the subject |
 | Product showcase, detail scanning | **KenBurnsImage** (with pan) | Pan reveals different product areas over time |
+
+### When KenBurnsImage can replace AssetVideo
+
+Text-to-video generation is **expensive and slow** (minutes per scene). When an Expression
+Intent traditionally maps to AssetVideo, consider whether KenBurnsImage on a static
+image could achieve a similar result at a fraction of the cost:
+
+| AssetVideo scenario | Replace with KenBurnsImage? | Reasoning |
+|---------------------|----------------------------|-----------|
+| Establish a scene | **Yes** — `zoom="out"` + `pan` | A slow zoom out on a wide establishing shot is indistinguishable from video for many scenes |
+| Create emotional atmosphere | **Yes** — `zoom="in"` | Subtle zoom on a moody image creates tension; video motion may distract |
+| Express memories / nostalgia | **Yes** — `zoom="in"` | The Ken Burns "slow zoom on a photo" effect is the classic documentary look for memory sequences |
+| Express abstract concepts | **Yes** — with `pan` | Symbolic imagery with slow pan feels as dynamic as video without the cost |
+| Visualize future scenarios | **Maybe** — depends on scene | If the scene needs to show people moving or things happening → video; if it's a sweeping landscape/cityscape → KenBurnsImage |
+| Recreate historical scenes | **No** — use AssetVideo | Historical events need people, action, and dynamic elements that a still image lacks |
+| Recreate a news event | **No** — use AssetVideo | News footage needs the realism of actual motion |
+| Show before-and-after changes | **No** — use AssetVideo | Transitions require multiple states; stick with video or first-last-frame workflows |
+| Showcase dynamically (product) | **Maybe** — `pan` for detail | If just showing details → KenBurnsImage pan; if showing product in use → video |
+| Express era transitions | **Maybe** — depends on scene | Abstract timeline transitions can use KenBurnsImage; literal transformation needs video |
+
+**Rule of thumb**: if the scene's value comes from **atmosphere, mood, or visual context**,
+KenBurnsImage is likely sufficient. If the scene's value comes from **action, movement,
+or a process unfolding**, AssetVideo is necessary.
 
 ---
 
