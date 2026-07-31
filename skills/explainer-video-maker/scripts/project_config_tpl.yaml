@@ -22,9 +22,16 @@ aigc:
   origin_video_height: 540
   seed: 0 # global random seed
 stock_media:
-  # Stock media search sources for scenes with asset_generation_method: stock.
+  # Stock media search for scenes with asset_generation_method: stock.
+  # search_image: enable stock search for image scenes (type: image). Default true.
+  # search_video: enable stock search for video scenes (type: video). Default false
+  #   (stock video is often low quality / short; prefer AIGC for video unless
+  #   the scene is purely atmospheric B-roll).
+  # The agent MUST check these flags in Step 6 when deciding asset_generation_method.
+  search_image: true
+  search_video: false
   # Each entry specifies a provider and its API key (configured directly here).
-  # Default: empty list — stock media search is disabled.
+  # Default: empty list — stock media search is disabled even if search_image/video are true.
   # Example:
   #   sources:
   #     - provider: pexels

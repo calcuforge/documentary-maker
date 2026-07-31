@@ -92,8 +92,16 @@
    every story in one bulk pass). For each scene:
    - Decide the expression method using
      [expression_intent_mapping.md](expression_intent_mapping.md):
-     - **AIGC scenes** (`is_aigc_scene: true`): need AI-generated imagery/video
+     - **AIGC scenes** (`is_aigc_scene: true`, `asset_generation_method: aigc`): need AI-generated imagery/video
+     - **Stock scenes** (`is_aigc_scene: true`, `asset_generation_method: stock`): search web stock media — only for generic, non-specific visuals (see expression_intent_mapping.md)
      - **Data/text scenes** (`is_aigc_scene: false`): filled with text/data directly into Remotion components
+   - **Check `stock_media` flags before choosing stock:** read `project_config.yaml`
+     → `stock_media.search_image` (default true) and `stock_media.search_video`
+     (default false). If a flag is false, do NOT set `asset_generation_method: stock`
+     for that type — use AIGC instead. Example: if `search_video: false`, all
+     video-type scenes must use `asset_generation_method: aigc` even when the
+     content is generic. Also, `stock_media.sources` must be non-empty for stock
+     search to work at all.
    - Fill the display fields from the research and the chapter script: `intent`,
      `is_aigc_scene`, `type`, `remotion_component`, `visual_content`, `data`,
      `text`, `workflows`.

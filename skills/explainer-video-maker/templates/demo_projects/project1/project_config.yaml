@@ -18,9 +18,12 @@ aigc:
   origin_video_height: 540
   seed: 0 # 全局随机种子
 stock_media:
-  # Stock media search sources (scenes with asset_generation_method: stock).
-  # Each entry: provider + api_key (configured directly, not via env vars).
-  # Default: empty — stock search disabled. Example:
+  # search_image: enable stock search for image scenes. Default true.
+  # search_video: enable stock search for video scenes. Default false.
+  search_image: true
+  search_video: false
+  # Sources: provider + api_key. Default: empty — stock search disabled.
+  # Example:
   #   sources:
   #     - provider: pexels
   #       api_key: "your-pexels-api-key"

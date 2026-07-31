@@ -409,17 +409,40 @@ def main() -> None:
     video_dir = Path(args.video_struct).parent
 
     scenes = collect_stock_scenes(video_struct)
+
+    # Filter by search_image / search_video flags in stock_media config
+    stock_cfg = project_config.get("stock_media", {})
+    search_image = stock_cfg.get("search_image", True)
+    search_video = stock_cfg.get("search_video", False)
+    disabled_types = []
+    if not search_image:
+        disabled_types.append("image")
+    if not search_video:
+        disabled_types.append("video")
+    if disabled_types:
+        before = len(scenes)
+        skipped_disabled = [s for s in scenes if s["type"] in disabled_types]
+        scenes = [s for s in scenes if s["type"] not in disabled_types]
+        for s in skipped_disabled:
+            print(f"  SKIP {s['scene_id']} (stock_media.search_{s['type']} is disabled)",
+                  file=sys.stderr)
+        if before != len(scenes):
+            print(f"  Filtered {before - len(scenes)} scene(s) by search_image={search_image}, "
+                  f"search_video={search_video}", file=sys.stderr)
+
     if not scenes:
         print(json.dumps({
             "status": "ok",
-            "msg": "No scenes with asset_generation_method: stock",
-            "data": {"searched": 0, "downloaded": 0, "skipped": 0},
+            "msg": "No stock scenes to search (none configured, or disabled by search_image/search_video flags)",
+            "data": {"searched": 0, "downloaded": 0, "skipped": 0,
+                     "search_image": search_image, "search_video": search_video},
         }, ensure_ascii=False, indent=2))
         return
 
     provider_names = [s["provider"] for s in sources]
     print(f"Stock media search: {len(scenes)} scene(s), providers={provider_names}, "
-          f"target={target_w}x{target_h}", file=sys.stderr)
+          f"target={target_w}x{target_h}, "
+          f"search_image={search_image}, search_video={search_video}", file=sys.stderr)
 
     from lib.net import download_file
 
