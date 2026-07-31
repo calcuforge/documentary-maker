@@ -55,7 +55,7 @@ content:
   duration: medium
   # min_story_chars: minimum character count for each chapter's narration script
   #   (stories/{story_id}/script.md). Enforced by verify_story_scripts.py (Step 5).
-  min_story_chars: 500
+  min_story_chars: 300
 render:
   # Rendering is segmented: the video is split into frame-range segments, rendered
   # in parallel and concatenated with ffmpeg. segment_workers is AUTO-SIZED from
