@@ -110,9 +110,9 @@ def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
             text_content = scene.get("text", "")
 
             remotion_data = {}
-            if component in ("AssetVideo", "AssetImage"):
+            if component in ("AssetVideo", "AssetImage", "KenBurnsImage"):
                 raw_src = asset_path if asset_path else scene.get("origin_asset_path", "")
-                remotion_data = {"src": _to_relative(raw_src, video_dir), "role": "background"}
+                remotion_data = {"src": _to_relative(raw_src, video_dir), "role": "background", "totalFrame": scene_frames}
             elif data_content:
                 try:
                     remotion_data = json.loads(data_content) if isinstance(data_content, str) else data_content

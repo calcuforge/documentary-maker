@@ -610,6 +610,7 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
    | AnimationDemo | `heading`, `type`, `color` |
    | AssetImage | `src`, `role`, `caption` |
    | AssetVideo | `src`, `role`, `muted` |
+   | KenBurnsImage | `src`, `role`, `zoom` (in/out/none), `pan` (left/right/up/down/up-left/up-right/down-left/down-right/none), `caption`, `dim`, `totalFrame` |
 
    **Icon field usage** — Components `FeatureGrid`, `IconCard`, `StatCounter`,
    `FlowChart` accept an `icon` field. Two formats are supported:

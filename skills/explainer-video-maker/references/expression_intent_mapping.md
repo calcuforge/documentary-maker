@@ -1,12 +1,30 @@
 # AI Narration Video Production: Expression Intent Mapping
 
+## Choosing AssetImage vs KenBurnsImage
+
+When a scene uses a text-to-image workflow (or any static image), choose the Remotion component based on the Expression Intent:
+
+| Intent | Component | Rationale |
+|--------|-----------|-----------|
+| Image is primary visual, needs cinematic feel | **KenBurnsImage** | Slow zoom/pan adds engagement without video cost |
+| Image is background/atmosphere only | **KenBurnsImage** (or AssetImage) | Subtle motion enriches the backdrop |
+| Heavy text/data overlay on top of image | **AssetImage** | Static image avoids distracting motion behind text |
+| Image is informational (diagram, chart, screenshot) | **AssetImage** | Ken Burns motion adds no value to data |
+| Quick scene, short duration | **AssetImage** | Motion may not be noticeable in very short scenes |
+| Portrait / character introduction | **KenBurnsImage** (zoom="in") | Cinematic zoom draws focus to the subject |
+| Product showcase, detail scanning | **KenBurnsImage** (with pan) | Pan reveals different product areas over time |
+
+---
+
 ## 1. Narrative / Atmosphere
 
 | Expression Intent | Example | Workflow Type | Remotion Component | Reason |
 |---|---|---|---|---|
 | Establish a scene | 1950s New York street | text-to-video | AssetVideo | Dynamic environments are more immersive than static images. |
+| Establish a scene (still + motion) | 1950s New York street | text-to-image | KenBurnsImage | Static generation with Ken Burns (zoom out + pan) costs far less than video. |
 | Recreate historical scenes | Ancient Egyptian pyramid construction | text-to-video | AssetVideo | Historical events require dynamic visual reconstruction. |
 | Create emotional atmosphere | A city under tension before war | text-to-video | AssetVideo | Motion, lighting, and camera movement enhance emotional impact. |
+| Create emotional atmosphere (still) | A city under tension before war | text-to-image | KenBurnsImage | Subtle zoom-in + pan on a moody static image builds tension. |
 | Express abstract concepts | Artificial intelligence is changing the world | text-to-image → image-to-video | AssetVideo | Abstract ideas benefit from symbolic imagery and subtle animation. |
 | Visualize future scenarios | A smart city in 2050 | text-to-image → image-to-video | AssetVideo | Future concepts require creative generation with cinematic motion. |
 | Express era transitions | Agricultural age to industrial age | text-to-video | AssetVideo | Long-term evolution is best represented through animated scenes. |
@@ -20,6 +38,7 @@
 | Expression Intent | Example | Workflow Type | Remotion Component | Reason |
 |---|---|---|---|---|
 | Introduce a person | Who is Steve Jobs | text-to-image | AssetImage | A portrait provides the clearest visual introduction. |
+| Introduce a person (cinematic) | Who is Steve Jobs | text-to-image | KenBurnsImage | Slow zoom-in on portrait creates a dramatic, documentary feel. |
 | Show personal journey | From startup failure to success | - | Timeline | Personal growth is naturally represented chronologically. |
 | Present a quotation | "Innovation comes from different ideas." | - | QuoteBlock | Quotes deserve visual emphasis and attribution. |
 | Summarize achievements | Three major contributions | - | IconCard | Key achievements are easy to scan as individual cards. |
@@ -63,6 +82,7 @@
 |---|---|---|---|---|
 | Recreate a news event | Rocket launch | text-to-video | AssetVideo | Dynamic footage increases realism. |
 | Introduce background | Historical context | text-to-image | AssetImage | Background information usually requires only a representative image. |
+| Introduce background (cinematic) | Historical context | text-to-image | KenBurnsImage | Slow zoom out reveals the wider context; pan moves across a scene. |
 | Show event timeline | Development of the incident | - | Timeline | News events naturally follow chronological order. |
 | Explain impact | Impact on supply chain | - | FlowChart | Cause-and-effect relationships are clearly visualized. |
 | Present expert opinions | Expert quotes | - | QuoteBlock | Quotations highlight authority and credibility. |
@@ -75,6 +95,7 @@
 | Expression Intent | Example | Workflow Type | Remotion Component | Reason |
 |---|---|---|---|---|
 | Showcase appearance | Smartphone design | text-to-image | AssetImage | Static product images clearly display appearance. |
+| Scan product details | Smartphone design, detail view | text-to-image | KenBurnsImage | Ken Burns pan slowly reveals different product areas. |
 | Showcase dynamically | 360° product rotation | text-to-image → image-to-video | AssetVideo | Motion better demonstrates product design. |
 | Present selling points | Three core features | - | FeatureGrid | Features are easy to compare side by side. |
 | List functions | Fast charging, waterproof | - | IconCard | Icon-based cards improve readability. |
