@@ -12,6 +12,14 @@ Structure hierarchy: **Story → Scene** (each scene carries one narration)
 - Each scene has exactly one nested `narration` (1 scene = 1 narration)
 - The narration audio duration determines the scene's total frame count
 
+**Output confinement — ALL files under the project:** every file produced during
+the pipeline (search results, scripts, audio, AIGC assets, configs, video output)
+MUST be written under the project directory in its designated resource
+directories (see layout above) or its `tmp/` directory. Scripts MUST accept
+`--output` (or equivalent) parameters so output paths are always explicit.
+NEVER write to system temp dirs (`/tmp`, `%TEMP%`, `TMPDIR`), the workspace
+root, or any path outside the project.
+
 **Working principle — batch by story:** whenever a step creates a *large number*
 of items, do it **one story at a time** rather than all at once — e.g., writing
 chapter scripts (Step 5), splitting scenes and filling their `data`/`text`
@@ -44,6 +52,7 @@ projects/
 │   │   │               ├── origin_{scene_id}.{png|mp4}
 │   │   │               └── {scene_id}.{png|mp4}
 │   │   ├── video_tasks.yaml       # Step 8b — AIGC task list
+│   │   ├── tmp/                   # General temporary files (cache, discovery results, etc.)
 │   │   ├── remotion_sections.yaml # Step 10 — render config
 │   │   └── result.mp4             # Step 11 — final video
 ```
@@ -210,7 +219,7 @@ projects/
      ```bash
      python3 "${SKILL_DIR}/scripts/tool/search_rss_discovery.py" \
        --query "GPU pricing news" \
-       --output /abs/path/rss_sources.json
+       --output /abs/path/projects/{project}/video{N}/tmp/rss_sources.json
      ```
      Then cache discovered feeds into `project_config.yaml` → `rss_source_list`.
 

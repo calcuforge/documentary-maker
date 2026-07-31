@@ -113,6 +113,7 @@ projects/
 │   │   ├── video_struct.yaml      # Video structure (stories → scenes; each scene carries one narration)
 │   │   ├── video_tasks.yaml       # AIGC task list
 │   │   ├── remotion_sections.yaml # Remotion render config
+│   │   ├── tmp/                   # General temporary files (cache, discovery results, etc.)
 │   │   ├── search_results/
 │   │   │   ├── result1.md         # Research result 1
 │   │   │   └── result2.md         # Research result 2
@@ -215,6 +216,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | **Narration length** | Each scene's narration `content` MUST be ≤ 50 characters (a ceiling, not a target — aim for ~20-45 chars of substance and vary length; don't make them all tiny). Enforced by `verify_video_struct.py`. Split longer text into more scenes. |
 | **Verify before proceed** | Each step's verify script must pass before moving to the next step. |
 | **Absolute paths** | All script path arguments (`--config`, `--video-struct`, `--output`, etc.) MUST be absolute paths. Scripts reject relative paths with an error. |
+| **Output confined to project** | ALL agent-produced files (search results, scripts, audio, AIGC assets, remotion configs, rendered video) MUST be written under the project directory's pre-defined resource dirs or its `tmp/` directory. Scripts that produce output files MUST expose a `--output` (or equivalent) parameter so output paths are explicit. NEVER write to system temp dirs (`/tmp`, `%TEMP%`, `TMPDIR`), the workspace root, or any path outside the project. |
 
 ---
 
