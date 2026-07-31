@@ -266,17 +266,26 @@ projects/
 
 **What to do:**
 
-1. Write the narration script (讲稿) for each chapter — the full spoken prose for
-   that chapter, which Step 6 will split into short scene narrations. The script
-   is the chapter's single source of narration: **all scene narrations merged
-   together must equal this script exactly** (see Step 6).
+1. Write the narration script (讲稿) for each chapter using the format **one
+   narration per line** — each line is exactly one scene's narration (≤50
+   characters). Step 6 turns each line into a scene automatically, so the number
+   of lines = the number of scenes. The script is the chapter's single source of
+   narration: **all scene narrations merged together equal this script** (one
+   line = one narration).
+
+   ```text
+   1956年夏天，达特茅斯学院的一场研讨会，正式确立了人工智能这门学科的名字。
+   麦卡锡和明斯基等学者提出，要让机器去模拟人类的学习、推理和解决问题的能力。
+   早期的研究者满怀乐观，他们相信用不了几十年，就能造出真正会思考的机器。
+   ```
 
    **Write one chapter at a time, in multiple passes — do NOT write all chapters
    at once.** Finish one chapter's script before starting the next. Focusing on a
    single chapter produces richer, more detailed narration.
 
 2. Save each chapter's script to `stories/{story_id}/script.md` (one file per
-   chapter, under the video directory).
+   chapter, under the video directory). Write **only narration lines** — no
+   titles or headers; blank lines are allowed (ignored).
 
 3. **Each script MUST meet `content.min_story_chars`** (project_config.yaml,
    default **500** characters). A chapter script should be a complete, substantive
@@ -308,44 +317,49 @@ projects/
 
 **What to do:**
 
-1. Working **one chapter at a time**, fully design that chapter's scenes before
-   moving to the next chapter — split its `script.md` into **scenes**, decide
-   each scene's expression method (step 2), and fill all scene fields including
-   `data`/`text` (step 3). Each scene carries exactly one **narration** — a short
-   slice of the chapter script (1 scene = 1 narration). Add the `scene_list` to
-   the matching story in `video_struct.yaml`.
+1. **Generate the narration skeleton with a script.** Run `generate_scene_list.py`
+   to turn each chapter's `script.md` (one narration per line) into the
+   `scene_list` in `video_struct.yaml` — one scene per line, each carrying that
+   line as its `narration.content`. The display fields are left empty for you to
+   fill next.
+   ```bash
+   python3 "${SKILL_DIR}/scripts/tool/generate_scene_list.py" --video-struct /abs/path/video_struct.yaml
+   ```
+   - One scene is created per non-empty line; scene/narration ids are assigned
+     globally and stay unique. Stories that already have a `scene_list` are
+     skipped (pass `--force` to regenerate).
+   - **Do NOT hand-write the `scene_list` / narrations** — let the script generate
+     them so they match `script.md` exactly. `verify_video_struct.py` checks that
+     merging all scene narrations reproduces `script.md`.
 
-   **Script = merged narrations (exact):** the chapter script is exactly the
-   concatenation of all its scene narrations, in order. **Merging every scene
-   narration must reproduce `script.md` verbatim** — do not add, drop, or reword
-   any text when splitting. `verify_video_struct.py` enforces this (it compares
-   the merged narrations against `script.md`, ignoring whitespace/paragraph
-   breaks, so you may format the script into paragraphs but not change the words).
+   **Narration length:** each line (scene narration) MUST be **≤ 50 characters —
+   a ceiling, not a target**. Aim for a substantive line of roughly **20-45
+   characters** and **vary the length**; do NOT reduce them all to 10-character
+   fragments. If a line is too long, fix it in `script.md` and re-run the
+   generator with `--force`.
 
-   **Narration length:** each scene's narration MUST be **≤ 50 characters — a
-   ceiling, not a target** (enforced by `verify_video_struct.py`). Aim for a
-   substantive line of roughly **20-45 characters** and **vary the length**
-   across scenes; do NOT reduce them all to 10-character fragments. If a passage
-   exceeds 50 characters, split it into multiple scenes.
+2. **Fill the visuals, data and text — one story at a time.** Working one chapter
+   at a time, complete that story's scenes before moving to the next (do NOT fill
+   every story in one bulk pass). For each scene:
+   - Decide the expression method using
+     [expression_intent_mapping.md](expression_intent_mapping.md):
+     - **AIGC scenes** (`is_aigc_scene: true`): need AI-generated imagery/video
+     - **Data/text scenes** (`is_aigc_scene: false`): filled with text/data directly into Remotion components
+   - Fill the display fields from the research and the chapter script: `intent`,
+     `is_aigc_scene`, `type`, `remotion_component`, `visual_content`, `data`,
+     `text`, `workflows`.
+   - Leave EMPTY (auto-filled later): `asset_path`, `origin_asset_path`,
+     `narration.total_frame`, `narration.audio_path`.
+   - **Do NOT change `narration.content`** — it must stay equal to its `script.md`
+     line (`verify_video_struct.py` enforces this).
 
-2. For each scene, decide the expression method using
-   [expression_intent_mapping.md](expression_intent_mapping.md):
-   - **AIGC scenes** (`is_aigc_scene: true`): need AI-generated imagery/video
-   - **Data/text scenes** (`is_aigc_scene: false`): filled with text/data directly into Remotion components
+3. **One scene = one narration:** each scene has exactly one nested `narration`
+   (already created from the script line). The scene occupies its whole narration
+   duration.
 
-3. Fill the scene fields, supplementing display data and text from the research
-   and the chapter script. **Do this per story** — complete the current story's
-   scenes (including all `data`/`text`) before moving to the next; do NOT fill
-   `data`/`text` for every story in one bulk pass:
-   - Fill NOW: `id`, `intent`, `is_aigc_scene`, `type`, `remotion_component`, `visual_content`, `data`, `text`, `workflows`, `narration.id`, `narration.content`
-   - Leave EMPTY (auto-filled later): `asset_path`, `origin_asset_path`, `narration.total_frame`, `narration.audio_path`
+4. **Reference:** [demo_projects/project1/video1/video_struct.yaml](demo_projects/project1/video1/video_struct.yaml)
 
-4. **One scene = one narration:** each scene has exactly one nested `narration`.
-   There is no `percent` splitting — the scene occupies its whole narration duration.
-
-5. **Reference:** [demo_projects/project1/video1/video_struct.yaml](demo_projects/project1/video1/video_struct.yaml)
-
-6. **Validate:**
+5. **Validate:**
    ```bash
    python3 "${SKILL_DIR}/scripts/verify/verify_video_struct.py" --video-struct /abs/path/video_struct.yaml
    ```

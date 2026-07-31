@@ -44,6 +44,7 @@ explainer-video-maker/
     │   ├── tool/                   # Pipeline tool scripts
     │   │   ├── check_prereqs.py    # Prerequisite checker
     │   │   ├── init_project.py     # Project scaffolding (dir + default config template)
+    │   │   ├── generate_scene_list.py  # Build scene/narration skeleton from script.md lines
     │   │   ├── search_rss_discovery.py  # RSS source discovery
     │   │   ├── run_tts.py          # TTS synthesis + frame calculation
     │   │   ├── run_aigc.py         # AIGC task execution

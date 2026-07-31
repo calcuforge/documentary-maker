@@ -179,7 +179,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | 3 | Topic research | `scripts/search_provider/search.py`, `scripts/search_provider/search_rss.py` | `search_results/*.md` |
 | 4 | Design chapter list | `scripts/verify/verify_stories.py` | `video_struct.yaml` (stories only) |
 | 5 | Write chapter scripts | `scripts/verify/verify_story_scripts.py` | `stories/{story_id}/script.md` |
-| 6 | Design scene list | `scripts/verify/verify_video_struct.py` | `video_struct.yaml` (full structure) |
+| 6 | Design scene list | `scripts/tool/generate_scene_list.py`, `scripts/verify/verify_video_struct.py` | `video_struct.yaml` (full structure) |
 | 7 | TTS + frame calculation | `scripts/tool/run_tts.py`, `scripts/verify/verify_audio.py` | `speech.wav` per scene |
 | 8 | Plan AIGC tasks | `scripts/verify/verify_video_tasks.py` | `video_tasks.yaml` |
 | 9 | Execute AIGC tasks | `scripts/tool/run_aigc.py`, `scripts/tool/run_upscale.py`, `scripts/verify/verify_aigc_assets.py` | `scenes/` assets |
