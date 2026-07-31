@@ -28,7 +28,7 @@ stock_media:
   #   (stock video is often low quality / short; prefer AIGC for video unless
   #   the scene is purely atmospheric B-roll).
   # The agent MUST check these flags in Step 6 when deciding asset_generation_method.
-  search_image: true
+  search_image: false
   search_video: false
   # Each entry specifies a provider and its API key (configured directly here).
   # Default: empty list — stock media search is disabled even if search_image/video are true.
