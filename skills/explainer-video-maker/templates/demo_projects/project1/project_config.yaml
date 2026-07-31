@@ -14,8 +14,8 @@ aigc:
   # these sizes, then upscaled to the target video resolution if needed.
   origin_image_width: 1280
   origin_image_height: 720
-  origin_video_width: 1280
-  origin_video_height: 720
+  origin_video_width: 960
+  origin_video_height: 540
   seed: 0 # 全局随机种子
 tts:
   # ── Backend selection ──────────────────────────────────────────────────
