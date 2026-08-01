@@ -16,8 +16,8 @@ video:
 aigc:
   # Origin (pre-upscale) generation dimensions. AIGC assets are generated at
   # these sizes, then upscaled to the target video resolution if needed.
-  origin_image_width: 1280
-  origin_image_height: 720
+  origin_image_width: 1920
+  origin_image_height: 1080
   origin_video_width: 960
   origin_video_height: 540
   seed: 0 # global random seed
