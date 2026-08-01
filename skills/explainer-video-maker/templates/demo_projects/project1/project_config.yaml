@@ -94,6 +94,8 @@ content:
   duration: medium # 仅控制章节数：short=2-3 章 / medium=5-7 章 / long=8-12 章
   min_story_chars: 300 # 每个章节讲稿（stories/{story_id}/script.md）的最少字数，verify_story_scripts.py 校验
 render:
+  codec: h264 # 视频编码：h264 | h265 | vp8 | vp9 | av1 | prores
+  crf: 23 # 画质/体积权衡 0-51（越小画质越高、文件越大）
   # 分段渲染：按 frame-range 分段并行渲染，再用 ffmpeg 拼接。segment_workers 默认按
   # CPU 数自动设置——容器内会读取 cgroup v2 的 CPU 限制，使渲染不超出容器配额，并按
   # 此缩放每段并发。如需覆盖默认，取消以下注释：

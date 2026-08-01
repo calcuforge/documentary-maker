@@ -3,6 +3,8 @@
 resolution: 1080P
 orientation: horizontal
 fps: 24.0
+codec: h264
+crf: 23
 theme:
   primary_color: '#4f6ef7'
   background_color: '#ffffff'

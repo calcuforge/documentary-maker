@@ -40,6 +40,7 @@ VALID_COMPONENTS = [
 VALID_RESOLUTIONS = ["1080P", "4K", "1080p", "4k"]
 VALID_ORIENTATIONS = ["horizontal", "vertical"]
 VALID_TRANSITIONS = ["fade", "slide", "wipe", "none"]
+VALID_CODECS = ["h264", "h265", "hevc", "vp8", "vp9", "av1", "prores"]
 
 
 def validate(config: dict) -> tuple[list[str], list[str]]:
@@ -65,6 +66,14 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
         errors.append("[fps] is required")
     elif not isinstance(fps, (int, float)) or fps <= 0:
         errors.append(f"[fps] must be positive, got {fps}")
+
+    codec = config.get("codec", "")
+    if codec and codec.lower() not in VALID_CODECS:
+        errors.append(f"[codec] invalid '{codec}'. Valid: {VALID_CODECS}")
+    crf = config.get("crf")
+    if crf is not None:
+        if not isinstance(crf, (int, float)) or not (0 <= crf <= 51):
+            errors.append(f"[crf] must be 0-51, got '{crf}'")
 
     # Theme
     theme = config.get("theme", {})

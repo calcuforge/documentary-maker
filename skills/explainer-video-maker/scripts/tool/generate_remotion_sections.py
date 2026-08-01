@@ -197,6 +197,7 @@ def main() -> None:
     theme_cfg = project_config.get("theme", {})
     subtitle_cfg = project_config.get("subtitle", {})
     tts_cfg = project_config.get("tts", {})
+    render_cfg = project_config.get("render", {})
 
     fps = video_cfg.get("fps", 24)
     resolution = video_cfg.get("resolution", "1080p")
@@ -218,6 +219,8 @@ def main() -> None:
         "resolution": resolution_out,
         "orientation": orientation,
         "fps": float(fps),
+        "codec": render_cfg.get("codec", "h264"),
+        "crf": int(render_cfg.get("crf", 23)),
         "theme": {
             "primary_color": theme_cfg.get("primary_color", "#4f6ef7"),
             "background_color": theme_cfg.get("background_color", "#ffffff"),

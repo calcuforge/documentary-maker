@@ -28,6 +28,7 @@ VALID_TTS_BACKENDS = ["comfyui_indextts", "http_server"]
 VALID_TRANSITION_TYPES = ["fade", "slide", "wipe", "none"]
 VALID_DURATIONS = ["short", "medium", "long"]
 VALID_CREATION_MODES = ["auto", "manual"]
+VALID_CODECS = ["h264", "h265", "hevc", "vp8", "vp9", "av1", "prores"]
 
 
 def validate(config: dict) -> list[str]:
@@ -133,6 +134,16 @@ def validate(config: dict) -> list[str]:
     if min_chars is not None:
         if not isinstance(min_chars, int) or min_chars <= 0:
             errors.append(f"[content.min_story_chars] must be a positive integer, got '{min_chars}'")
+
+    # --- render section ---
+    render_cfg = config.get("render", {})
+    codec = render_cfg.get("codec", "")
+    if codec and codec.lower() not in VALID_CODECS:
+        errors.append(f"[render.codec] invalid '{codec}'. Valid: {VALID_CODECS}")
+    crf = render_cfg.get("crf")
+    if crf is not None:
+        if not isinstance(crf, (int, float)) or not (0 <= crf <= 51):
+            errors.append(f"[render.crf] must be 0-51, got '{crf}'")
 
     # --- dependence_paths ---
     deps = config.get("dependence_paths", {})
