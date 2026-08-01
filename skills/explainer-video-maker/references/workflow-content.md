@@ -30,48 +30,26 @@
 
    **Write one chapter at a time, in story order, in multiple passes — do NOT
    write all chapters at once.** Finish one chapter's script before starting the
-   next. Focusing on a single chapter produces richer, more detailed narration,
-   and writing in order lets each chapter connect to the one before it.
+   next. Focusing on a single chapter produces richer, more detailed narration.
 
-2. **Decide inter-chapter continuity by video style — your call.** Before
-   writing, read `project.video_style` and decide how tightly the chapters must
-   connect to one another. This is an agent judgment decision, not a fixed table;
-   the guide below is a starting point:
-   - **Continuous narrative** (e.g. `documentary`, `news_broadcast`): treat all
-     chapters as one unbroken story. Each chapter MUST flow from the previous one
-     — open by bridging from where the last chapter ended (a temporal or causal
-     link), carry a single narrative thread through the whole video, and never
-     re-introduce the topic cold. A documentary's chapters should play as
-     consecutive acts of the same film, not as standalone clips.
-   - **Modular / explanatory** (e.g. `knowledge_sharing`, `tutorial`,
-     `data_report`, `product_intro`): chapters may be largely self-contained
-     (each covers a distinct concept, step, or section). A light bridge between
-     chapters is enough; they can stand on their own.
-
-   Whichever level you choose, apply it consistently across every chapter, and
-   show it in how each chapter's first and last narration lines are written.
-   Because chapters are written one at a time in story order (sub-step 1), each
-   new chapter can — and for continuous styles, must — pick up from the one
-   before it.
-
-3. Save each chapter's script to `stories/{story_id}/script.md` (one file per
+2. Save each chapter's script to `stories/{story_id}/script.md` (one file per
    chapter, under the video directory). Write **only narration lines** — no
    titles or headers; blank lines are allowed (ignored).
 
-4. **Each script MUST meet `content.min_story_chars`** (project_config.yaml,
+3. **Each script MUST meet `content.min_story_chars`** (project_config.yaml,
    default **500** characters). A chapter script should be a complete, substantive
    narration — not a thin outline.
 
-5. **Writing style — MUST follow [natural-narration.md](natural-narration.md):**
+4. **Writing style — MUST follow [natural-narration.md](natural-narration.md):**
    - No AI filler phrases
    - No rule-of-three abuse
    - Vary sentence length
    - State facts directly
    - Write for the ear, not the eye
 
-6. **Reference:** [demo_projects/project1/video1/stories/story1/script.md](demo_projects/project1/video1/stories/story1/script.md)
+5. **Reference:** [demo_projects/project1/video1/stories/story1/script.md](demo_projects/project1/video1/stories/story1/script.md)
 
-7. **Validate:**
+6. **Validate:**
    ```bash
    python3 "${SKILL_DIR}/scripts/verify/verify_story_scripts.py" \
      --video-struct /abs/path/video_struct.yaml \
