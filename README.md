@@ -7,7 +7,7 @@ explanation.
 
 ## How It Works
 
-The skill guides an AI coding agent through an 11-step pipeline:
+The skill guides an AI coding agent through a 12-step pipeline:
 
 1. **Project initialization** — create project config
 2. **Topic definition** — auto-select or user-specified topic
@@ -18,8 +18,9 @@ The skill guides an AI coding agent through an 11-step pipeline:
 7. **TTS synthesis** — generate narration audio, calculate frame counts
 8. **AIGC task planning** — design prompts, choose workflows
 9. **AIGC execution** — generate images/videos via ComfyUI, upscale
-10. **Remotion config generation** — build rendering configuration
-11. **Video rendering** — render final MP4 via remotion-video-template
+10. **Background music** — generate a BGM track via comfyui-scheduler text-to-music
+11. **Remotion config generation** — build rendering configuration
+12. **Video rendering** — render final MP4 via remotion-video-template
 
 Audio drives visuals: each scene carries exactly one narration, and that
 narration's audio duration determines the scene's total frame count.
@@ -50,6 +51,7 @@ explainer-video-maker/
     │   │   ├── build_video_prompt.py  # Flatten structured video_prompt.yaml into a prompt string
     │   │   ├── run_aigc.py         # AIGC task execution
     │   │   ├── run_upscale.py      # Asset upscaling
+    │   │   ├── run_bgm.py          # Background music generation (text-to-music)
     │   │   ├── generate_remotion_sections.py  # Remotion config generator
     │   │   └── render.py           # Video renderer
     │   └── verify/                 # Validation scripts

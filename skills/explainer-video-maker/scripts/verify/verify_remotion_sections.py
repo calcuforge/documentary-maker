@@ -75,6 +75,19 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
         if transition and transition not in VALID_TRANSITIONS:
             errors.append(f"[theme.transition_type] invalid '{transition}'")
 
+    # BGM (optional top-level block emitted by generate_remotion_sections.py)
+    bgm = config.get("bgm", {})
+    if bgm:
+        if not bgm.get("audio"):
+            errors.append("[bgm.audio] is required when a bgm block is present")
+        volume = bgm.get("volume")
+        if volume is not None:
+            if not isinstance(volume, (int, float)) or not (0 <= volume <= 0.3):
+                errors.append(f"[bgm.volume] must be 0-0.3, got '{volume}'")
+        loop = bgm.get("loop")
+        if loop is not None and not isinstance(loop, bool):
+            errors.append(f"[bgm.loop] must be a boolean, got '{loop}'")
+
     # Subtitle
     subtitle = config.get("subtitle", {})
     if not subtitle:

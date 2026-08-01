@@ -1,8 +1,8 @@
-# Workflow Steps — Production Phase (Steps 8–12)
+# Workflow Steps — Production Phase (Steps 8–13)
 
-> **When to load:** Step 8 through Step 12 — stock media search, AIGC prompt design,
-> task execution, upscale, Remotion config generation, and final render. Also
-> includes step completion reporting and resumption logic.
+> **When to load:** Step 8 through Step 13 — stock media search, AIGC prompt design,
+> task execution, upscale, background music, Remotion config generation, and final
+> render. Also includes step completion reporting and resumption logic.
 
 **Prerequisite:** [workflow-content.md](workflow-content.md) Steps 5–7 must be
 complete (all narration audio generated, `total_frame` fields populated).
@@ -237,7 +237,7 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
    95 via ffmpeg, updates `asset_path` and `origin_asset_path` in
    `video_struct.yaml`, and deletes the original files. Video files (.mp4 etc.)
    are left untouched — they were already compressed with h264 crf 18 during
-   upscale. **Run this BEFORE Step 11** so `generate_remotion_sections.py`
+   upscale. **Run this BEFORE Step 12** so `generate_remotion_sections.py`
    picks up the compressed .jpg paths.
 
    **Idempotent:** re-running skips files that are already JPEG.
@@ -250,7 +250,58 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
 
 ---
 
-## Step 11: Generate Remotion Rendering Config
+## Step 11: Generate Background Music
+
+**When:** Once per project, after AIGC is done and before generating the remotion
+config (the config step copies the BGM into the video dir for render). The BGM is
+a project-level resource shared by all videos — it is generated a single time.
+
+**Purpose:** Generate a background music track for the video from a text prompt
+using comfyui-scheduler's text-to-music workflow (`stable_audio_3_medium`), and
+record its path in `project_config.yaml` (`bgm.audio`). The music is mixed into
+the final video in-render by Remotion `<Audio>` (no post-render ffmpeg step).
+
+**Prerequisite:** A ComfyUI server reachable via `comfyui-scheduler` that has the
+`stable_audio_3_medium` checkpoint and its text encoders installed, and the
+workflow imported (`comfyui-scheduler workflow import-all`).
+
+**Config:** `project_config.yaml` → `bgm` block:
+
+```yaml
+bgm:
+  enabled: true   # set false to skip BGM entirely
+  audio: ""       # generated file path — written back by run_bgm.py
+  prompt: "舒缓的纪录片背景音乐，钢琴与弦乐，节奏平缓，情绪温和克制，无人声。"
+  loop: true      # loop the BGM to fill the whole video
+  length: 120     # target length in seconds
+  volume: 0.10    # volume 0–0.3
+```
+
+**What to do:**
+
+1. Run the BGM generation script:
+   ```bash
+   python3 "${SKILL_DIR}/scripts/tool/run_bgm.py" \
+     --project-config /abs/path/project_config.yaml
+   ```
+   - Calls `comfyui-scheduler run -w stable_audio_3_medium` with `prompt` +
+     `duration` (from `bgm.length`), downloads the result to
+     `projects/{name}/bgm.mp3`, and writes `bgm.audio` back into
+     `project_config.yaml`.
+   - **Idempotent:** skipped when `bgm.enabled: false` or when `bgm.audio` already
+     points to an existing file. Pass `--force` to regenerate.
+   - If you already have your own music, just set `bgm.audio` to its path (and
+     adjust `bgm.loop` / `bgm.volume`) — the step then skips generation.
+   - If generation fails (scheduler unreachable, missing model), either fix the
+     environment and re-run, or set `bgm.enabled: false` to render without BGM.
+
+2. The remotion config step (Step 12) then copies `bgm.mp3` into the video
+   directory and emits a `bgm:` block in `remotion_sections.yaml`, which
+   `YamlVideo.js` renders as a looping `<Audio>` track at `bgm.volume`.
+
+---
+
+## Step 12: Generate Remotion Rendering Config
 
 **When:** After all assets are verified.
 
@@ -325,11 +376,11 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
      --remotion-sections /abs/path/remotion_sections.yaml \
      --project-config /abs/path/project_config.yaml
    ```
-   Both validators must exit 0 before proceeding to Step 12.
+   Both validators must exit 0 before proceeding to Step 13.
 
 ---
 
-## Step 12: Render Video
+## Step 13: Render Video
 
 **When:** After remotion_sections.yaml passes validation.
 
@@ -369,7 +420,7 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
    | Symptom in render.log | Likely cause | Fix |
    |----------------------|-------------|-----|
    | `JavaScript heap out of memory` | Too many parallel segments or very long composition | Reduce `render.segment_workers` in project_config.yaml |
-   | `ENOENT: no such file` on an asset/audio path | Missing or mis-pathed file in remotion_sections.yaml | Check `src` / `audio` paths; re-run Step 10 (AIGC) or Step 11 (remotion config) |
+   | `ENOENT: no such file` on an asset/audio path | Missing or mis-pathed file in remotion_sections.yaml | Check `src` / `audio` paths; re-run Step 10 (AIGC) or Step 12 (remotion config) |
    | `FFmpeg ... error` during concat | A segment failed to render, producing a corrupt partial file | Look earlier in the log for the segment's error; fix and re-render |
    | `timeout` / process killed | Render exceeded `--timeout` (default 1h) | Increase `--timeout`, or reduce video length / complexity |
    | `Cannot find module` / bundler error | `node_modules` missing or stale in remotion-video-template | Run `npm install` in the template directory |
@@ -409,8 +460,9 @@ Per-step artifact summary:
 | 8 | `scenes/origin_*` stock downloads (count, provider, resolution) |
 | 9 | `video_tasks.yaml` (task group count, total tasks) |
 | 10 | `scenes/origin_*` AIGC + upscaled files (count) |
-| 11 | `remotion_sections.yaml` (section count) |
-| 12 | `result.mp4` (file size, duration) |
+| 11 | `bgm.mp3` (project root; path written to `bgm.audio`) |
+| 12 | `remotion_sections.yaml` (section count) |
+| 13 | `result.mp4` (file size, duration) |
 
 ---
 
@@ -433,5 +485,6 @@ where to resume:
 | + audio files + frames set | Step 8 (search stock media) |
 | + `scenes/` with stock assets (or no stock scenes) | Step 9 (plan AIGC) |
 | + `video_tasks.yaml` | Step 10 (execute AIGC) |
-| + `scenes/` with all assets | Step 11 (generate remotion) |
-| + `remotion_sections.yaml` | Step 12 (render) |
+| + `scenes/` with all assets | Step 11 (generate bgm) |
+| + `bgm.mp3` at project root (or `bgm.enabled: false`) | Step 12 (generate remotion) |
+| + `remotion_sections.yaml` | Step 13 (render) |

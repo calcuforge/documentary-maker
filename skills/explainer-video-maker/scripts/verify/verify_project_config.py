@@ -98,6 +98,27 @@ def validate(config: dict) -> list[str]:
             if not http.get("url"):
                 errors.append("[tts.http.url] is required when backend is http_server")
 
+    # --- bgm section ---
+    bgm = config.get("bgm", {})
+    enabled = bgm.get("enabled", True)
+    if enabled is not None and not isinstance(enabled, bool):
+        errors.append(f"[bgm.enabled] must be a boolean, got '{enabled}'")
+    loop = bgm.get("loop")
+    if loop is not None and not isinstance(loop, bool):
+        errors.append(f"[bgm.loop] must be a boolean, got '{loop}'")
+    length = bgm.get("length")
+    if length is not None:
+        if not isinstance(length, (int, float)) or length <= 0:
+            errors.append(f"[bgm.length] must be a positive number, got '{length}'")
+    volume = bgm.get("volume")
+    if volume is not None:
+        if not isinstance(volume, (int, float)) or not (0 <= volume <= 0.3):
+            errors.append(f"[bgm.volume] must be 0-0.3, got '{volume}'")
+    if enabled:
+        if not bgm.get("prompt"):
+            errors.append("[bgm.prompt] is required when bgm is enabled — describe the desired "
+                          "music (style, instruments, mood) for text-to-music generation")
+
     # --- theme section ---
     theme = config.get("theme", {})
     transition = theme.get("transition_type", "")

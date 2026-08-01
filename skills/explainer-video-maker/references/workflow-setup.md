@@ -6,7 +6,7 @@
 
 ## Overview
 
-The pipeline produces narration-driven explainer videos through 11 steps.
+The pipeline produces narration-driven explainer videos through 13 steps.
 Audio drives visuals: narration audio length determines frame counts.
 
 Structure hierarchy: **Story → Scene** (each scene carries one narration)
@@ -38,6 +38,7 @@ projects/
 ├── {project_name}/
 │   ├── project_config.yaml        # Step 1 — project global preferences
 │   ├── voice_file.wav             # Step 1 — TTS reference voice
+│   ├── bgm.mp3                    # Step 11 — background music (shared by all videos)
 │   ├── {video_name}/
 │   │   ├── video_config.yaml      # Step 2 — topic definition
 │   │   ├── search_results/        # Step 3 — research artifacts
@@ -55,8 +56,8 @@ projects/
 │   │   │               └── {scene_id}.{png|mp4}
 │   │   ├── video_tasks.yaml       # Step 9b — AIGC task list
 │   │   ├── tmp/                   # General temporary files (cache, discovery results, etc.)
-│   │   ├── remotion_sections.yaml # Step 11 — render config
-│   │   └── result.mp4             # Step 12 — final video
+│   │   ├── remotion_sections.yaml # Step 12 — render config
+│   │   └── result.mp4             # Step 13 — final video
 ```
 
 ---

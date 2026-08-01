@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -70,6 +71,42 @@ def _to_relative(path: str, video_dir: str) -> str:
     except ValueError:
         # Path is outside video_dir — return as-is (Remotion may still resolve it)
         return str(p)
+
+
+def build_bgm_block(project_config: dict, video_dir: str) -> dict | None:
+    """Build the top-level `bgm` block for remotion_sections.yaml.
+
+    Copies the project-level BGM file into the video directory (the Remotion
+    --public-dir) so it can be referenced via staticFile("bgm.mp3"). Returns
+    None when BGM is disabled or the file does not exist.
+    """
+    bgm = project_config.get("bgm", {})
+    if not bgm.get("enabled", True):
+        return None
+
+    audio = bgm.get("audio", "")
+    if not audio:
+        return None
+    src = Path(audio)
+    # A relative bgm.audio resolves against the project root (run_bgm.py writes
+    # an absolute path, but a hand-edited config may use a project-relative one).
+    if not src.is_absolute():
+        project_root = project_config.get("project", {}).get("project_root_path", "")
+        if project_root:
+            src = Path(project_root) / src
+    if not src.exists():
+        return None
+
+    dest = Path(video_dir) / "bgm.mp3"
+    if src.resolve() != dest.resolve():
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+
+    return {
+        "audio": "bgm.mp3",
+        "volume": float(bgm.get("volume", 0.1)),
+        "loop": bool(bgm.get("loop", True)),
+    }
 
 
 def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
@@ -197,6 +234,11 @@ def main() -> None:
         },
         "stories": stories,
     }
+
+    # Optional background music (copied into the video dir by build_bgm_block)
+    bgm_block = build_bgm_block(project_config, video_dir)
+    if bgm_block:
+        remotion_sections["bgm"] = bgm_block
 
     # Save
     save_yaml(remotion_sections, args.output)

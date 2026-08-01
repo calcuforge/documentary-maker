@@ -10,6 +10,10 @@ theme:
   accent_color: '#FF6B6B'
   transition_type: fade
   transition_duration: 12.0
+bgm:
+  audio: bgm.mp3
+  volume: 0.1
+  loop: true
 subtitle:
   font_size: 32
   primary_color: '&H00333333'

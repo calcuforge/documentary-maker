@@ -9,7 +9,7 @@ YAML references, and deletes the original files.
 Video files (.mp4 / .mov / .avi / .webm / .mkv) are left untouched — they were
 already compressed with h264 crf 18 during upscale (Step 10.2).
 
-Run BEFORE generate_remotion_sections.py (Step 11) so the Remotion config picks
+Run BEFORE generate_remotion_sections.py (Step 12) so the Remotion config picks
 up the compressed .jpg paths.
 
 Usage:
