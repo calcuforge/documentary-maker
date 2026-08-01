@@ -350,34 +350,6 @@ def main() -> None:
                 else:
                     generated += 1
 
-    # Compress WAV → MP3 (128kbps) for reduced memory usage during Remotion render
-    def _compress_audio(wav_path: str) -> str:
-        mp3_path = str(Path(wav_path).with_suffix(".mp3"))
-        if Path(mp3_path).exists() and not args.force:
-            return mp3_path
-        try:
-            subprocess.run(
-                ["ffmpeg", "-y", "-i", wav_path, "-b:a", "128k", "-map_metadata", "-1", mp3_path],
-                capture_output=True, text=True, timeout=60,
-                check=True,
-            )
-            return mp3_path
-        except subprocess.SubprocessError as e:
-            print(f"    WARNING: audio compression failed for {wav_path}: {e}", file=sys.stderr)
-            return wav_path  # fall back to uncompressed
-
-    compressed_count = 0
-    for u in units:
-        wav_path = u.get("output_path", u["audio_path"])
-        if wav_path and Path(wav_path).exists() and wav_path.endswith(".wav"):
-            mp3_path = _compress_audio(wav_path)
-            if mp3_path != wav_path:
-                u["output_path"] = mp3_path
-                u["narration_ref"]["audio_path"] = mp3_path
-                compressed_count += 1
-    if compressed_count:
-        print(f"  Compressed {compressed_count} audio file(s) to MP3 (128kbps)", file=sys.stderr)
-
     # Calculate frames and update video_struct
     updated_count = 0
     for u in units:

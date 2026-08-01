@@ -178,10 +178,9 @@
    - `--timeout 3600` (default): per-TTS subprocess timeout (1h)
    This will:
    - Generate `speech.wav` for each scene's narration
-   - **Compress WAV → MP3 (128kbps)** to reduce Remotion render memory
-   - Measure audio duration via ffprobe (from WAV for accuracy)
+   - Measure audio duration via ffprobe
    - Calculate `total_frame = ceil(duration × fps)`
-   - Update `video_struct.yaml` `narration.audio_path` (pointing to .mp3) and `narration.total_frame`
+   - Update `video_struct.yaml` `narration.audio_path` (pointing to .wav) and `narration.total_frame`
 
    **Idempotent:** re-running skips narrations whose audio already exists
    (reported as `skipped`) — safe to resume after an interruption. Pass
