@@ -228,7 +228,21 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
    with h264 crf 18** (significantly reduces file size for Remotion render
    without visible quality loss), and updates `asset_path`.
 
-3. **Validate:**
+3. **Compress image assets to JPEG quality 95:**
+   ```bash
+   python3 "${SKILL_DIR}/scripts/tool/compress_images.py" \
+     --video-struct /abs/path/video_struct.yaml
+   ```
+   Converts all image assets (.png / .webp / .bmp / .tiff) to JPEG at quality
+   95 via ffmpeg, updates `asset_path` and `origin_asset_path` in
+   `video_struct.yaml`, and deletes the original files. Video files (.mp4 etc.)
+   are left untouched — they were already compressed with h264 crf 18 during
+   upscale. **Run this BEFORE Step 11** so `generate_remotion_sections.py`
+   picks up the compressed .jpg paths.
+
+   **Idempotent:** re-running skips files that are already JPEG.
+
+4. **Validate:**
    ```bash
    python3 "${SKILL_DIR}/scripts/verify/verify_aigc_assets.py" \
      --video-struct /abs/path/video_struct.yaml --check-upscaled
