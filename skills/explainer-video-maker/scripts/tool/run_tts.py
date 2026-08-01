@@ -172,6 +172,9 @@ def _run_voice_design(voice_instruct: str, output_path: str, timeout: int = 3600
     Returns the output audio file path.
     """
     lang = language or "zh-CN"
+    # Qwen3VoiceDesign's `language` widget takes Chinese/English enum values,
+    # not project language codes (zh-CN/en-US) — map before sending.
+    node_language = {"zh-CN": "Chinese", "en-US": "English"}.get(lang, "Auto")
     content = ("这是一个语音参考样本，用于确定解说视频的旁白音色。"
                if lang == "zh-CN"
                else "This is a voice reference sample for narration.")
@@ -179,7 +182,7 @@ def _run_voice_design(voice_instruct: str, output_path: str, timeout: int = 3600
     inputs = json.dumps({
         "voice_instruct": voice_instruct,
         "content": content,
-        "language": lang,
+        "language": node_language,
     }, ensure_ascii=False)
 
     cmd = ["comfyui-scheduler", "run", "-w", "qwen3_tts_voice_design", "-i", inputs]
