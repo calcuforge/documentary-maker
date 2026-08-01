@@ -107,4 +107,4 @@ in your Claude Code skills path, then trigger with phrases like:
 
 ## License
 
-See [LICENSE](skills/explainer-video-maker/LICENSE).
+See [LICENSE](LICENSE).
