@@ -410,11 +410,14 @@ bgm:
    ```
    Rendering is **segmented**: the video is split into frame-range segments
    (default 600 frames each), rendered in parallel, then concatenated with
-   ffmpeg. The number of concurrent segment workers is **auto-sized from the CPU
-   count** — inside a container the cgroup v2 CPU limit is read, so rendering
-   stays within the container's quota (per-render concurrency is scaled to
-   match). This is all automatic; override via `render.segment_frames` /
-   `render.segment_workers` in project_config.yaml only if needed.
+   ffmpeg. Segment workers are **auto-sized to avoid out-of-memory**: each
+   headless Chrome renderer costs ~1 GB @1080p / ~2 GB @4K, so the number of
+   concurrent workers is capped by the memory budget (~75% of RAM; cgroup v2
+   CPU/memory limits are read inside containers) as well as by the CPU count.
+   Per-render concurrency is likewise capped (≤4). This is all automatic —
+   override only if needed via `render.segment_frames` / `render.segment_workers`
+   in project_config.yaml. The render start log prints the detected resources and
+   the chosen `segment_workers` / concurrency / estimated peak memory.
 
 3. Verify the output file exists and is non-empty.
 
@@ -425,7 +428,7 @@ bgm:
 
    | Symptom in render.log | Likely cause | Fix |
    |----------------------|-------------|-----|
-   | `JavaScript heap out of memory` | Too many parallel segments or very long composition | Reduce `render.segment_workers` in project_config.yaml |
+   | `JavaScript heap out of memory` | Too many parallel segments or very long composition | Workers are auto-capped by RAM, but reduce `render.segment_workers` (or render at 1080p instead of 4K) to lower peak memory; as a last resort set `NODE_OPTIONS=--max-old-space-size=<MB>` for the render command |
    | `ENOENT: no such file` on an asset/audio path | Missing or mis-pathed file in remotion_sections.yaml | Check `src` / `audio` paths; re-run Step 10 (AIGC) or Step 12 (remotion config) |
    | `FFmpeg ... error` during concat | A segment failed to render, producing a corrupt partial file | Look earlier in the log for the segment's error; fix and re-render |
    | `timeout` / process killed | Render exceeded `--timeout` (default 1h) | Increase `--timeout`, or reduce video length / complexity |
