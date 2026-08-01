@@ -113,6 +113,14 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
      achieves cinematic feel at far lower cost. See
      `expression_intent_mapping.md` for a per-scenario substitution table.
    - Work **one story at a time** (consistent with Steps 5-6).
+   - **Text in images — 文字嵌入专用模板.** When an AIGC image scene needs
+     readable text (a screen, sign, label, book cover, ...), describe the text
+     content, font style, and layout explicitly in the prompt — a vague phrase
+     like "shows some text" will not render legibly:
+     - 当你需要在图像中包含可读文字时，务必使用明确的语言描述内容、字体风格和排版位置。
+     - 举例：画面中央有一个发光的LED屏幕，上面显示'Hello World'和'你好世界'，中英文并列，无衬线字体，蓝色渐变背景
+     - 小贴士：使用"displaying"、"written on"、"engraved with"等动词明确指出文字存在形式
+     - 小贴士：指定字体类型（如serif, sans-serif, calligraphy）有助于提升一致性
 
 2. **Cross-scene consistency — recurring subjects.** Before writing any prompt
    files, scan ALL scenes across ALL stories to identify subjects that appear
