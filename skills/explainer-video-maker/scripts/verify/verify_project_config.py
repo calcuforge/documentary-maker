@@ -86,6 +86,10 @@ def validate(config: dict) -> list[str]:
         if speed is not None:
             if not isinstance(speed, (int, float)) or not (0.25 <= speed <= 4.0):
                 errors.append(f"[tts.speed] must be 0.25-4.0, got '{speed}'")
+        volume = tts.get("volume")
+        if volume is not None:
+            if not isinstance(volume, (int, float)) or not (0 <= volume <= 1.0):
+                errors.append(f"[tts.volume] must be 0-1.0, got '{volume}'")
         # voice_instruct is left empty at init and filled by the agent before Step 7;
         # run_tts.py errors if it is still empty when the voice file is auto-generated.
 

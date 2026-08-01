@@ -130,6 +130,12 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
             if not audio:
                 warnings.append(f"{sec_prefix}: 'audio' path is empty")
 
+            # volume (narration audio multiplier)
+            volume = section.get("volume")
+            if volume is not None:
+                if not isinstance(volume, (int, float)) or not (0 <= volume <= 1.0):
+                    errors.append(f"{sec_prefix}: 'volume' must be 0-1.0, got '{volume}'")
+
             # scene_list
             scene_list = section.get("scene_list", [])
             if not scene_list:

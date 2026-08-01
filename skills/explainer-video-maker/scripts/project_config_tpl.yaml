@@ -46,6 +46,8 @@ tts:
   #          http_server      — HTTP multipart TTS server (see tts.http below).
   backend: comfyui_indextts
   speed: 1.0
+  # volume: narration audio volume 0–1 (multiplier applied by Remotion <Audio>).
+  volume: 2.0
   # voice_file: empty at Step 1. If empty when running TTS (Step 7), the voice
   #   design workflow runs automatically using voice_instruct and updates this field.
   voice_file: ""

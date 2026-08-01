@@ -69,6 +69,7 @@ stories:
   story_id: story1
   section_list:
   - audio: stories/story1/narration1/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: AssetVideo
       remotion_data: '{"src": "stories/story1/narration1/scenes/scene1.mp4", "role":
@@ -76,6 +77,7 @@ stories:
       total_frame: 228
       scene_id: scene1
   - audio: stories/story1/narration2/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: QuoteBlock
       remotion_data: '{"heading": "学科奠基", "quote": "要让机器去模拟人类的学习、推理和解决问题的能力。", "attribution":
@@ -83,6 +85,7 @@ stories:
       total_frame: 222
       scene_id: scene2
   - audio: stories/story1/narration3/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: AssetImage
       remotion_data: '{"src": "stories/story1/narration3/scenes/scene3.png", "role":
@@ -90,6 +93,7 @@ stories:
       total_frame: 210
       scene_id: scene3
   - audio: stories/story1/narration4/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: Timeline
       remotion_data: '{"heading": "早期历程", "items": [{"label": "1956", "description":
@@ -98,6 +102,7 @@ stories:
       total_frame: 222
       scene_id: scene4
   - audio: stories/story1/narration5/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: AssetVideo
       remotion_data: '{"src": "stories/story1/narration5/scenes/scene5.mp4", "role":
@@ -105,6 +110,7 @@ stories:
       total_frame: 240
       scene_id: scene5
   - audio: stories/story1/narration6/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: IconCard
       remotion_data: '{"heading": "复苏契机", "icon": "zap", "title": "专家系统商用", "description":
@@ -112,6 +118,7 @@ stories:
       total_frame: 216
       scene_id: scene6
   - audio: stories/story1/narration7/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: StatCounter
       remotion_data: '{"heading": "里程碑", "items": [{"value": 1997, "suffix": "年",
@@ -119,6 +126,7 @@ stories:
       total_frame: 246
       scene_id: scene7
   - audio: stories/story1/narration8/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: AssetImage
       remotion_data: '{"src": "stories/story1/narration8/scenes/scene8.png", "role":
@@ -126,6 +134,7 @@ stories:
       total_frame: 240
       scene_id: scene8
   - audio: stories/story1/narration9/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: FeatureGrid
       remotion_data: '{"heading": "日常应用", "columns": 3, "items": [{"icon": "search",
@@ -135,6 +144,7 @@ stories:
       total_frame: 222
       scene_id: scene9
   - audio: stories/story1/narration10/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: AssetVideo
       remotion_data: '{"src": "stories/story1/narration10/scenes/scene10.mp4", "role":
@@ -142,6 +152,7 @@ stories:
       total_frame: 234
       scene_id: scene10
   - audio: stories/story1/narration11/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: DataBar
       remotion_data: '{"heading": "开源力量", "items": [{"label": "开源模型", "value": 80},
@@ -149,6 +160,7 @@ stories:
       total_frame: 216
       scene_id: scene11
   - audio: stories/story1/narration12/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: IconCard
       remotion_data: '{"heading": "国家战略", "icon": "globe", "title": "上升为竞争力关键", "description":
@@ -156,6 +168,7 @@ stories:
       total_frame: 204
       scene_id: scene12
   - audio: stories/story1/narration13/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: AssetVideo
       remotion_data: '{"src": "stories/story1/narration13/scenes/scene13.mp4", "role":
@@ -163,6 +176,7 @@ stories:
       total_frame: 234
       scene_id: scene13
   - audio: stories/story1/narration14/speech.wav
+    volume: 1.0
     scene_list:
     - remotion_component: QuoteBlock
       remotion_data: '{"heading": "展望未来", "quote": "人工智能仍在快速演进，它带来的机遇和挑战，需要全社会共同去面对。",

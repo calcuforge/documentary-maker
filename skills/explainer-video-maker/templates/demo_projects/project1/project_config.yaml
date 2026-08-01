@@ -41,6 +41,7 @@ tts:
   # needed in commands. Set once, all TTS calls route automatically.
   backend: comfyui_indextts
   speed: 1.0
+  volume: 1.0 # narration volume 0–1 (Remotion <Audio> volume multiplier)
     # ── Reference voice ─────────────────────────────────────────────────────
     # voice_file: can be empty at Step 1. If empty when running TTS (Step 7),
     #   the voice design workflow (qwen3_tts_voice_design) runs automatically

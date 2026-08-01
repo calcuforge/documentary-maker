@@ -109,7 +109,7 @@ def build_bgm_block(project_config: dict, video_dir: str) -> dict | None:
     }
 
 
-def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
+def build_stories(video_struct: dict, video_dir: str, narration_volume: float = 1.0) -> list[dict]:
     """Build the stories/sections structure for remotion_sections.yaml.
 
     Each scene carries exactly one narration, so every section_list entry
@@ -167,6 +167,7 @@ def build_stories(video_struct: dict, video_dir: str) -> list[dict]:
 
             section_list.append({
                 "audio": audio_rel,
+                "volume": narration_volume,
                 "scene_list": scene_list_out,
             })
 
@@ -195,6 +196,7 @@ def main() -> None:
     video_cfg = project_config.get("video", {})
     theme_cfg = project_config.get("theme", {})
     subtitle_cfg = project_config.get("subtitle", {})
+    tts_cfg = project_config.get("tts", {})
 
     fps = video_cfg.get("fps", 24)
     resolution = video_cfg.get("resolution", "1080p")
@@ -207,7 +209,8 @@ def main() -> None:
     video_dir = str(Path(args.video_struct).parent)
 
     # Build sections
-    stories = build_stories(video_struct, video_dir)
+    narration_volume = float(tts_cfg.get("volume", 1.0))
+    stories = build_stories(video_struct, video_dir, narration_volume)
     subtitle_list = build_subtitle_list(video_struct)
 
     # Assemble remotion_sections.yaml
