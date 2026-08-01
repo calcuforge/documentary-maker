@@ -261,7 +261,7 @@ def main() -> None:
         try:
             subprocess.run(
                 ["ffmpeg", "-y", "-i", filepath, "-c:v", "libx264", "-crf", "18",
-                 "-preset", "fast", "-c:a", "aac", "-b:a", "128k",
+                 "-preset", "fast", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k",
                  "-map_metadata", "-1", tmp],
                 capture_output=True, text=True, timeout=120,
                 check=True,

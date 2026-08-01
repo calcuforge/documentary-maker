@@ -103,6 +103,13 @@ def run_single_task(
     from lib.net import download_file
     download_file(file_url, output_path)
 
+    from lib.video import make_faststart
+
+    # Non-faststart mp4s (moov atom at EOF) make Remotion time out fetching frames
+    # via HTTP range requests — re-mux to faststart (stream copy, lossless).
+    if output_path.lower().endswith(".mp4") and not make_faststart(output_path):
+        print(f"    WARNING: faststart re-mux failed for {output_path}", file=sys.stderr)
+
     return output_path
 
 
