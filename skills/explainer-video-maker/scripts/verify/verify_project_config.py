@@ -114,10 +114,8 @@ def validate(config: dict) -> list[str]:
     if volume is not None:
         if not isinstance(volume, (int, float)) or not (0 <= volume <= 0.3):
             errors.append(f"[bgm.volume] must be 0-0.3, got '{volume}'")
-    if enabled:
-        if not bgm.get("prompt"):
-            errors.append("[bgm.prompt] is required when bgm is enabled — describe the desired "
-                          "music (style, instruments, mood) for text-to-music generation")
+    # bgm.prompt is intentionally left empty at init and filled by the agent before
+    # Step 11; run_bgm.py errors if it is still empty at generation time.
 
     # --- theme section ---
     theme = config.get("theme", {})

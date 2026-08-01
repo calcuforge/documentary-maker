@@ -271,7 +271,7 @@ workflow imported (`comfyui-scheduler workflow import-all`).
 bgm:
   enabled: true   # set false to skip BGM entirely
   audio: ""       # generated file path — written back by run_bgm.py
-  prompt: "舒缓的纪录片背景音乐，钢琴与弦乐，节奏平缓，情绪温和克制，无人声。"
+  prompt: ""      # REQUIRED — agent fills with a music description before running
   loop: true      # loop the BGM to fill the whole video
   length: 120     # target length in seconds
   volume: 0.10    # volume 0–0.3
@@ -279,7 +279,13 @@ bgm:
 
 **What to do:**
 
-1. Run the BGM generation script:
+1. **Fill `bgm.prompt`** in `project_config.yaml` with a music description
+   (style, instruments, mood — matching the video's tone), e.g.
+   `舒缓的纪录片背景音乐，钢琴与弦乐，节奏平缓，情绪温和克制，无人声。` for a
+   documentary or `upbeat corporate tech background music` for a product intro.
+   It is left empty at project init; `run_bgm.py` errors if it is still empty.
+
+2. Run the BGM generation script:
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/run_bgm.py" \
      --project-config /abs/path/project_config.yaml
@@ -295,7 +301,7 @@ bgm:
    - If generation fails (scheduler unreachable, missing model), either fix the
      environment and re-run, or set `bgm.enabled: false` to render without BGM.
 
-2. The remotion config step (Step 12) then copies `bgm.mp3` into the video
+3. The remotion config step (Step 12) then copies `bgm.mp3` into the video
    directory and emits a `bgm:` block in `remotion_sections.yaml`, which
    `YamlVideo.js` renders as a looping `<Audio>` track at `bgm.volume`.
 

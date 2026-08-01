@@ -72,6 +72,8 @@ bgm:
   # audio: written back by run_bgm.py (Step 11) after generation. May also point
   #   at your own music file to skip generation.
   audio: /path/to/projects/my-project/bgm.mp3
+  # prompt: agent fills with a music description (style, instruments, mood) before
+  #   Step 11. Example shown here.
   prompt: "舒缓的纪录片背景音乐，钢琴与弦乐，节奏平缓，情绪温和克制，无人声。"
   loop: true # loop the BGM to fill the whole video
   length: 120 # target BGM length in seconds

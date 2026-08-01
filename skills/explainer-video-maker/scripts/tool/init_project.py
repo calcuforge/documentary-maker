@@ -96,17 +96,6 @@ def main() -> None:
     if not deps.get("comfyui_scheduler"):
         deps["comfyui_scheduler"] = "dep/comfyui-scheduler"
 
-    # Generate a default bgm.prompt if the template did not provide one. The
-    # template ships a generic default; project.language may be empty at init,
-    # so fall back to a neutral prompt the agent can edit in Step 1.
-    bgm = config.setdefault("bgm", {})
-    if not bgm.get("prompt"):
-        lang = config.get("project", {}).get("language", "")
-        if lang == "en-US":
-            bgm["prompt"] = "Calm documentary background music, piano and strings, gentle rhythm, understated warm mood, no vocals."
-        else:
-            bgm["prompt"] = "舒缓的纪录片背景音乐，钢琴与弦乐，节奏平缓，情绪温和克制，无人声。"
-
     config_path = project_dir / "project_config.yaml"
     save_yaml(config, config_path)
 
@@ -120,6 +109,9 @@ def main() -> None:
     for field in ("remotion_template", "comfyui_scheduler"):
         if not deps.get(field):
             supplement.append(f"dependence_paths.{field}")
+    # bgm.prompt is left empty at init — the agent fills it before Step 11
+    if not config.get("bgm", {}).get("prompt"):
+        supplement.append("bgm.prompt")
 
     print(json.dumps({
         "status": "ok",

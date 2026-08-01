@@ -235,7 +235,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 - After Step 8: `verify_stock_assets.py` must exit 0
 - After Step 9: `verify_video_tasks.py` must exit 0
 - After Step 10: `verify_aigc_assets.py` must exit 0
-- After Step 11: `run_bgm.py` must exit 0 (skipped when `bgm.enabled: false`)
+- After Step 11: `run_bgm.py` must exit 0 (skipped when `bgm.enabled: false`; fill `bgm.prompt` in `project_config.yaml` first — it is empty at init)
 - After Step 12: `verify_remotion_sections.py` must exit 0, then `verify_remotion_data.py` must exit 0
 
 ---
