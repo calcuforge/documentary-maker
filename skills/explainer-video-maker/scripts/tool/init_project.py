@@ -112,6 +112,9 @@ def main() -> None:
     # bgm.prompt is left empty at init — the agent fills it before Step 11
     if not config.get("bgm", {}).get("prompt"):
         supplement.append("bgm.prompt")
+    # tts.voice_instruct is left empty at init — the agent fills it before Step 7
+    if not config.get("tts", {}).get("voice_instruct"):
+        supplement.append("tts.voice_instruct")
 
     print(json.dumps({
         "status": "ok",

@@ -49,10 +49,13 @@ tts:
   # voice_file: empty at Step 1. If empty when running TTS (Step 7), the voice
   #   design workflow runs automatically using voice_instruct and updates this field.
   voice_file: ""
-  # voice_instruct: REQUIRED. Describes the target voice characteristics.
+  # voice_instruct: REQUIRED — empty at init. The agent MUST fill it in before
+  #   Step 7 (run_tts.py). When voice_file is empty, the voice design workflow
+  #   (qwen3_tts_voice_design) runs automatically using voice_instruct and errors
+  #   if it is still empty. Examples:
   #   zh-CN: "男，中年，中音调"   en-US: "male, middle-aged, moderate pitch"
   #   See comfyui-scheduler/doc/workflow.md for the valid voice attributes.
-  voice_instruct: "男，中年，极低音调"
+  voice_instruct: ""
   # HTTP TTS server config (only used when backend: http_server).
   # Protocol: POST multipart/form-data (fields: input, speed, voice_file).
   # The URL is resolved via os.path.expandvars(); ${BACKEND_PROXY_ENDPOINT}

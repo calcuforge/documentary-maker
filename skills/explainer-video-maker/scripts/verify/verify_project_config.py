@@ -86,11 +86,8 @@ def validate(config: dict) -> list[str]:
         if speed is not None:
             if not isinstance(speed, (int, float)) or not (0.25 <= speed <= 4.0):
                 errors.append(f"[tts.speed] must be 0.25-4.0, got '{speed}'")
-        # voice_instruct is required (voice_file can be empty — auto-generated in Step 7)
-        voice_instruct = tts.get("voice_instruct", "")
-        if not voice_instruct:
-            errors.append("[tts.voice_instruct] is required — describe the target voice "
-                          "(e.g., '男，中年，中音调'); see comfyui-scheduler/doc/workflow.md for valid attributes")
+        # voice_instruct is left empty at init and filled by the agent before Step 7;
+        # run_tts.py errors if it is still empty when the voice file is auto-generated.
 
         # If http_server backend, check http config
         if backend == "http_server":

@@ -120,10 +120,10 @@ projects/
 
    **Leave these as-is** (sensible defaults — change only on the user's request):
    `video.orientation` / `resolution` / `fps`, `aigc.*` dimensions and `seed`,
-   `tts.backend` / `speed` / `voice_instruct`, `theme.*`, `content.duration`,
-   `render.*` (segmented-render tuning), `subtitle.*`. `tts.voice_instruct` is
-   already pre-filled (e.g., `男，中年，中音调`); see `comfyui-scheduler/doc/workflow.md`
-   for valid voice attributes if the user wants a different voice.
+   `tts.backend` / `speed`, `theme.*`, `content.duration`, `render.*`
+   (segmented-render tuning), `subtitle.*`. `tts.voice_instruct` is EMPTY at init —
+   fill it with the target voice characteristics (e.g., `男，中年，中音调`); see
+   `comfyui-scheduler/doc/workflow.md` for valid voice attributes.
 
    **`dependence_paths` is pre-filled by `init_project.py`** to the workspace's
    `dep/` directory as workspace-relative paths
@@ -173,7 +173,7 @@ projects/
 7. (Optional) `tts.voice_file` is empty by default and auto-generates during the
    audio/TTS step (pipeline Step 7). To pre-generate a reference voice now:
    ```bash
-   comfyui-scheduler run -w ominivoice_voice_design -i '{"voice_instruct": "male, middle-aged, moderate pitch", "content": "This is a sample sentence for voice reference."}'
+   comfyui-scheduler run -w qwen3_tts_voice_design -i '{"voice_instruct": "male, middle-aged, moderate pitch", "content": "This is a sample sentence for voice reference.", "language": "en-US"}'
    ```
    Download the output and save as `projects/{name}/voice_file.wav`. Update `tts.voice_file` in the config.
 

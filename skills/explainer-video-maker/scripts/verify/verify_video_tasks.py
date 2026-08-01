@@ -39,7 +39,7 @@ KNOWN_WORKFLOW_CODES = [
     "ltx2.3_t2v_int8",
     "nvidia_rtx_image_upscale",
     "nvidia_rtx_video_upscale",
-    "ominivoice_voice_design",
+    "qwen3_tts_voice_design",
     "qwen_image_edit_2511_int8_step4",
     "wan2.2_svi2pro_vbvr_int8",
     "z_image_fp16",

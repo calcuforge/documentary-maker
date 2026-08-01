@@ -166,20 +166,23 @@ def collect_narration_units(video_struct: dict) -> list[dict]:
     return units
 
 
-def _run_voice_design(voice_instruct: str, output_path: str, timeout: int = 3600) -> str:
-    """Generate a reference voice via ominivoice_voice_design workflow.
+def _run_voice_design(voice_instruct: str, output_path: str, timeout: int = 3600, language: str | None = None) -> str:
+    """Generate a reference voice via the qwen3_tts_voice_design workflow.
 
     Returns the output audio file path.
     """
-    content = "这是一个语音参考样本，用于确定解说视频的旁白音色。" if "男" in voice_instruct or "女" in voice_instruct else \
-              "This is a voice reference sample for narration."
+    lang = language or "zh-CN"
+    content = ("这是一个语音参考样本，用于确定解说视频的旁白音色。"
+               if lang == "zh-CN"
+               else "This is a voice reference sample for narration.")
 
     inputs = json.dumps({
         "voice_instruct": voice_instruct,
         "content": content,
+        "language": lang,
     }, ensure_ascii=False)
 
-    cmd = ["comfyui-scheduler", "run", "-w", "ominivoice_voice_design", "-i", inputs]
+    cmd = ["comfyui-scheduler", "run", "-w", "qwen3_tts_voice_design", "-i", inputs]
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
@@ -246,9 +249,16 @@ def main() -> None:
     if not voice_file or not Path(voice_file).exists():
         # Run voice design to generate a reference voice
         voice_instruct = tts_config.get("voice_instruct", "")
+        lang = project_config.get("project", {}).get("language", "zh-CN")
         if not voice_instruct:
-            lang = project_config.get("project", {}).get("language", "zh-CN")
-            voice_instruct = "男，中年，中音调" if lang == "zh-CN" else "male, middle-aged, moderate pitch"
+            print(json.dumps({
+                "status": "error",
+                "msg": "Cannot auto-generate voice: tts.voice_instruct is empty — fill it in "
+                       "project_config.yaml (describe the target voice characteristics, e.g. "
+                       "'男，中年，中音调'; see comfyui-scheduler/doc/workflow.md)",
+                "data": {},
+            }, ensure_ascii=False, indent=2))
+            sys.exit(1)
 
         voice_output = str(Path(project_root) / "voice_file.wav") if project_root else ""
         if not voice_output:
@@ -260,7 +270,7 @@ def main() -> None:
             sys.exit(1)
 
         print(f"Voice file not found. Running voice design (instruct: {voice_instruct})...", file=sys.stderr)
-        voice_file = _run_voice_design(voice_instruct, voice_output, timeout=tts_timeout)
+        voice_file = _run_voice_design(voice_instruct, voice_output, timeout=tts_timeout, language=lang)
 
         # Update project_config.yaml with the generated voice file
         tts_config["voice_file"] = voice_file
