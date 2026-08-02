@@ -52,7 +52,7 @@ tts:
   volume: 1.0
   # pause_seconds: silence added AFTER each narration's audio (before the next
   #   narration) so the pacing breathes. Added to narration.total_frame during TTS.
-  pause_seconds: 1.0
+  pause_seconds: 0.5
   # loudnorm: normalize each narration's audio to a target loudness (LUFS) so the
   #   narration is consistently audible. Re-encodes the narration WAV after TTS.
   loudnorm: true
@@ -93,7 +93,7 @@ bgm:
   prompt: ""
   loop: true # loop the BGM to fill the whole video
   length: 120 # target BGM length in seconds (text-to-music duration)
-  volume: 0.10 # BGM volume 0–0.3 (Remotion <Audio> volume)
+  volume: 0.30 # BGM volume 0–0.3 (Remotion <Audio> volume)
 theme:
   # These override the matching fields in themes/<category>.yaml.
   # Explicit fields here win; everything else falls back to the theme preset.
