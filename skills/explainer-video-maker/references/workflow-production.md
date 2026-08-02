@@ -78,7 +78,9 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
 1. Review `video_struct.yaml` — identify all scenes where `is_aigc_scene: true`.
    For each AIGC scene, based on its `intent` and `visual_content`, design a
    structured video prompt and save it to
-   `stories/{story_id}/{narration_id}/scenes/video_prompt.yaml`:
+   `stories/{story_id}/{narration_id}/scenes/video_prompt_{scene_id}.yaml`
+   — **one prompt file PER SCENE** (a narration split into 1-N scenes has one
+   `video_prompt_<scene_id>.yaml` per scene):
 
    ```yaml
    video_prompt:
@@ -136,11 +138,11 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
 
 2. For each AIGC scene in the current story:
    - **Generate the flat prompt** by calling `build_video_prompt.py` on the
-     scene's `video_prompt.yaml` (call once per task type for scenes with both
-     t2v and i2v tasks):
+     scene's `video_prompt_{scene_id}.yaml` (call once per task type for scenes
+     with both t2v and i2v tasks):
      ```bash
      python3 "${SKILL_DIR}/scripts/tool/build_video_prompt.py" \
-       --prompt-yaml /abs/path/to/video_prompt.yaml --type text_to_video
+       --prompt-yaml /abs/path/to/video_prompt_{scene_id}.yaml --type text_to_video
      ```
      Use the output `data.prompt` in the task payload's `prompt` field.
    - **Workflow pipeline:** Choose from available workflows (see `comfyui-scheduler/doc/workflow.md`):

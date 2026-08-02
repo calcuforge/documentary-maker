@@ -3,11 +3,12 @@
 Convert a structured video-prompt YAML (Prompt设计阶段产物) into a flat prompt
 string for the ComfyUI pipeline payload in video_tasks.yaml.
 
-Reads a scene's prompt.yaml (co-located with its assets in
-stories/{story_id}/{narration_id}/scenes/) and outputs the flattened prompt.
+Reads a scene's prompt file (video_prompt_{scene_id}.yaml, co-located with its
+assets in stories/{story_id}/{narration_id}/scenes/) and outputs the flattened
+prompt.
 
 Usage:
-    python build_video_prompt.py --prompt-yaml /abs/path/to/prompt.yaml [--type text_to_video]
+    python build_video_prompt.py --prompt-yaml /abs/path/to/video_prompt_{scene_id}.yaml [--type text_to_video]
 
 The --type flag overrides the video_prompt.type field in the YAML, which is
 useful when a scene has BOTH text_to_video and image_to_video tasks (the agent

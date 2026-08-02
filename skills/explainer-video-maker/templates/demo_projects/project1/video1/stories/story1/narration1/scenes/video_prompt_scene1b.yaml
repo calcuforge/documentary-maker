@@ -1,0 +1,43 @@
+video_prompt:
+  # 类型：text_to_video / image_to_video / text_to_image
+  type: text_to_video
+
+  # 公共参数（所有类型共享）— 每个 scene 一个 prompt 文件
+  common:
+    subject:
+      main: "学者在黑板前的特写"
+      description: "一位学者手指着黑板上的公式，向其他学者讲解"
+    scene:
+      location: "达特茅斯学院会议室"
+      environment: "黑板写满公式，复古黑白影像"
+    time:
+      period: "1956年夏天"
+      lighting: "自然光线透过窗户"
+    style:
+      visual: "复古黑白纪录片风格"
+      color: "黑白"
+      quality: "8K, ultra realistic"
+    action:
+      description: "学者指着黑板上的公式，其他学者点头交流"
+    camera:
+      shot: "close-up"
+      movement: "slow push in"
+      angle: "eye level"
+
+  # 文生视频参数
+  text_to_video:
+    prompt: "特写：学者手指黑板上的公式讲解，其他学者围看，复古黑白纪录片风格"
+    negative_prompt:
+      - "低质量"
+      - "模糊"
+      - "变形"
+      - "彩色"
+
+  # 图生视频参数
+  image_to_video:
+    motion:
+      type: camera_and_object_motion
+      camera:
+        movement: "slow push in"
+      object:
+        movement: "学者手指在黑板上移动，其他学者轻微点头"

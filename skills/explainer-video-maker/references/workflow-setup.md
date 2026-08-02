@@ -53,7 +53,7 @@ projects/
 │   │   │       └── {narration_id}/
 │   │   │           ├── speech.wav
 │   │   │           └── scenes/
-│   │   │               ├── video_prompt.yaml          # Step 9a — structured video prompt
+│   │   │               ├── video_prompt_{scene_id}.yaml  # Step 9a — structured video prompt per scene
 │   │   │               ├── origin_{scene_id}.{png|mp4}
 │   │   │               └── {scene_id}.{png|mp4}
 │   │   ├── video_tasks.yaml       # Step 9b — AIGC task list

@@ -2,11 +2,11 @@ video_prompt:
   # 类型：text_to_video / image_to_video / text_to_image
   type: text_to_video
 
-  # 公共参数（所有类型共享）
+  # 公共参数（所有类型共享）— 每个 scene 一个 prompt 文件
   common:
     subject:
-      main: "1956年达特茅斯学院研讨会"
-      description: "学者们围坐在会议桌旁讨论，桌上散落着论文和笔记"
+      main: "1956年达特茅斯学院研讨会现场全景"
+      description: "学者们围坐在长会议桌旁讨论，桌上散落着论文和笔记"
     scene:
       location: "达特茅斯学院会议室"
       environment: "木质桌椅，黑板上写满公式，学术氛围浓厚"
@@ -18,15 +18,15 @@ video_prompt:
       color: "黑白"
       quality: "8K, ultra realistic"
     action:
-      description: "学者们围坐讨论，偶尔指向黑板上的公式"
+      description: "学者们围坐讨论，偶有起身发表看法"
     camera:
-      shot: "medium shot"
+      shot: "wide shot"
       movement: "slow pan right"
       angle: "eye level"
 
   # 文生视频参数
   text_to_video:
-    prompt: "1956年达特茅斯学院研讨会，学者们围坐讨论，复古黑白纪录片风格"
+    prompt: "1956年达特茅斯学院研讨会现场全景，学者们围坐讨论，复古黑白纪录片风格"
     negative_prompt:
       - "低质量"
       - "模糊"
@@ -40,4 +40,4 @@ video_prompt:
       camera:
         movement: "slow pan right"
       object:
-        movement: "学者们轻微转头讨论，手指向黑板"
+        movement: "学者们轻微转头讨论，偶有起身"

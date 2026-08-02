@@ -50,9 +50,13 @@ def parse_script_lines(script_path: Path) -> list[str]:
 
 
 def id_generator(existing_ids: set[str], prefix: str):
-    """Yield unused ids prefix1, prefix2, ... continuing past any existing ones."""
+    """Yield unused ids prefix1, prefix2, ... continuing past any existing ones.
+
+    The numeric suffix may carry a letter (scene1a/scene1b) — such ids still
+    reserve their numeric prefix, so a new id never looks like it could alias one.
+    """
     nums = []
-    pattern = re.compile(rf"^{re.escape(prefix)}(\d+)$")
+    pattern = re.compile(rf"^{re.escape(prefix)}(\d+)[a-z]*$")
     for eid in existing_ids:
         m = pattern.match(eid or "")
         if m:
