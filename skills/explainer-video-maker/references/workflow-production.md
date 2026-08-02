@@ -465,7 +465,7 @@ Per-step artifact summary:
 | 2 | `video_config.yaml` (show the chosen topic) |
 | 3 | `search_results/result{N}.md` (list all, count of results) |
 | 4 | `video_struct.yaml` (story count — chapter list) |
-| 5 | `stories/{story_id}/script.md` (count; each meets `min_story_chars`) |
+| 5 | `stories/{story_id}/script.md` (count; total meets `min_story_chars` × chapters) |
 | 6 | `video_struct.yaml` (scene count; each scene = one narration) |
 | 7 | `speech.wav` files (count, total duration) |
 | 8 | `scenes/origin_*` stock downloads (count, provider, resolution) |

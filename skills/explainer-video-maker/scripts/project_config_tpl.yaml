@@ -95,8 +95,10 @@ content:
   # duration: controls the number of chapters (stories) only —
   #   short = 2-3 chapters, medium = 5-7 chapters, long = 8-12 chapters.
   duration: medium
-  # min_story_chars: minimum character count for each chapter's narration script
-  #   (stories/{story_id}/script.md). Enforced by verify_story_scripts.py (Step 5).
+  # min_story_chars: base character count PER chapter. There is no per-chapter
+  #   minimum; the COMBINED length of all chapter scripts (stories/{story_id}/script.md)
+  #   must reach min_story_chars × <number of chapters>. Enforced by
+  #   verify_story_scripts.py (Step 5).
   min_story_chars: 300
 render:
   codec: h264 # video codec: h264 | h265 | vp8 | vp9 | av1 | prores

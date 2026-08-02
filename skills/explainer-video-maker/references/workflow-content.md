@@ -36,9 +36,11 @@
    chapter, under the video directory). Write **only narration lines** — no
    titles or headers; blank lines are allowed (ignored).
 
-3. **Each script MUST meet `content.min_story_chars`** (project_config.yaml,
-   default **500** characters). A chapter script should be a complete, substantive
-   narration — not a thin outline.
+3. **Total narration length — no per-chapter minimum.** The COMBINED character
+   count of ALL chapter scripts must reach `content.min_story_chars` × <number of
+   chapters> (project_config.yaml, default **500** per chapter). A single chapter
+   may be short as long as the overall narration is substantive. Enforced by
+   `verify_story_scripts.py` (Step 5).
 
 4. **Writing style — MUST follow [natural-narration.md](natural-narration.md):**
    - No AI filler phrases

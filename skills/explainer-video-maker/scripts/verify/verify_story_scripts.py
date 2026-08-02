@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Validate per-chapter narration scripts — Step 5 gate.
+Validate total narration script length — Step 5 gate.
 
-Each story in video_struct.yaml must have a narration script file at
+Every story in video_struct.yaml must have a narration script file at
     {video_dir}/stories/{story_id}/script.md
-whose character count (trimmed) meets the project's content.min_story_chars
-(default 500).
+The COMBINED character count (trimmed) across ALL chapter scripts must reach
+content.min_story_chars × <number of chapters> (default 500 per chapter).
+There is no per-chapter minimum.
 
 Usage:
     python verify_story_scripts.py --video-struct /abs/path/video_struct.yaml \
@@ -40,6 +41,7 @@ def validate(struct: dict, min_chars: int, video_dir: Path) -> tuple[list[str], 
         errors.append("[stories] list is empty or missing")
         return errors, warnings
 
+    total_chars = 0
     for si, story in enumerate(stories):
         story_id = story.get("id", "")
         prefix = f"stories[{si}] ({story_id or '?'})"
@@ -53,13 +55,16 @@ def validate(struct: dict, min_chars: int, video_dir: Path) -> tuple[list[str], 
             errors.append(f"{prefix}: script file not found: {script_path}")
             continue
 
-        content = script_path.read_text(encoding="utf-8")
-        char_count = len(content.strip())
-        if char_count < min_chars:
-            errors.append(
-                f"{prefix}: script is {char_count} chars, below the minimum "
-                f"{min_chars} (content.min_story_chars): {script_path}"
-            )
+        total_chars += len(script_path.read_text(encoding="utf-8").strip())
+
+    # Total length across ALL chapters: no per-chapter minimum.
+    expected = min_chars * len(stories)
+    if total_chars < expected:
+        errors.append(
+            f"Total narration is {total_chars} chars across {len(stories)} chapter(s), "
+            f"below the {expected} minimum "
+            f"(content.min_story_chars={min_chars} × {len(stories)} chapters)"
+        )
 
     return errors, warnings
 
@@ -80,6 +85,9 @@ def main() -> None:
     video_dir = Path(args.video_struct).parent
     errors, warnings = validate(struct, min_chars, video_dir)
 
+    story_count = len(struct.get("stories", []))
+    expected_total = min_chars * story_count
+
     if errors:
         print(json.dumps({
             "status": "error",
@@ -97,8 +105,8 @@ def main() -> None:
     else:
         print(json.dumps({
             "status": "ok",
-            "msg": f"All chapter scripts meet the {min_chars}-character minimum",
-            "data": {"stories": len(struct.get("stories", [])), "min_story_chars": min_chars},
+            "msg": f"All chapter scripts meet the total {expected_total}-character minimum",
+            "data": {"stories": story_count, "min_story_chars": min_chars, "expected_total": expected_total},
         }, ensure_ascii=False, indent=2))
 
 
