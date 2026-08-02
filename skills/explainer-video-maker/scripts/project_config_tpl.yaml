@@ -104,13 +104,12 @@ render:
   codec: h264 # video codec: h264 | h265 | vp8 | vp9 | av1 | prores
   crf: 23 # quality/size tradeoff 0-51 (lower = higher quality, larger file)
   timeout_ms: 60000 # per-frame component/delayRender timeout (Remotion default 30000; raise if large AIGC assets load slowly)
-  # Rendering is segmented: the video is split into frame-range segments, rendered
-  # in parallel and concatenated with ffmpeg. segment_workers is AUTO-SIZED from
-  # the CPU count by default — inside a container the cgroup v2 CPU limit is read
-  # so the render stays within the container's quota; per-render concurrency is
-  # scaled accordingly. Uncomment to override the defaults:
+  # Rendering is segmented but SINGLE-PROCESS: the video is split into frame-range
+  # segments rendered one at a time (one Chrome, bounded memory), then concatenated
+  # with ffmpeg. Per-render concurrency is auto-sized from the CPU (≈ half the
+  # effective cores, capped at 8). Uncomment to override the defaults:
   # segment_frames: 600   # frames per render segment
-  # segment_workers: 2    # max concurrent segment renders
+  # segment_workers: 1    # concurrent segment renders (default 1 = serial)
 dependence_paths:
   # Filled by init_project.py with workspace-relative paths into the workspace's
   # dep/ directory (e.g. dep/remotion-video-template). A relative path resolves

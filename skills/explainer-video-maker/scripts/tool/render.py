@@ -104,9 +104,9 @@ def main() -> None:
         return
 
     # Render — render-yaml.mjs splits the video into frame-range segments, renders
-    # them in parallel (each at Remotion's default concurrency) and concatenates
-    # them with ffmpeg. segment_frames / segment_workers are optional tuning knobs
-    # (render-yaml.mjs applies its own defaults when they are not set).
+    # them one at a time (single Chrome, serial) and concatenates them with ffmpeg.
+    # segment_frames / segment_workers are optional tuning knobs (render-yaml.mjs
+    # applies its own defaults when they are not set).
     render_cfg = project_config.get("render") or {}
     segment_frames = render_cfg.get("segment_frames")
     segment_workers = render_cfg.get("segment_workers")
