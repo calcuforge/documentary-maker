@@ -103,8 +103,9 @@ def main() -> None:
             pass
         return
 
-    # Render — render-yaml.mjs splits the video into frame-range segments, renders
-    # them one at a time (single Chrome, serial) and concatenates them with ffmpeg.
+    # Render — render-yaml.mjs splits the video into frame-range segments and
+    # concatenates them with ffmpeg, with adaptive parallelism (per-render
+    # concurrency capped at 8, extra segment workers when CPU allows).
     # segment_frames / segment_workers are optional tuning knobs (render-yaml.mjs
     # applies its own defaults when they are not set).
     render_cfg = project_config.get("render") or {}

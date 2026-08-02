@@ -97,10 +97,11 @@ render:
   codec: h264 # 视频编码：h264 | h265 | vp8 | vp9 | av1 | prores
   crf: 23 # 画质/体积权衡 0-51（越小画质越高、文件越大）
   timeout_ms: 60000 # 单帧组件/delayRender 超时（Remotion 默认 30000；大体积 AIGC 资产加载慢时可调大）
-  # 分段渲染：按 frame-range 分段、单进程串行渲染（一次一个 Chrome，内存有界），
-  # 再用 ffmpeg 拼接。每段内并发按 CPU 自动调整（≈有效核数/2，上限 8）。如需覆盖：
+  # 分段渲染：并发自适应——单 Chrome 内取帧并发上限 8；当 CPU 目标（≈有效核数/2）
+  # 超过上限时，多余核数溢出到更多分段 worker（受内存约束）。≤16 核机器实际为单进程。
+  # 如需覆盖：
   # segment_frames: 600   # 每个渲染分段的帧数
-  # segment_workers: 1    # 并发分段数（默认 1 = 串行）
+  # segment_workers: auto # 并发分段数（默认自动）
 dependence_paths:
   # Pre-filled by init_project.py to the workspace's dep/ directory as
   # workspace-relative paths (resolved against the workspace at runtime).

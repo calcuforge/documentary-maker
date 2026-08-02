@@ -414,16 +414,17 @@ bgm:
      --project-config /abs/path/project_config.yaml \
      --output /abs/path/projects/{project}/video{N}/result.mp4
    ```
-   Rendering is **segmented but single-process**: the video is split into
-   frame-range segments (default 600 frames each), rendered one at a time (one
-   headless Chrome — memory stays bounded at ~1 GB @1080p / ~2 GB @4K), then
-   concatenated with ffmpeg. Per-render concurrency (parallel frames inside the
-   single Chrome) is auto-sized from the CPU (≈ half the effective cores, capped
-   at 8; cgroup v2 CPU limits are read inside containers). Override only if
-   needed via `render.segment_frames` / `render.segment_workers` in
-   project_config.yaml (default `segment_workers: 1` = serial). The render start
-   log prints the detected resources and the chosen `segment_workers` /
-   concurrency / estimated peak memory.
+   Rendering is **segmented + adaptive**: the video is split into frame-range
+   segments (default 600 frames each) and concatenated with ffmpeg. Per-render
+   concurrency (parallel frames inside one headless Chrome) is capped at 8 so
+   frame buffers stay bounded (~1 GB @1080p / ~2 GB @4K per Chrome); when the CPU
+   target (≈ half the effective cores; cgroup v2 limits are read in containers)
+   exceeds the cap, surplus cores spill into more segment workers, which are also
+   memory-bounded (~75% of RAM). On ≤16-core machines this is effectively
+   single-process. Override via `render.segment_frames` / `render.segment_workers`
+   in project_config.yaml (default auto). The render start log prints the
+   detected resources and the chosen `segment_workers` / concurrency / estimated
+   peak memory.
 
 3. Verify the output file exists and is non-empty.
 
@@ -434,7 +435,7 @@ bgm:
 
    | Symptom in render.log | Likely cause | Fix |
    |----------------------|-------------|-----|
-   | `JavaScript heap out of memory` | Very long composition or high per-render concurrency | Render is single-process by default (`segment_workers: 1`); if it still OOMs, lower `render.segment_frames` (smaller segments) or render at 1080p instead of 4K; as a last resort set `NODE_OPTIONS=--max-old-space-size=<MB>` for the render command |
+   | `JavaScript heap out of memory` | Very long composition or high total parallelism | Workers are memory-bounded, but if it still OOMs lower `render.segment_workers` (set it explicitly) and/or `render.segment_frames` (smaller segments), or render at 1080p instead of 4K; as a last resort set `NODE_OPTIONS=--max-old-space-size=<MB>` for the render command |
    | `ENOENT: no such file` on an asset/audio path | Missing or mis-pathed file in remotion_sections.yaml | Check `src` / `audio` paths; re-run Step 10 (AIGC) or Step 12 (remotion config) |
    | `FFmpeg ... error` during concat | A segment failed to render, producing a corrupt partial file | Look earlier in the log for the segment's error; fix and re-render |
    | `timeout` / process killed | Render exceeded `--timeout` (default 1h) | Increase `--timeout`, or reduce video length / complexity |
