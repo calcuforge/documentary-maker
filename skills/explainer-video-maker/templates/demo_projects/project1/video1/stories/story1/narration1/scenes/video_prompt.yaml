@@ -27,7 +27,7 @@ video_prompt:
   # 文生视频参数
   text_to_video:
     prompt: "1956年达特茅斯学院研讨会，学者们围坐讨论，复古黑白纪录片风格"
-    negative:
+    negative_prompt:
       - "低质量"
       - "模糊"
       - "变形"

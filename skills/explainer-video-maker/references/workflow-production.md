@@ -92,7 +92,7 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
        camera:     {shot: "...", movement: "...", angle: "..."}
      text_to_video:
        prompt: "<one-sentence prompt>"
-       negative: ["term1", "term2"]
+       negative_prompt: ["term1", "term2"]
      image_to_video:
        motion:
          type: camera_and_object_motion
@@ -100,7 +100,7 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
          object: {movement: "..."}
      text_to_image:
        prompt: "<one-sentence prompt>"
-       negative: ["term1", "term2"]
+       negative_prompt: ["term1", "term2"]
    ```
 
    - For video scenes (`type: video`): include both `text_to_video` and

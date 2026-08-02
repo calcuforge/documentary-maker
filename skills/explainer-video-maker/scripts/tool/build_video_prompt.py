@@ -14,7 +14,7 @@ useful when a scene has BOTH text_to_video and image_to_video tasks (the agent
 calls this script once per task type with the same prompt file).
 
 Output (JSON envelope): data.prompt contains the flat prompt string, and
-data.negative (if present) contains the negative-prompt list.
+data.negative_prompt (if present) contains the negative-prompt list.
 
 The structured prompt format follows this schema (see Step 9a):
     video_prompt:
@@ -28,7 +28,7 @@ The structured prompt format follows this schema (see Step 9a):
         camera:     {shot, movement, angle}
       text_to_video:
         prompt: "<one-sentence prompt>"
-        negative: ["term1", "term2", ...]
+        negative_prompt: ["term1", "term2", ...]
       image_to_video:
         motion:
           type: camera_and_object_motion
@@ -36,7 +36,7 @@ The structured prompt format follows this schema (see Step 9a):
           object:  {movement}
       text_to_image:
         prompt: "<one-sentence prompt>"
-        negative: ["term1", "term2", ...]
+        negative_prompt: ["term1", "term2", ...]
 """
 
 from __future__ import annotations
@@ -82,14 +82,14 @@ def build_prompt(config: dict, type_override: str | None = None) -> dict:
         prompt_text = t2v.get("prompt", "")
         if prompt_text:
             parts.append(prompt_text)
-        negative = t2v.get("negative", [])
+        negative = t2v.get("negative_prompt", [])
 
     elif video_type == "text_to_image":
         t2i = video.get("text_to_image", {})
         prompt_text = t2i.get("prompt", "")
         if prompt_text:
             parts.append(prompt_text)
-        negative = t2i.get("negative", [])
+        negative = t2i.get("negative_prompt", [])
 
     elif video_type == "image_to_video":
         i2v = video.get("image_to_video", {})
@@ -108,7 +108,7 @@ def build_prompt(config: dict, type_override: str | None = None) -> dict:
 
     result: dict[str, str | list[str]] = {"prompt": prompt}
     if negative:
-        result["negative"] = negative
+        result["negative_prompt"] = negative
     return result
 
 
