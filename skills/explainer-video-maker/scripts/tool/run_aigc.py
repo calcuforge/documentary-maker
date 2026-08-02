@@ -142,6 +142,42 @@ def collect_retry_set(task_groups: list[dict], retry_ordinals: list[int]) -> set
     return retry_set
 
 
+def validate_placeholders(task_groups: list[dict]) -> list[str]:
+    """Pre-flight check: every $taskN placeholder must reference a task in an
+    EARLIER group.
+
+    Groups run sequentially (each fully completes before the next starts), so only
+    earlier groups' outputs are available when a task executes. Returns error
+    messages; empty list = all placeholders resolvable.
+    """
+    ordinal_group: dict[int, int] = {}
+    for group in task_groups:
+        gord = group.get("task_group_ordinal", 0)
+        for task in group.get("tasks", []):
+            ordinal_group[task.get("ordinal", 0)] = gord
+
+    errors: list[str] = []
+    for group in task_groups:
+        gord = group.get("task_group_ordinal", 0)
+        for task in group.get("tasks", []):
+            ordinal = task.get("ordinal", 0)
+            payload = task.get("payload", "{}")
+            payload_str = payload if isinstance(payload, str) else json.dumps(payload)
+            for m in PLACEHOLDER_RE.finditer(payload_str):
+                dep = int(m.group(1))
+                dep_group = ordinal_group.get(dep)
+                if dep_group is None:
+                    errors.append(
+                        f"task {ordinal}: $task{dep} references a non-existent task ordinal"
+                    )
+                elif dep_group >= gord:
+                    errors.append(
+                        f"task {ordinal}: $task{dep} runs in group {dep_group}, not earlier "
+                        f"than this task's group {gord} — dependencies must be in an earlier group"
+                    )
+    return errors
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Execute AIGC tasks via comfyui-scheduler")
     parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
@@ -174,6 +210,17 @@ def main() -> None:
 
     # Sort groups by ordinal
     task_groups.sort(key=lambda g: g.get("task_group_ordinal", 0))
+
+    # Pre-flight: reject unresolved $taskN placeholders BEFORE calling
+    # comfyui-scheduler, so we never waste a run on an unresolvable dependency.
+    placeholder_errors = validate_placeholders(task_groups)
+    if placeholder_errors:
+        print(json.dumps({
+            "status": "error",
+            "msg": f"video_tasks.yaml has {len(placeholder_errors)} unresolved $taskN placeholder(s)",
+            "data": {"errors": placeholder_errors},
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
 
     # Handle --retry: delete origin files for retry tasks + dependents
     retry_ordinals: list[int] = []
