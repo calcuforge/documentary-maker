@@ -168,6 +168,9 @@
    - `--timeout 3600` (default): per-TTS subprocess timeout (1h)
    This will:
    - Generate `speech.wav` for each narration (one per section)
+   - Normalize each narration's loudness via ffmpeg loudnorm (`tts.loudnorm`,
+     default true) to `tts.loudness_target` LUFS (default -14; higher = louder)
+     so the narration is clearly audible over the mix
    - Measure audio duration via ffprobe
    - Calculate `narration.total_frame = ceil((duration + tts.pause_seconds) × fps)`
      (`tts.pause_seconds` = silence after the narration, default 0.5s — the next

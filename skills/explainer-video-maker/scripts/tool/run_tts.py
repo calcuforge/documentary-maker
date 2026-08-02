@@ -55,6 +55,33 @@ def duration_to_frames(duration_sec: float, fps: int) -> int:
     return math.ceil(duration_sec * fps)
 
 
+def normalize_loudness(path: str, target_lufs: float = -14.0) -> bool:
+    """Normalize a narration WAV to a target loudness (single-pass loudnorm).
+
+    Re-encodes in place (temp file + atomic replace) so the narration is
+    consistently audible. Returns False on failure, leaving the original intact.
+    """
+    src = Path(path)
+    if not src.exists() or src.stat().st_size == 0:
+        return False
+    tmp = str(src) + ".loudnorm.tmp.wav"
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", str(src),
+             "-af", f"loudnorm=I={target_lufs}:TP=-1.5:LRA=11",
+             "-c:a", "pcm_s16le", tmp],
+            capture_output=True, text=True, timeout=120, check=True,
+        )
+        Path(tmp).replace(src)
+        return True
+    except (subprocess.SubprocessError, OSError):
+        try:
+            Path(tmp).unlink(missing_ok=True)
+        except OSError:
+            pass
+        return False
+
+
 def synth_comfyui_indextts(
     content: str,
     voice_file: str,
@@ -243,6 +270,9 @@ def main() -> None:
     # Silence after each narration's audio, added to narration.total_frame so the
     # next narration starts pause_seconds later while the visual stays continuous.
     pause_seconds = float(tts_config.get("pause_seconds", 0.5))
+    # Normalize each narration's loudness so the narration is clearly audible.
+    loudnorm_enabled = tts_config.get("loudnorm", True)
+    loudness_target = float(tts_config.get("loudness_target", -14.0))  # LUFS, negative
     fps = project_config.get("video", {}).get("fps", 24)
 
     # Resolve voice file — auto-generate via voice design if missing
@@ -373,6 +403,8 @@ def main() -> None:
         audio_path = u.get("output_path", u["audio_path"])
         if audio_path and Path(audio_path).exists():
             try:
+                if loudnorm_enabled and not normalize_loudness(audio_path, loudness_target):
+                    print(f"    WARNING: loudnorm failed for {audio_path}", file=sys.stderr)
                 duration = get_audio_duration(audio_path)
                 total_frame = duration_to_frames(duration + pause_seconds, fps)
                 # Update in-place

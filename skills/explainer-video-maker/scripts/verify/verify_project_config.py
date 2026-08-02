@@ -95,6 +95,14 @@ def validate(config: dict) -> list[str]:
         if pause_seconds is not None:
             if isinstance(pause_seconds, bool) or not isinstance(pause_seconds, (int, float)) or pause_seconds < 0:
                 errors.append(f"[tts.pause_seconds] must be a non-negative number, got '{pause_seconds}'")
+        loudnorm = tts.get("loudnorm")
+        if loudnorm is not None and not isinstance(loudnorm, bool):
+            errors.append(f"[tts.loudnorm] must be a boolean, got '{loudnorm}'")
+        loudness_target = tts.get("loudness_target")
+        if loudness_target is not None:
+            if isinstance(loudness_target, bool) or not isinstance(loudness_target, (int, float)) \
+                    or not (-70 <= loudness_target <= 0):
+                errors.append(f"[tts.loudness_target] must be a LUFS target (-70 to 0), got '{loudness_target}'")
         # voice_instruct is left empty at init and filled by the agent before Step 7;
         # run_tts.py errors if it is still empty when the voice file is auto-generated.
 

@@ -43,6 +43,8 @@ tts:
   speed: 1.0
   volume: 1.0 # narration volume 0–1 (Remotion <Audio> volume multiplier)
   pause_seconds: 0.5 # 每段旁白音频后的留白秒数（计入 narration.total_frame，读完停顿再读下一段）
+  loudnorm: true # 对每段旁白音频做响度归一（目标 LUFS），让旁白更清晰可闻（会重编码 WAV）
+  loudness_target: -14 # 响度目标（LUFS，负数）：越大（越接近0）越响，如 -16 沉稳 / -14 标准 / -12 更响
     # ── Reference voice ─────────────────────────────────────────────────────
     # voice_file: can be empty at Step 1. If empty when running TTS (Step 7),
     #   the voice design workflow (qwen3_tts_voice_design) runs automatically
