@@ -2,9 +2,10 @@
 """
 TTS synthesis + frame count calculation.
 
-Reads video_struct.yaml, generates speech audio for each scene's narration using
-the configured TTS backend (comfyui_indextts or http_server), then uses ffprobe
-to measure audio duration and calculates total_frame for each narration.
+Reads video_struct.yaml, generates speech audio for each narration (one per
+section) using the configured TTS backend (comfyui_indextts or http_server),
+then uses ffprobe to measure audio duration and calculates total_frame for each
+narration.
 
 Updates video_struct.yaml narration.audio_path and narration.total_frame fields.
 
