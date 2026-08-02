@@ -169,7 +169,9 @@
    This will:
    - Generate `speech.wav` for each narration (one per section)
    - Measure audio duration via ffprobe
-   - Calculate `narration.total_frame = ceil(duration × fps)`
+   - Calculate `narration.total_frame = ceil((duration + tts.pause_seconds) × fps)`
+     (`tts.pause_seconds` = silence after the narration, default 0.5s — the next
+     narration starts after a short pause while the visual stays continuous)
    - Update `video_struct.yaml` `narration.audio_path` (pointing to .wav) and `narration.total_frame`.
      Scene frames are derived later (Step 12) by splitting `narration.total_frame`
      across the section's scenes via `percentage`.

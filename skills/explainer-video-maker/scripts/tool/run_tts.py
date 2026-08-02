@@ -240,6 +240,9 @@ def main() -> None:
     tts_config = project_config.get("tts", {})
     backend = tts_config.get("backend", "comfyui_indextts")
     speed = tts_config.get("speed", 1.0)
+    # Silence after each narration's audio, added to narration.total_frame so the
+    # next narration starts pause_seconds later while the visual stays continuous.
+    pause_seconds = float(tts_config.get("pause_seconds", 0.5))
     fps = project_config.get("video", {}).get("fps", 24)
 
     # Resolve voice file — auto-generate via voice design if missing
@@ -371,7 +374,7 @@ def main() -> None:
         if audio_path and Path(audio_path).exists():
             try:
                 duration = get_audio_duration(audio_path)
-                total_frame = duration_to_frames(duration, fps)
+                total_frame = duration_to_frames(duration + pause_seconds, fps)
                 # Update in-place
                 u["narration_ref"]["audio_path"] = audio_path
                 u["narration_ref"]["total_frame"] = total_frame

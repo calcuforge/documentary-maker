@@ -124,8 +124,9 @@ projects/
 
    **Leave these as-is** (sensible defaults — change only on the user's request):
    `video.orientation` / `resolution` / `fps`, `aigc.*` dimensions and `seed`,
-   `tts.backend` / `speed`, `theme.*`, `content.duration`, `render.*`
-   (segmented-render tuning), `subtitle.*`. `tts.voice_instruct` is EMPTY at init —
+   `tts.backend` / `speed` / `volume` / `pause_seconds`, `theme.*`,
+   `content.duration`, `render.*` (segmented-render tuning), `subtitle.*`.
+   `tts.voice_instruct` is EMPTY at init —
    fill it with the target voice characteristics (e.g., `男，中年，中音调`); see
    `comfyui-scheduler/doc/workflow.md` for valid voice attributes.
 

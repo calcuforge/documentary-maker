@@ -42,6 +42,7 @@ tts:
   backend: comfyui_indextts
   speed: 1.0
   volume: 1.0 # narration volume 0–1 (Remotion <Audio> volume multiplier)
+  pause_seconds: 0.5 # 每段旁白音频后的留白秒数（计入 narration.total_frame，读完停顿再读下一段）
     # ── Reference voice ─────────────────────────────────────────────────────
     # voice_file: can be empty at Step 1. If empty when running TTS (Step 7),
     #   the voice design workflow (qwen3_tts_voice_design) runs automatically

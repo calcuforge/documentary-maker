@@ -48,6 +48,9 @@ tts:
   speed: 1.0
   # volume: narration audio volume 0–1 (multiplier applied by Remotion <Audio>).
   volume: 2.0
+  # pause_seconds: silence added AFTER each narration's audio (before the next
+  #   narration) so the pacing breathes. Added to narration.total_frame during TTS.
+  pause_seconds: 0.5
   # voice_file: empty at Step 1. If empty when running TTS (Step 7), the voice
   #   design workflow runs automatically using voice_instruct and updates this field.
   voice_file: ""

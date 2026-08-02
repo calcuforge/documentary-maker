@@ -91,6 +91,10 @@ def validate(config: dict) -> list[str]:
         if volume is not None:
             if not isinstance(volume, (int, float)) or not (0 <= volume <= 1.0):
                 errors.append(f"[tts.volume] must be 0-1.0, got '{volume}'")
+        pause_seconds = tts.get("pause_seconds")
+        if pause_seconds is not None:
+            if isinstance(pause_seconds, bool) or not isinstance(pause_seconds, (int, float)) or pause_seconds < 0:
+                errors.append(f"[tts.pause_seconds] must be a non-negative number, got '{pause_seconds}'")
         # voice_instruct is left empty at init and filled by the agent before Step 7;
         # run_tts.py errors if it is still empty when the voice file is auto-generated.
 
