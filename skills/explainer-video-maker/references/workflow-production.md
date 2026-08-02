@@ -106,12 +106,6 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
    - For video scenes (`type: video`): include both `text_to_video` and
      `image_to_video` sections (one prompt file covers both workflow tasks).
    - For image scenes (`type: image`): include only the `text_to_image` section.
-   - **Before choosing `type: video`:** text-to-video generation is slow and
-     expensive. Evaluate whether the scene truly needs action/motion, or whether
-     atmosphere/mood is the goal. If atmosphere suffices, use `type: image` +
-     `KenBurnsImage` component instead — a static image with Ken Burns zoom/pan
-     achieves cinematic feel at far lower cost. See
-     `expression_intent_mapping.md` for a per-scenario substitution table.
    - Work **one story at a time** (consistent with Steps 5-6).
    - **Text in images — 文字嵌入专用模板.** When an AIGC image scene needs
      readable text (a screen, sign, label, book cover, ...), describe the text

@@ -14,29 +14,6 @@ When a scene uses a text-to-image workflow (or any static image), choose the Rem
 | Portrait / character introduction | **KenBurnsImage** (zoom="in") | Cinematic zoom draws focus to the subject |
 | Product showcase, detail scanning | **KenBurnsImage** (with pan) | Pan reveals different product areas over time |
 
-### When KenBurnsImage can replace AssetVideo
-
-Text-to-video generation is **expensive and slow** (minutes per scene). When an Expression
-Intent traditionally maps to AssetVideo, consider whether KenBurnsImage on a static
-image could achieve a similar result at a fraction of the cost:
-
-| AssetVideo scenario | Replace with KenBurnsImage? | Reasoning |
-|---------------------|----------------------------|-----------|
-| Establish a scene | **Yes** — `zoom="out"` + `pan` | A slow zoom out on a wide establishing shot is indistinguishable from video for many scenes |
-| Create emotional atmosphere | **Yes** — `zoom="in"` | Subtle zoom on a moody image creates tension; video motion may distract |
-| Express memories / nostalgia | **Yes** — `zoom="in"` | The Ken Burns "slow zoom on a photo" effect is the classic documentary look for memory sequences |
-| Express abstract concepts | **Yes** — with `pan` | Symbolic imagery with slow pan feels as dynamic as video without the cost |
-| Visualize future scenarios | **Maybe** — depends on scene | If the scene needs to show people moving or things happening → video; if it's a sweeping landscape/cityscape → KenBurnsImage |
-| Recreate historical scenes | **No** — use AssetVideo | Historical events need people, action, and dynamic elements that a still image lacks |
-| Recreate a news event | **No** — use AssetVideo | News footage needs the realism of actual motion |
-| Show before-and-after changes | **No** — use AssetVideo | Transitions require multiple states; stick with video or first-last-frame workflows |
-| Showcase dynamically (product) | **Maybe** — `pan` for detail | If just showing details → KenBurnsImage pan; if showing product in use → video |
-| Express era transitions | **Maybe** — depends on scene | Abstract timeline transitions can use KenBurnsImage; literal transformation needs video |
-
-**Rule of thumb**: if the scene's value comes from **atmosphere, mood, or visual context**,
-KenBurnsImage is likely sufficient. If the scene's value comes from **action, movement,
-or a process unfolding**, AssetVideo is necessary.
-
 ### Stock media (asset_generation_method: stock)
 
 Stock media (searched from Pexels / Pixabay / Unsplash) is an alternative to
@@ -57,10 +34,8 @@ the tables below.
 | Expression Intent | Example | Workflow Type | Remotion Component | Reason |
 |---|---|---|---|---|
 | Establish a scene | 1950s New York street | text-to-video | AssetVideo | Dynamic environments are more immersive than static images. |
-| Establish a scene (still + motion) | 1950s New York street | text-to-image | KenBurnsImage | Static generation with Ken Burns (zoom out + pan) costs far less than video. |
 | Recreate historical scenes | Ancient Egyptian pyramid construction | text-to-video | AssetVideo | Historical events require dynamic visual reconstruction. |
 | Create emotional atmosphere | A city under tension before war | text-to-video | AssetVideo | Motion, lighting, and camera movement enhance emotional impact. |
-| Create emotional atmosphere (still) | A city under tension before war | text-to-image | KenBurnsImage | Subtle zoom-in + pan on a moody static image builds tension. |
 | Express abstract concepts | Artificial intelligence is changing the world | text-to-image → image-to-video | AssetVideo | Abstract ideas benefit from symbolic imagery and subtle animation. |
 | Visualize future scenarios | A smart city in 2050 | text-to-image → image-to-video | AssetVideo | Future concepts require creative generation with cinematic motion. |
 | Express era transitions | Agricultural age to industrial age | text-to-video | AssetVideo | Long-term evolution is best represented through animated scenes. |
