@@ -113,7 +113,9 @@ projects/
    default fields unless the user explicitly asks for a different value.**
 
    **Fill these** (empty / placeholder in the template):
-   - `project.name` — replace the `my-project` placeholder with a descriptive name
+   - `project.name` — replace the `my-project` placeholder with the video
+     CATEGORY name (the `video_style` value, e.g. `documentary`) — do NOT use the
+     specific video title
    - `project.language` — `zh-CN` or `en-US` (match the user's language)
    - `project.video_style` — e.g., `documentary`, `knowledge_sharing`, `news_broadcast`, `product_intro`, `data_report`, `tutorial`
    - `project.target_audience` — e.g., `general`, `tech_enthusiasts`, `students`, `professionals`, `investors`

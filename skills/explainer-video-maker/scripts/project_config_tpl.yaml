@@ -3,7 +3,7 @@
 # fills project.project_root_path. The agent then edits the created file DIRECTLY
 # to supply request-dependent fields (marked "agent fills" below).
 project:
-  name: my-project # agent fills: descriptive project name (also used as the directory name)
+  name: my-project # agent fills: project name = the video CATEGORY name (the video_style value, e.g. documentary) — NOT the specific video title
   project_root_path: "" # filled by init_project.py — absolute path to the project dir
   creation_mode: auto # auto — pipeline runs end-to-end. manual — each AI product waits for user confirmation.
   language: "" # agent fills: narration language zh-CN | en-US

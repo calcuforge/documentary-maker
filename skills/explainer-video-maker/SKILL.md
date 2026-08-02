@@ -110,7 +110,8 @@ directory from the `scripts/project_config_tpl.yaml` template, named via its
 already exists, a numeric suffix is appended automatically: `documentary`,
 `documentary2`, `documentary3`, ... After creation, edit `project_config.yaml`
 to set the actual `project.name`, `project.video_style`, and other
-request-dependent fields.
+request-dependent fields. **`project.name` MUST be the video CATEGORY name (the
+`video_style` value, e.g. `documentary`) — never the specific video title.**
 
 **Video directory — never reuse.** Every video-making request creates a NEW
 `video{N}/` directory (`video1`, `video2`, ...). Each time the user asks to make
@@ -245,6 +246,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | Rule | Requirement |
 |------|-------------|
 | **Projects under workspace** | All project directories MUST be under `projects/` in the workspace. Never create outside. |
+| **Project name = category** | `project.name` MUST be the video CATEGORY name (the `video_style` value, e.g. `documentary`) — never the specific video title. |
 | **New video dir per request** | Every video-making request creates a NEW `video{N}/` directory. Never reuse or overwrite an existing `video{N}/` — always pick the next available `N`. |
 | **Audio-master clock** | Each scene's narration audio duration determines that scene's total frames. `total_frame = ceil(audio_duration × fps)`. Never hand-estimate. |
 | **One scene = one narration** | Every scene carries exactly one nested `narration`. There is no separate narration layer and no `percent` splitting. |
