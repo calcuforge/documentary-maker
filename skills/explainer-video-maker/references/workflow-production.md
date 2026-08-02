@@ -441,6 +441,14 @@ bgm:
    | `timeout` / process killed | Render exceeded `--timeout` (default 1h) | Increase `--timeout`, or reduce video length / complexity |
    | `Cannot find module` / bundler error | `node_modules` missing or stale in remotion-video-template | Run `npm install` in the template directory |
 
+5. **Deliver the video — faststart + progressive playback.** When outputting the
+   finished `result.mp4` as a player component in the chat, embed it so it streams
+   progressively instead of loading the whole file at once — e.g.
+   `<video controls preload="metadata" src="...">`. The render output is already
+   faststart (moov atom at the front), which is what enables progressive playback;
+   if the player would buffer the entire file (`preload="auto"`), switch it to
+   `preload="metadata"` (loads only the header/seek map first).
+
 ---
 
 ## Step Completion Reporting (Manual Mode)
