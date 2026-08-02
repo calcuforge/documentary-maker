@@ -103,6 +103,7 @@ content:
 render:
   codec: h264 # video codec: h264 | h265 | vp8 | vp9 | av1 | prores
   crf: 23 # quality/size tradeoff 0-51 (lower = higher quality, larger file)
+  timeout_ms: 60000 # per-frame component/delayRender timeout (Remotion default 30000; raise if large AIGC assets load slowly)
   # Rendering is segmented: the video is split into frame-range segments, rendered
   # in parallel and concatenated with ffmpeg. segment_workers is AUTO-SIZED from
   # the CPU count by default — inside a container the cgroup v2 CPU limit is read

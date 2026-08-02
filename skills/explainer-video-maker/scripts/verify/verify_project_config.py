@@ -144,6 +144,10 @@ def validate(config: dict) -> list[str]:
     if crf is not None:
         if not isinstance(crf, (int, float)) or not (0 <= crf <= 51):
             errors.append(f"[render.crf] must be 0-51, got '{crf}'")
+    timeout_ms = render_cfg.get("timeout_ms")
+    if timeout_ms is not None:
+        if isinstance(timeout_ms, bool) or not isinstance(timeout_ms, int) or timeout_ms <= 0:
+            errors.append(f"[render.timeout_ms] must be a positive integer, got '{timeout_ms}'")
 
     # --- dependence_paths ---
     deps = config.get("dependence_paths", {})

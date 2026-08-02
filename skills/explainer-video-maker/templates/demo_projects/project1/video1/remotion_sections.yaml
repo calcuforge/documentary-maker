@@ -3,6 +3,7 @@ orientation: horizontal
 fps: 24.0
 codec: h264
 crf: 23
+timeout_ms: 60000
 theme:
   primary_color: '#4f6ef7'
   background_color: '#ffffff'

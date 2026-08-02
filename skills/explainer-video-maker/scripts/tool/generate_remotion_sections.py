@@ -252,6 +252,7 @@ def main() -> None:
         "fps": float(fps),
         "codec": render_cfg.get("codec", "h264"),
         "crf": int(render_cfg.get("crf", 23)),
+        "timeout_ms": int(render_cfg.get("timeout_ms", 60000)),
         "theme": {
             "primary_color": theme_cfg.get("primary_color", "#4f6ef7"),
             "background_color": theme_cfg.get("background_color", "#ffffff"),
