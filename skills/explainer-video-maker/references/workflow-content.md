@@ -83,11 +83,18 @@
      generate them so they match `script.md` exactly. `verify_video_struct.py`
      checks that merging all narration contents reproduces `script.md`.
 
-2. **Split scenes and set `percentage` — one narration at a time.** A narration
-   (section) can map to 1-N scenes. When one narration needs multiple visuals
-   (e.g. a long sentence, or one idea with two images), split its `scene_list`
-   into N scenes and set each scene's integer `percentage` so they sum to **100**
-   (e.g. 60/40, 70/30). A narration with a single scene stays at `percentage: 100`.
+2. **Split each narration into 1-N scenes and set `percentage`.** Do NOT default
+   every narration to a single scene — most narrations should drive **MORE than
+   one** visual. Split a narration's `scene_list` into multiple scenes when:
+   - the narration is **long (roughly > 30-40 characters)** — split it into 2+
+     scenes so each scene shows a portion,
+   - the narration contains **multiple distinct ideas / shots** (an event plus
+     its aftermath, a person plus their work, a concept plus its impact, a wide
+     establishing shot plus a close-up detail) — give each idea its own scene,
+   - the pacing or the video style benefits from a visual change mid-narration.
+   Set each scene's integer `percentage` so they sum to **100** (e.g. 60/40,
+   70/30, 50/50, or three scenes 40/30/30). Keep a single scene
+   (`percentage: 100`) only for short, single-idea narrations.
    Scene frames are derived from the percentages in Step 12 (largest-remainder,
    so Σ scene frames == narration.total_frame). Verify sums to 100 per narration
    (`verify_video_struct.py`).

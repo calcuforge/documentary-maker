@@ -3,9 +3,13 @@ task_group_list: # ai生成任务组列表，按workflow_type分组，包含有�
     workflow_code: z_image_fp16 # 文生图
     tasks:
       - ordinal: 1 # 任务序号，全局唯一
-        scene_id: scene1 # 所属画面单元的ID
-        payload: '{"prompt":"1956年达特茅斯学院研讨会现场，学者们围坐讨论，复古黑白影像风格","width":1280,"height":720}' # 传给comfyui-scheduler的运行参数，JSON格式，用$taskn占位依赖任务产物
+        scene_id: scene1a # 所属画面单元的ID
+        payload: '{"prompt":"1956年达特茅斯学院研讨会现场全景，学者们围坐讨论，复古黑白影像风格","width":1280,"height":720}' # 传给comfyui-scheduler的运行参数，JSON格式，用$taskn占位依赖任务产物
         dependent_task: 0 # 依赖任务的序号，0表示无依赖
+      - ordinal: 12
+        scene_id: scene1b
+        payload: '{"prompt":"特写：学者们讨论并指向黑板上的公式，复古黑白影像风格","width":1280,"height":720}'
+        dependent_task: 0
       - ordinal: 2
         scene_id: scene3a
         payload: '{"prompt":"1960年代充满信心的计算机实验室，科学家在大型机前工作，明亮乐观的色调","width":1280,"height":720}'
@@ -34,9 +38,13 @@ task_group_list: # ai生成任务组列表，按workflow_type分组，包含有�
     workflow_code: ltx2.3_i2v_int8 # 图生视频，依赖对应文生图任务产物
     tasks:
       - ordinal: 7
-        scene_id: scene1
+        scene_id: scene1a
         dependent_task: 1
-        payload: '{"prompt":"研讨会现场学者们交流讨论，镜头缓慢推进","width":960,"height":540,"total_frame":120,"image_file":"$task1"}'
+        payload: '{"prompt":"研讨会现场全景，学者们交流讨论，镜头缓慢推进","width":960,"height":540,"total_frame":120,"image_file":"$task1"}'
+      - ordinal: 13
+        scene_id: scene1b
+        dependent_task: 12
+        payload: '{"prompt":"特写镜头：学者们讨论并指向黑板，镜头微微推进","width":960,"height":540,"total_frame":120,"image_file":"$task12"}'
       - ordinal: 8
         scene_id: scene5
         dependent_task: 3

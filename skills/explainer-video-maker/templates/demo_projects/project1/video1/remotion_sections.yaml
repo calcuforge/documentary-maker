@@ -20,124 +20,124 @@ subtitle:
   list:
   - text: 1956年夏天，达特茅斯学院的一场研讨会，
     start_frame: 1
-    end_frame: 126
+    end_frame: 137
     scene_index: 0
   - text: 正式确立了人工智能这门学科的名字。
-    start_frame: 127
+    start_frame: 138
     end_frame: 228
-    scene_index: 0
+    scene_index: 1
   - text: 麦卡锡和明斯基等学者提出，要让机器去模拟人类的学习、
     start_frame: 229
     end_frame: 384
-    scene_index: 1
+    scene_index: 2
   - text: 推理和解决问题的能力。
     start_frame: 385
     end_frame: 450
-    scene_index: 1
+    scene_index: 2
   - text: 早期的研究者满怀乐观，他们相信用不了几十年，
     start_frame: 451
     end_frame: 529
-    scene_index: 2
+    scene_index: 3
   - text: 就能造出真正会思考的机器。
     start_frame: 530
     end_frame: 576
-    scene_index: 2
+    scene_index: 3
   - text: 与此同时，新的理论不断涌现，推动着整个领域向前迈进。
     start_frame: 577
     end_frame: 628
-    scene_index: 3
+    scene_index: 4
   - text: 学术界对人工智能的前景充满期待。
     start_frame: 629
     end_frame: 660
-    scene_index: 3
+    scene_index: 4
   - text: 然而现实的进展远比设想缓慢，有限的算力和匮乏的数据，
     start_frame: 661
     end_frame: 816
-    scene_index: 4
+    scene_index: 5
   - text: 让许多宏大的目标落空。
     start_frame: 817
     end_frame: 882
-    scene_index: 4
+    scene_index: 5
   - text: 到了20世纪70年代，政府和企业纷纷削减资金，
     start_frame: 883
     end_frame: 1020
-    scene_index: 5
+    scene_index: 6
   - text: 人工智能跌入了历史上的第一次寒冬。
     start_frame: 1021
     end_frame: 1122
-    scene_index: 5
+    scene_index: 6
   - text: 直到80年代专家系统开始商用，才重新点燃了工业界对这项技术的
     start_frame: 1123
     end_frame: 1302
-    scene_index: 6
+    scene_index: 7
   - text: 兴趣和投入。
     start_frame: 1303
     end_frame: 1338
-    scene_index: 6
+    scene_index: 7
   - text: 1997年，IBM的深蓝计算机击败了国际象棋世界冠军卡斯帕罗
     start_frame: 1339
     end_frame: 1518
-    scene_index: 7
+    scene_index: 8
   - text: 夫，让全世界为之震惊。
     start_frame: 1519
     end_frame: 1584
-    scene_index: 7
+    scene_index: 8
   - text: 2012年，深度神经网络在一场图像识别竞赛中取得了压倒性的胜
     start_frame: 1585
     end_frame: 1764
-    scene_index: 8
+    scene_index: 9
   - text: 利，掀起了新的浪潮。
     start_frame: 1765
     end_frame: 1824
-    scene_index: 8
+    scene_index: 9
   - text: 在此之后，神经网络迅速渗透到搜索引擎、
     start_frame: 1825
     end_frame: 1938
-    scene_index: 9
+    scene_index: 10
   - text: 机器翻译和个性化推荐等日常应用之中。
     start_frame: 1939
     end_frame: 2046
-    scene_index: 9
+    scene_index: 10
   - text: 2022年，生成式模型突然迎来爆发，机器开始学会写作、作画，
     start_frame: 2047
     end_frame: 2226
-    scene_index: 10
+    scene_index: 11
   - text: 甚至编写程序代码。
     start_frame: 2227
     end_frame: 2280
-    scene_index: 10
+    scene_index: 11
   - text: 与此同时，开源社区不断壮大，让越来越多的开发者能够参与到模型
     start_frame: 2281
     end_frame: 2460
-    scene_index: 11
+    scene_index: 12
   - text: 的创新中来。
     start_frame: 2461
     end_frame: 2496
-    scene_index: 11
+    scene_index: 12
   - text: 各国政府也纷纷出台战略，把人工智能视为决定未来国家竞争力的关
     start_frame: 2497
     end_frame: 2676
-    scene_index: 12
+    scene_index: 13
   - text: 键力量。
     start_frame: 2677
     end_frame: 2700
-    scene_index: 12
+    scene_index: 13
   - text: 短短几十年间，人工智能从一间间实验室走进了千家万户，
     start_frame: 2701
     end_frame: 2856
-    scene_index: 13
+    scene_index: 14
   - text: 成为这个时代最关键的技术。
     start_frame: 2857
     end_frame: 2934
-    scene_index: 13
+    scene_index: 14
   - text: 展望未来，人工智能仍在快速演进，它带来的机遇和挑战，
     start_frame: 2935
     end_frame: 3090
-    scene_index: 14
+    scene_index: 15
   - text: 需要全社会共同去面对。
     start_frame: 3091
     end_frame: 3156
-    scene_index: 14
+    scene_index: 15
 stories:
 - story_name: 人工智能的崛起
   story_id: story1
@@ -146,10 +146,15 @@ stories:
     volume: 1.0
     scene_list:
     - remotion_component: AssetVideo
-      remotion_data: '{"src": "stories\\story1\\narration1\\scenes\\scene1.mp4", "role":
-        "background", "totalFrame": 228}'
-      total_frame: 228
-      scene_id: scene1
+      remotion_data: '{"src": "stories\\story1\\narration1\\scenes\\scene1a.mp4",
+        "role": "background", "totalFrame": 137}'
+      total_frame: 137
+      scene_id: scene1a
+    - remotion_component: AssetVideo
+      remotion_data: '{"src": "stories\\story1\\narration1\\scenes\\scene1b.mp4",
+        "role": "background", "totalFrame": 91}'
+      total_frame: 91
+      scene_id: scene1b
   - audio: stories/story1/narration2/speech.wav
     volume: 1.0
     scene_list:

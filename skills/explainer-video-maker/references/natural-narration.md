@@ -11,9 +11,9 @@ removes those tells.
 > **Length:** there is **no hard character cap** on a narration (`narration.content`).
 > Write a complete, substantive thought and **vary the length** across narrations
 > (mix fuller lines with the occasional short punch). Do NOT chop every narration
-> into a tiny fragment — a line should carry real information. If one narration
-> needs multiple visuals, split it into several scenes (with `percentage` shares)
-> in Step 6 — for visual reasons, not for length.
+> into a tiny fragment — a line should carry real information. Long or multi-idea
+> narrations should be split into several scenes (with `percentage` shares) in
+> Step 6, so each scene shows a portion of the thought.
 
 ---
 

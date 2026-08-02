@@ -8,13 +8,13 @@ stories: # 故事单元列表
           content: 1956年夏天，达特茅斯学院的一场研讨会，正式确立了人工智能这门学科的名字。 # 旁白内容（无字数上限）
           total_frame: 0 # 该旁白的总帧数（Step 7 自动填充）
           audio_path: "" # 旁白音频文件路径（Step 7 自动填充）
-        scene_list: # 该旁白对应的1-n个画面
+        scene_list: # 该旁白对应的1-n个画面（一条旁白通常拆成2+个画面）
           - intent: 历史背景介绍  # 表达意图
-            id: scene1 # 画面ID，全局唯一
-            percentage: 100 # 该画面占旁白总帧数的比例（%），同旁白内总和=100
+            id: scene1a # 画面ID，全局唯一
+            percentage: 60 # 该画面占旁白总帧数的比例（%），同旁白内总和=100
             data: "" # 非AIGC画面展示的数据（AIGC画面留空）
             text: "" # 非AIGC画面展示的文本（AIGC画面留空）
-            visual_content: 1956年达特茅斯学院研讨会现场，学者们围坐讨论，复古黑白影像风格 # AIGC画面要展示的内容（非提示词）
+            visual_content: 1956年达特茅斯学院研讨会现场全景，学者们围坐讨论，复古黑白影像风格 # AIGC画面要展示的内容（非提示词）
             is_aigc_scene: true # 是否AIGC生成的画面
             asset_generation_method: aigc # 资产生成方式，aigc或none
             type: video # AIGC内容类型，image、video或none
@@ -22,6 +22,21 @@ stories: # 故事单元列表
             origin_asset_path: "" # aigc生产的资产文件路径（Step 9 自动填充）
             asset_path: "" # 放大后的资产文件路径（Step 9 自动填充）
             workflows: # 生成资产所用的comfyui工作流列表
+              - workflow_type: text_to_image
+              - workflow_type: image_to_video
+          - intent: 细节聚焦  # 表达意图
+            id: scene1b # 画面ID，全局唯一
+            percentage: 40 # 40%帧数
+            data: ""
+            text: ""
+            visual_content: 特写：学者们讨论并指向黑板上的公式，复古黑白影像风格
+            is_aigc_scene: true
+            asset_generation_method: aigc
+            type: video
+            remotion_component: AssetVideo
+            origin_asset_path: ""
+            asset_path: ""
+            workflows:
               - workflow_type: text_to_image
               - workflow_type: image_to_video
       # ── narration2：非AIGC 数据画面示例 ───────────────────────────────
