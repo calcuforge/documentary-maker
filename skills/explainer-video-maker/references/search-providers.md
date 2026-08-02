@@ -38,8 +38,11 @@ python3 "${SKILL_DIR}/scripts/search_provider/search.py" \
 | `--visit-top` | 5 | Number of top results to visit for full content |
 | `--timeout` | 30000 | Page load timeout (ms) |
 
-**Locale auto-detection (default sources):**
-- China network → `baidu` + `baike` + `bing` (uses cn.bing.com)
+**Locale auto-detection (default sources):** detected by **network reachability**
+(Baidu reachable + Google blocked ⇒ China), falling back to system locale/timezone.
+- China network → `baidu` + `baike` + `bing` (uses cn.bing.com). Google/Wikipedia
+  are **unreachable** in domestic China — `search.py` drops them even if explicitly
+  passed via `--sources`.
 - International → `google` + `wikipedia` + `bing`
 
 **Baike search strategy** (3 fallback levels):

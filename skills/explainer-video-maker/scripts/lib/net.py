@@ -4,8 +4,10 @@ Network utilities — locale-aware site selection, subprocess helpers.
 
 from __future__ import annotations
 
+import functools
 import locale
 import os
+import socket
 import subprocess
 import sys
 from typing import Optional
@@ -19,22 +21,53 @@ def require_abs(*paths: str) -> None:
             sys.exit(1)
 
 
-def is_china_network() -> bool:
-    """Heuristic: detect if the local environment is likely in China.
+def _tcp_reachable(host: str, port: int = 443, timeout: float = 3.0) -> bool:
+    """True if a TCP connection to host:port can be established."""
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
-    Checks:
-    1. System locale contains 'zh' or 'CN'
-    2. Environment variable REGION is set to CN
-    3. Timezone hint (TZ contains Asia/Shanghai or Asia/Chongqing etc.)
+
+@functools.lru_cache(maxsize=1)
+def _probe_china_network() -> Optional[bool]:
+    """Probe reachability: True = domestic China, False = international,
+    None = inconclusive (e.g. no network). Baidu reachable while Google is
+    blocked ⇒ behind the GFW — this holds even when the system locale is English.
     """
-    # Check env override first
+    china_ok = _tcp_reachable("www.baidu.com")
+    intl_ok = _tcp_reachable("www.google.com")
+    if china_ok and not intl_ok:
+        return True
+    if intl_ok:
+        return False
+    return None
+
+
+def is_china_network() -> bool:
+    """Detect a domestic China network.
+
+    Order:
+    1. REGION env override (authoritative when set).
+    2. Network-reachability probe (Baidu reachable + Google blocked ⇒ China) —
+       reliable even when the system locale / timezone say otherwise.
+    3. Locale / timezone heuristics as a fallback when the probe is inconclusive
+       (e.g. no network at all).
+    """
+    # Env override first (fast, authoritative)
     region = os.environ.get("REGION", "").upper()
     if region == "CN":
         return True
     if region in ("US", "UK", "JP", "KR", "EU"):
         return False
 
-    # Check locale
+    # Network-reachability probe (cached) — the decisive check
+    probed = _probe_china_network()
+    if probed is not None:
+        return probed
+
+    # Locale fallback
     try:
         loc = locale.getdefaultlocale()[0] or ""
     except Exception:
@@ -42,7 +75,7 @@ def is_china_network() -> bool:
     if "zh" in loc.lower() or "cn" in loc.lower():
         return True
 
-    # Check timezone
+    # Timezone fallback
     tz = os.environ.get("TZ", "")
     china_zones = ("Asia/Shanghai", "Asia/Chongqing", "Asia/Urumqi", "PRC")
     if tz in china_zones:

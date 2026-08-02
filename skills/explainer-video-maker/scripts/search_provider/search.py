@@ -698,6 +698,18 @@ def main() -> None:
         else:
             sources = ["google", "wikipedia", "bing"]
 
+    # Domestic China network: Google/Wikipedia are unreachable — drop them even if
+    # explicitly requested, so the search does not hang/keep retrying blocked sites.
+    if is_china_network():
+        blocked = [s for s in sources if s in ("google", "wikipedia")]
+        if blocked:
+            sources = [s for s in sources if s not in blocked]
+            print(f"  INFO: domestic China network detected — dropping unreachable "
+                  f"source(s): {', '.join(blocked)}", file=sys.stderr)
+        if not sources:
+            sources = ["baidu", "baike", "bing"]
+            print("  INFO: no reachable sources left — falling back to baidu/baike/bing", file=sys.stderr)
+
     all_results: list[dict] = []
     page_contents: dict[str, str] = {}
 
