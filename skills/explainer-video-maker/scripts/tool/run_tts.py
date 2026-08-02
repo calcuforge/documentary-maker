@@ -145,19 +145,19 @@ def synth_http_server(
 
 
 def collect_narration_units(video_struct: dict) -> list[dict]:
-    """Collect all scene narrations with their context from video_struct.
+    """Collect all narrations with their context from video_struct.
 
-    Each scene carries exactly one narration (scene.narration). The narration
-    dict reference is kept for in-place updates of audio_path / total_frame.
+    One narration per section (section.narration); each narration maps to 1-N
+    scenes. The narration dict reference is kept for in-place updates of
+    audio_path / total_frame.
     """
     units = []
     for story in video_struct.get("stories", []):
         story_id = story.get("id", "")
-        for scene in story.get("scene_list", []):
-            narration = scene.get("narration") or {}
+        for section in story.get("section_list", []):
+            narration = section.get("narration") or {}
             units.append({
                 "story_id": story_id,
-                "scene_id": scene.get("id", ""),
                 "narration_id": narration.get("id", ""),
                 "content": narration.get("content", ""),
                 "audio_path": narration.get("audio_path", ""),

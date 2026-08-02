@@ -1,20 +1,19 @@
 # Natural Narration — Anti-Slop Rules for Spoken Scripts
 
 > **When to load:** During Step 5 (write chapter narration scripts), when writing
-> each chapter's `script.md`. Also applies when splitting scripts into per-scene
-> narrations in Step 6 — every `narration.content` field in video_struct.yaml.
+> each chapter's `script.md`. Also applies to every `narration.content` field in
+> video_struct.yaml (one narration per section).
 
 A narration script is **heard**, not read. AI-generated prose has predictable
 tells that make it sound like a machine reading a press release. This guide
 removes those tells.
 
-> **Length budget:** each scene's narration (`narration.content`) MUST be
-> **≤ 50 characters — but that is a ceiling, not a target.** Write a complete,
-> substantive thought: aim for roughly **20-45 characters**, and **vary the
-> length** across scenes (mix fuller lines with the occasional short punch).
-> Do NOT chop every narration into a 10-character fragment — a line should carry
-> real information. If a passage exceeds 50 characters, split it into multiple
-> scenes. `verify_video_struct.py` rejects anything over 50.
+> **Length:** there is **no hard character cap** on a narration (`narration.content`).
+> Write a complete, substantive thought and **vary the length** across narrations
+> (mix fuller lines with the occasional short punch). Do NOT chop every narration
+> into a tiny fragment — a line should carry real information. If one narration
+> needs multiple visuals, split it into several scenes (with `percentage` shares)
+> in Step 6 — for visual reasons, not for length.
 
 ---
 
@@ -128,5 +127,4 @@ Before finalizing narration content, verify:
 - [ ] Attributions are named or removed
 - [ ] Numbers formatted for TTS
 - [ ] Ending is a concrete fact, not "未来可期"
-- [ ] Each narration is ≤ 50 characters (split longer text into more scenes)
-- [ ] Narrations are NOT all tiny fragments — most carry a full thought (~20-45 chars) and lengths vary across scenes
+- [ ] No narration is a tiny fragment — each carries a full thought and lengths vary across narrations

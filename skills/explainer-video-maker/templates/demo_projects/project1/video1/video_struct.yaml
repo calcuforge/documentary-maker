@@ -1,257 +1,306 @@
 stories: # 故事单元列表
   - id: story1  # 故事ID，全局唯一
     name: 人工智能的崛起 # 故事名称
-    scene_list: # 画面单元列表，1个画面对应1个旁白；由章节讲稿 script.md 拆分而来
-      # ── scene1：AIGC 视频画面示例（字段含义见此处注释）──────────────────
-      - intent: 历史背景介绍  # 表达意图
-        id: scene1 # 画面ID，全局唯一
-        data: "" # 非AIGC画面展示的数据（AIGC画面留空）
-        text: "" # 非AIGC画面展示的文本（AIGC画面留空）
-        visual_content: 1956年达特茅斯学院研讨会现场，学者们围坐讨论，复古黑白影像风格 # AIGC画面要展示的内容（非提示词）
-        is_aigc_scene: true # 是否AIGC生成的画面
-        asset_generation_method: aigc # 资产生成方式，aigc或none
-        type: video # AIGC内容类型，image、video或none
-        remotion_component: AssetVideo # remotion渲染组件
-        origin_asset_path: "" # aigc生产的资产文件路径（Step 9 自动填充）
-        asset_path: "" # 放大后的资产文件路径（Step 9 自动填充）
-        workflows: # 生成资产所用的comfyui工作流列表
-          - workflow_type: text_to_image
-          - workflow_type: image_to_video
-        narration: # 旁白单元，作为画面的属性，1个画面对应1个旁白
+    section_list: # 章节单元列表，1个section=1条旁白；每条旁白对应1-n个scene（scene带percentage，总和=100）
+      # ── narration1：AIGC 视频画面示例 ──────────────────────────────────
+      - narration: # 旁白单元（每条旁白一个，Step 7 自动填充 total_frame/audio_path）
           id: narration1 # 旁白ID，全局唯一
-          content: 1956年夏天，达特茅斯学院的一场研讨会，正式确立了人工智能这门学科的名字。 # 旁白内容（≤50字）
-          total_frame: 0 # 该画面（旁白）的总帧数（Step 7 自动填充）
+          content: 1956年夏天，达特茅斯学院的一场研讨会，正式确立了人工智能这门学科的名字。 # 旁白内容（无字数上限）
+          total_frame: 0 # 该旁白的总帧数（Step 7 自动填充）
           audio_path: "" # 旁白音频文件路径（Step 7 自动填充）
-      # ── scene2：非AIGC 数据画面示例（字段含义见此处注释）────────────────
-      - intent: 核心观点呈现  # 表达意图
-        id: scene2 # 画面ID，全局唯一
-        data: '{"heading":"学科奠基","quote":"要让机器去模拟人类的学习、推理和解决问题的能力。","attribution":"麦卡锡、明斯基等学者"}' # 非AIGC画面展示的数据（组件结构化数据，JSON）
-        text: "" # 非AIGC画面展示的文本
-        visual_content: "" # AIGC画面要展示的内容（非AIGC留空）
-        is_aigc_scene: false # 是否AIGC生成的画面
-        asset_generation_method: none # 资产生成方式，aigc或none
-        type: none # AIGC内容类型，image、video或none
-        remotion_component: QuoteBlock # remotion渲染组件
-        origin_asset_path: "" # aigc生产的资产文件路径
-        asset_path: "" # 放大后的资产文件路径
-        workflows: [] # 非AIGC无需工作流
-        narration:
+        scene_list: # 该旁白对应的1-n个画面
+          - intent: 历史背景介绍  # 表达意图
+            id: scene1 # 画面ID，全局唯一
+            percentage: 100 # 该画面占旁白总帧数的比例（%），同旁白内总和=100
+            data: "" # 非AIGC画面展示的数据（AIGC画面留空）
+            text: "" # 非AIGC画面展示的文本（AIGC画面留空）
+            visual_content: 1956年达特茅斯学院研讨会现场，学者们围坐讨论，复古黑白影像风格 # AIGC画面要展示的内容（非提示词）
+            is_aigc_scene: true # 是否AIGC生成的画面
+            asset_generation_method: aigc # 资产生成方式，aigc或none
+            type: video # AIGC内容类型，image、video或none
+            remotion_component: AssetVideo # remotion渲染组件
+            origin_asset_path: "" # aigc生产的资产文件路径（Step 9 自动填充）
+            asset_path: "" # 放大后的资产文件路径（Step 9 自动填充）
+            workflows: # 生成资产所用的comfyui工作流列表
+              - workflow_type: text_to_image
+              - workflow_type: image_to_video
+      # ── narration2：非AIGC 数据画面示例 ───────────────────────────────
+      - narration:
           id: narration2
           content: 麦卡锡和明斯基等学者提出，要让机器去模拟人类的学习、推理和解决问题的能力。
           total_frame: 0
           audio_path: ""
-      # ── scene3：网络素材（stock）画面示例 ─────────────────────────────────
-      # asset_generation_method: stock 表示从网络素材库搜索图片/视频，而非AIGC生成。
-      # 适用于表现非具体对象或抽象场景（如"60年代实验室氛围"），对图像准确度要求不高。
-      # is_aigc_scene 仍为 true（需要外部资产），但 workflows 为空（无需ComfyUI工作流）。
-      - intent: 时代氛围渲染  # 表达意图
-        id: scene3 # 画面ID，全局唯一
-        data: "" # 非AIGC画面展示的数据（stock画面留空）
-        text: "" # 非AIGC画面展示的文本（stock画面留空）
-        visual_content: 1960年代计算机实验室，大型机，科学家工作，复古色调 # 搜索关键词来源
-        is_aigc_scene: true # 需要外部资产（与aigc相同）
-        asset_generation_method: stock # 资产来源：stock（网络素材搜索）
-        type: image # 素材类型：image 或 video
-        remotion_component: KenBurnsImage # 渲染组件（stock图片推荐KenBurnsImage增加动感）
-        origin_asset_path: "" # 下载的素材文件路径（Step 8 自动填充）
-        asset_path: "" # 放大后的素材文件路径（Step 10 自动填充）
-        workflows: [] # stock素材无需ComfyUI工作流
-        narration:
+        scene_list:
+          - intent: 核心观点呈现  # 表达意图
+            id: scene2 # 画面ID，全局唯一
+            percentage: 100
+            data: '{"heading":"学科奠基","quote":"要让机器去模拟人类的学习、推理和解决问题的能力。","attribution":"麦卡锡、明斯基等学者"}' # 非AIGC画面展示的数据（组件结构化数据，JSON）
+            text: "" # 非AIGC画面展示的文本
+            visual_content: "" # AIGC画面要展示的内容（非AIGC留空）
+            is_aigc_scene: false # 是否AIGC生成的画面
+            asset_generation_method: none # 资产生成方式，aigc或none
+            type: none # AIGC内容类型，image、video或none
+            remotion_component: QuoteBlock # remotion渲染组件
+            origin_asset_path: "" # aigc生产的资产文件路径
+            asset_path: "" # 放大后的资产文件路径
+            workflows: [] # 非AIGC无需工作流
+      # ── narration3：1条旁白 → 2个scene（percentage 60/40 演示）─────────
+      - narration:
           id: narration3
-          content: 早期的研究者满怀乐观，他们相信用不了几十年，就能造出真正会思考的机器。
+          content: 早期的研究者满怀乐观，他们相信用不了几十年，就能造出真正会思考的机器。与此同时，新的理论不断涌现，推动着整个领域向前迈进。学术界对人工智能的前景充满期待。
           total_frame: 0
           audio_path: ""
-      - intent: 发展历程梳理
-        id: scene4
-        data: '{"heading":"早期历程","items":[{"label":"1956","description":"达特茅斯会议，学科诞生"},{"label":"1960s","description":"乐观探索，目标宏大"},{"label":"1970s","description":"进展放缓，遭遇瓶颈"}]}'
-        text: ""
-        visual_content: ""
-        is_aigc_scene: false
-        asset_generation_method: none
-        type: none
-        remotion_component: Timeline
-        origin_asset_path: ""
-        asset_path: ""
-        workflows: []
-        narration:
+        scene_list: # 一条旁白拆成2个画面，percentage总和=100
+          - intent: 时代氛围渲染  # 表达意图
+            id: scene3a # 画面ID，全局唯一
+            percentage: 60 # 60%帧数
+            data: "" # 非AIGC画面展示的数据（stock画面留空）
+            text: "" # 非AIGC画面展示的文本（stock画面留空）
+            visual_content: 1960年代计算机实验室，大型机，科学家工作，复古色调 # 搜索关键词来源
+            is_aigc_scene: true # 需要外部资产（与aigc相同）
+            asset_generation_method: stock # 资产来源：stock（网络素材搜索）
+            type: image # 素材类型：image 或 video
+            remotion_component: KenBurnsImage # 渲染组件（stock图片推荐KenBurnsImage增加动感）
+            origin_asset_path: "" # 下载的素材文件路径（Step 8 自动填充）
+            asset_path: "" # 放大后的素材文件路径（Step 10 自动填充）
+            workflows: [] # stock素材无需ComfyUI工作流
+          - intent: 细节渲染  # 表达意图
+            id: scene3b # 画面ID，全局唯一
+            percentage: 40 # 40%帧数
+            data: ""
+            text: ""
+            visual_content: 特写：科学家在大型机前记录数据，复古色调
+            is_aigc_scene: true
+            asset_generation_method: stock
+            type: image
+            remotion_component: KenBurnsImage
+            origin_asset_path: ""
+            asset_path: ""
+            workflows: []
+      # ── narration4：Timeline 数据画面 ─────────────────────────────────
+      - narration:
           id: narration4
           content: 然而现实的进展远比设想缓慢，有限的算力和匮乏的数据，让许多宏大的目标落空。
           total_frame: 0
           audio_path: ""
-      - intent: 历史场景再现
-        id: scene5
-        data: ""
-        text: ""
-        visual_content: 1970年代冷清的实验室，停用的大型计算机，灰暗压抑的色调，体现第一次AI寒冬
-        is_aigc_scene: true
-        asset_generation_method: aigc
-        type: video
-        remotion_component: AssetVideo
-        origin_asset_path: ""
-        asset_path: ""
-        workflows:
-          - workflow_type: text_to_image
-          - workflow_type: image_to_video
-        narration:
+        scene_list:
+          - intent: 发展历程梳理
+            id: scene4
+            percentage: 100
+            data: '{"heading":"早期历程","items":[{"label":"1956","description":"达特茅斯会议，学科诞生"},{"label":"1960s","description":"乐观探索，目标宏大"},{"label":"1970s","description":"进展放缓，遭遇瓶颈"}]}'
+            text: ""
+            visual_content: ""
+            is_aigc_scene: false
+            asset_generation_method: none
+            type: none
+            remotion_component: Timeline
+            origin_asset_path: ""
+            asset_path: ""
+            workflows: []
+      # ── narration5：AIGC 视频画面 ─────────────────────────────────────
+      - narration:
           id: narration5
           content: 到了20世纪70年代，政府和企业纷纷削减资金，人工智能跌入了历史上的第一次寒冬。
           total_frame: 0
           audio_path: ""
-      - intent: 关键转折展示
-        id: scene6
-        data: '{"heading":"复苏契机","icon":"zap","title":"专家系统商用","description":"80年代专家系统走向商业应用，重新点燃工业界的兴趣与投入。"}'
-        text: ""
-        visual_content: ""
-        is_aigc_scene: false
-        asset_generation_method: none
-        type: none
-        remotion_component: IconCard
-        origin_asset_path: ""
-        asset_path: ""
-        workflows: []
-        narration:
+        scene_list:
+          - intent: 历史场景再现
+            id: scene5
+            percentage: 100
+            data: ""
+            text: ""
+            visual_content: 1970年代冷清的实验室，停用的大型计算机，灰暗压抑的色调，体现第一次AI寒冬
+            is_aigc_scene: true
+            asset_generation_method: aigc
+            type: video
+            remotion_component: AssetVideo
+            origin_asset_path: ""
+            asset_path: ""
+            workflows:
+              - workflow_type: text_to_image
+              - workflow_type: image_to_video
+      # ── narration6：IconCard 数据画面 ─────────────────────────────────
+      - narration:
           id: narration6
           content: 直到80年代专家系统开始商用，才重新点燃了工业界对这项技术的兴趣和投入。
           total_frame: 0
           audio_path: ""
-      - intent: 里程碑数据
-        id: scene7
-        data: '{"heading":"里程碑","items":[{"value":1997,"suffix":"年","label":"深蓝击败卡斯帕罗夫","icon":"trophy"}]}'
-        text: ""
-        visual_content: ""
-        is_aigc_scene: false
-        asset_generation_method: none
-        type: none
-        remotion_component: StatCounter
-        origin_asset_path: ""
-        asset_path: ""
-        workflows: []
-        narration:
+        scene_list:
+          - intent: 关键转折展示
+            id: scene6
+            percentage: 100
+            data: '{"heading":"复苏契机","icon":"zap","title":"专家系统商用","description":"80年代专家系统走向商业应用，重新点燃工业界的兴趣与投入。"}'
+            text: ""
+            visual_content: ""
+            is_aigc_scene: false
+            asset_generation_method: none
+            type: none
+            remotion_component: IconCard
+            origin_asset_path: ""
+            asset_path: ""
+            workflows: []
+      # ── narration7：StatCounter 数据画面 ──────────────────────────────
+      - narration:
           id: narration7
           content: 1997年，IBM的深蓝计算机击败了国际象棋世界冠军卡斯帕罗夫，让全世界为之震惊。
           total_frame: 0
           audio_path: ""
-      - intent: 概念可视化
-        id: scene8
-        data: ""
-        text: ""
-        visual_content: 2012年深度学习神经网络示意图，发光的节点与连接线，科技感蓝色调
-        is_aigc_scene: true
-        asset_generation_method: aigc
-        type: image
-        remotion_component: AssetImage
-        origin_asset_path: ""
-        asset_path: ""
-        workflows:
-          - workflow_type: text_to_image
-        narration:
+        scene_list:
+          - intent: 里程碑数据
+            id: scene7
+            percentage: 100
+            data: '{"heading":"里程碑","items":[{"value":1997,"suffix":"年","label":"深蓝击败卡斯帕罗夫","icon":"trophy"}]}'
+            text: ""
+            visual_content: ""
+            is_aigc_scene: false
+            asset_generation_method: none
+            type: none
+            remotion_component: StatCounter
+            origin_asset_path: ""
+            asset_path: ""
+            workflows: []
+      # ── narration8：AIGC 图片画面 ─────────────────────────────────────
+      - narration:
           id: narration8
           content: 2012年，深度神经网络在一场图像识别竞赛中取得了压倒性的胜利，掀起了新的浪潮。
           total_frame: 0
           audio_path: ""
-      - intent: 应用场景展示
-        id: scene9
-        data: '{"heading":"日常应用","columns":3,"items":[{"icon":"search","title":"搜索引擎","description":"更精准的检索"},{"icon":"languages","title":"机器翻译","description":"跨语言沟通"},{"icon":"thumbs-up","title":"个性推荐","description":"懂你所好"}]}'
-        text: ""
-        visual_content: ""
-        is_aigc_scene: false
-        asset_generation_method: none
-        type: none
-        remotion_component: FeatureGrid
-        origin_asset_path: ""
-        asset_path: ""
-        workflows: []
-        narration:
+        scene_list:
+          - intent: 概念可视化
+            id: scene8
+            percentage: 100
+            data: ""
+            text: ""
+            visual_content: 2012年深度学习神经网络示意图，发光的节点与连接线，科技感蓝色调
+            is_aigc_scene: true
+            asset_generation_method: aigc
+            type: image
+            remotion_component: AssetImage
+            origin_asset_path: ""
+            asset_path: ""
+            workflows:
+              - workflow_type: text_to_image
+      # ── narration9：FeatureGrid 数据画面 ──────────────────────────────
+      - narration:
           id: narration9
           content: 在此之后，神经网络迅速渗透到搜索引擎、机器翻译和个性化推荐等日常应用之中。
           total_frame: 0
           audio_path: ""
-      - intent: 未来场景想象
-        id: scene10
-        data: ""
-        text: ""
-        visual_content: 2022年生成式AI创作画面，屏幕上自动生成文字与图像，未来感数字空间
-        is_aigc_scene: true
-        asset_generation_method: aigc
-        type: video
-        remotion_component: AssetVideo
-        origin_asset_path: ""
-        asset_path: ""
-        workflows:
-          - workflow_type: text_to_image
-          - workflow_type: image_to_video
-        narration:
+        scene_list:
+          - intent: 应用场景展示
+            id: scene9
+            percentage: 100
+            data: '{"heading":"日常应用","columns":3,"items":[{"icon":"search","title":"搜索引擎","description":"更精准的检索"},{"icon":"languages","title":"机器翻译","description":"跨语言沟通"},{"icon":"thumbs-up","title":"个性推荐","description":"懂你所好"}]}'
+            text: ""
+            visual_content: ""
+            is_aigc_scene: false
+            asset_generation_method: none
+            type: none
+            remotion_component: FeatureGrid
+            origin_asset_path: ""
+            asset_path: ""
+            workflows: []
+      # ── narration10：AIGC 视频画面 ────────────────────────────────────
+      - narration:
           id: narration10
           content: 2022年，生成式模型突然迎来爆发，机器开始学会写作、作画，甚至编写程序代码。
           total_frame: 0
           audio_path: ""
-      - intent: 数据趋势展示
-        id: scene11
-        data: '{"heading":"开源力量","items":[{"label":"开源模型","value":80},{"label":"社区贡献者","value":65},{"label":"衍生应用","value":90}]}'
-        text: ""
-        visual_content: ""
-        is_aigc_scene: false
-        asset_generation_method: none
-        type: none
-        remotion_component: DataBar
-        origin_asset_path: ""
-        asset_path: ""
-        workflows: []
-        narration:
+        scene_list:
+          - intent: 未来场景想象
+            id: scene10
+            percentage: 100
+            data: ""
+            text: ""
+            visual_content: 2022年生成式AI创作画面，屏幕上自动生成文字与图像，未来感数字空间
+            is_aigc_scene: true
+            asset_generation_method: aigc
+            type: video
+            remotion_component: AssetVideo
+            origin_asset_path: ""
+            asset_path: ""
+            workflows:
+              - workflow_type: text_to_image
+              - workflow_type: image_to_video
+      # ── narration11：DataBar 数据画面 ─────────────────────────────────
+      - narration:
           id: narration11
           content: 与此同时，开源社区不断壮大，让越来越多的开发者能够参与到模型的创新中来。
           total_frame: 0
           audio_path: ""
-      - intent: 要点归纳
-        id: scene12
-        data: '{"heading":"国家战略","icon":"globe","title":"上升为竞争力关键","description":"各国纷纷出台战略，把人工智能视为决定未来国家竞争力的关键力量。"}'
-        text: ""
-        visual_content: ""
-        is_aigc_scene: false
-        asset_generation_method: none
-        type: none
-        remotion_component: IconCard
-        origin_asset_path: ""
-        asset_path: ""
-        workflows: []
-        narration:
+        scene_list:
+          - intent: 数据趋势展示
+            id: scene11
+            percentage: 100
+            data: '{"heading":"开源力量","items":[{"label":"开源模型","value":80},{"label":"社区贡献者","value":65},{"label":"衍生应用","value":90}]}'
+            text: ""
+            visual_content: ""
+            is_aigc_scene: false
+            asset_generation_method: none
+            type: none
+            remotion_component: DataBar
+            origin_asset_path: ""
+            asset_path: ""
+            workflows: []
+      # ── narration12：IconCard 数据画面 ────────────────────────────────
+      - narration:
           id: narration12
           content: 各国政府也纷纷出台战略，把人工智能视为决定未来国家竞争力的关键力量。
           total_frame: 0
           audio_path: ""
-      - intent: 总结场景升华
-        id: scene13
-        data: ""
-        text: ""
-        visual_content: 人工智能融入现代生活的城市夜景，万家灯火与数据流交织，温暖而宏大
-        is_aigc_scene: true
-        asset_generation_method: aigc
-        type: video
-        remotion_component: AssetVideo
-        origin_asset_path: ""
-        asset_path: ""
-        workflows:
-          - workflow_type: text_to_image
-          - workflow_type: image_to_video
-        narration:
+        scene_list:
+          - intent: 要点归纳
+            id: scene12
+            percentage: 100
+            data: '{"heading":"国家战略","icon":"globe","title":"上升为竞争力关键","description":"各国纷纷出台战略，把人工智能视为决定未来国家竞争力的关键力量。"}'
+            text: ""
+            visual_content: ""
+            is_aigc_scene: false
+            asset_generation_method: none
+            type: none
+            remotion_component: IconCard
+            origin_asset_path: ""
+            asset_path: ""
+            workflows: []
+      # ── narration13：AIGC 视频画面 ────────────────────────────────────
+      - narration:
           id: narration13
           content: 短短几十年间，人工智能从一间间实验室走进了千家万户，成为这个时代最关键的技术。
           total_frame: 0
           audio_path: ""
-      - intent: 展望引用
-        id: scene14
-        data: '{"heading":"展望未来","quote":"人工智能仍在快速演进，它带来的机遇和挑战，需要全社会共同去面对。","attribution":"结语"}'
-        text: ""
-        visual_content: ""
-        is_aigc_scene: false
-        asset_generation_method: none
-        type: none
-        remotion_component: QuoteBlock
-        origin_asset_path: ""
-        asset_path: ""
-        workflows: []
-        narration:
+        scene_list:
+          - intent: 总结场景升华
+            id: scene13
+            percentage: 100
+            data: ""
+            text: ""
+            visual_content: 人工智能融入现代生活的城市夜景，万家灯火与数据流交织，温暖而宏大
+            is_aigc_scene: true
+            asset_generation_method: aigc
+            type: video
+            remotion_component: AssetVideo
+            origin_asset_path: ""
+            asset_path: ""
+            workflows:
+              - workflow_type: text_to_image
+              - workflow_type: image_to_video
+      # ── narration14：QuoteBlock 数据画面 ──────────────────────────────
+      - narration:
           id: narration14
           content: 展望未来，人工智能仍在快速演进，它带来的机遇和挑战，需要全社会共同去面对。
           total_frame: 0
           audio_path: ""
+        scene_list:
+          - intent: 展望引用
+            id: scene14
+            percentage: 100
+            data: '{"heading":"展望未来","quote":"人工智能仍在快速演进，它带来的机遇和挑战，需要全社会共同去面对。","attribution":"结语"}'
+            text: ""
+            visual_content: ""
+            is_aigc_scene: false
+            asset_generation_method: none
+            type: none
+            remotion_component: QuoteBlock
+            origin_asset_path: ""
+            asset_path: ""
+            workflows: []

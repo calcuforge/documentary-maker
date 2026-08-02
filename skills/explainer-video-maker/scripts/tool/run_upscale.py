@@ -123,16 +123,17 @@ def collect_scenes_to_upscale(video_struct: dict) -> list[dict]:
     """Collect all AIGC scenes that have origin_asset_path but no asset_path."""
     scenes = []
     for story in video_struct.get("stories", []):
-        for scene in story.get("scene_list", []):
-            origin = scene.get("origin_asset_path", "")
-            asset = scene.get("asset_path", "")
-            if origin and not asset and scene.get("is_aigc_scene", False):
-                scenes.append({
-                    "scene_id": scene.get("id", ""),
-                    "origin_asset_path": origin,
-                    "type": scene.get("type", "image"),
-                    "scene_ref": scene,
-                })
+        for section in story.get("section_list", []):
+            for scene in section.get("scene_list", []):
+                origin = scene.get("origin_asset_path", "")
+                asset = scene.get("asset_path", "")
+                if origin and not asset and scene.get("is_aigc_scene", False):
+                    scenes.append({
+                        "scene_id": scene.get("id", ""),
+                        "origin_asset_path": origin,
+                        "type": scene.get("type", "image"),
+                        "scene_ref": scene,
+                    })
     return scenes
 
 
@@ -171,17 +172,18 @@ def main() -> None:
     if args.force:
         # Include scenes that already have asset_path
         for story in video_struct.get("stories", []):
-            for scene in story.get("scene_list", []):
-                origin = scene.get("origin_asset_path", "")
-                if origin and scene.get("is_aigc_scene", False):
-                    already_in = any(s["scene_id"] == scene.get("id") for s in scenes)
-                    if not already_in:
-                        scenes.append({
-                            "scene_id": scene.get("id", ""),
-                            "origin_asset_path": origin,
-                            "type": scene.get("type", "image"),
-                            "scene_ref": scene,
-                        })
+            for section in story.get("section_list", []):
+                for scene in section.get("scene_list", []):
+                    origin = scene.get("origin_asset_path", "")
+                    if origin and scene.get("is_aigc_scene", False):
+                        already_in = any(s["scene_id"] == scene.get("id") for s in scenes)
+                        if not already_in:
+                            scenes.append({
+                                "scene_id": scene.get("id", ""),
+                                "origin_asset_path": origin,
+                                "type": scene.get("type", "image"),
+                                "scene_ref": scene,
+                            })
 
     if not scenes:
         print(json.dumps({
@@ -273,15 +275,16 @@ def main() -> None:
 
     compressed = 0
     for story in video_struct.get("stories", []):
-        for scene in story.get("scene_list", []):
-            asset = scene.get("asset_path", "")
-            if not asset or not Path(asset).exists():
-                continue
-            if scene.get("type") != "video":
-                continue
-            if scene.get("is_aigc_scene"):
-                _compress_video(asset)
-                compressed += 1
+        for section in story.get("section_list", []):
+            for scene in section.get("scene_list", []):
+                asset = scene.get("asset_path", "")
+                if not asset or not Path(asset).exists():
+                    continue
+                if scene.get("type") != "video":
+                    continue
+                if scene.get("is_aigc_scene"):
+                    _compress_video(asset)
+                    compressed += 1
     if compressed:
         print(f"  Compressed {compressed} video asset(s) (h264 crf 18)", file=sys.stderr)
 

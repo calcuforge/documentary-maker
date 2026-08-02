@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """
-Generate the scene_list (narration skeleton) in video_struct.yaml from each
+Generate the section_list (narration skeleton) in video_struct.yaml from each
 chapter's script.md, which is written one narration per line (Step 5).
 
 For every story in video_struct.yaml, reads stories/{story_id}/script.md and
-turns each non-empty line into one scene carrying that line as its narration
-(1 line = 1 scene = 1 narration). The scene's display fields — intent,
+turns each non-empty line into one SECTION carrying that line as its narration
+(1 line = 1 narration = 1 section). Each section starts with a single default
+scene (percentage: 100); the agent splits it into 1-N scenes and adjusts the
+percentages (sum = 100 per narration) in Step 6. Scene display fields — intent,
 remotion_component, is_aigc_scene, type, data, text, visual_content, workflows —
-are left empty/default for the agent to fill in Step 6 (one story at a time).
+are left empty/default for the agent to fill.
 
-Stories that already have a non-empty scene_list are skipped unless --force is
+Stories that already have a non-empty section_list are skipped unless --force is
 given, so the tool is safe to re-run and works story-by-story.
 
 Usage:
@@ -32,7 +34,6 @@ sys.path.insert(0, str(SKILL_ROOT))
 from lib.yamlutil import load_yaml, save_yaml
 
 SCRIPT_FILENAME = "script.md"
-MAX_NARRATION_CHARS = 50
 
 
 def parse_script_lines(script_path: Path) -> list[str]:
@@ -62,8 +63,8 @@ def id_generator(existing_ids: set[str], prefix: str):
         n += 1
 
 
-def build_scene(scene_id: str, narration_id: str, content: str) -> dict:
-    """Build a scene skeleton with default display fields (agent fills in Step 6)."""
+def build_default_scene(scene_id: str) -> dict:
+    """Build a single default scene (percentage 100) — agent splits in Step 6."""
     return {
         "intent": "",  # agent fills (Step 6)
         "id": scene_id,
@@ -77,22 +78,30 @@ def build_scene(scene_id: str, narration_id: str, content: str) -> dict:
         "origin_asset_path": "",
         "asset_path": "",
         "workflows": [],
+        "percentage": 100,  # split by agent (Step 6); Σ per narration = 100
+    }
+
+
+def build_section(narration_id: str, content: str, scene_id: str) -> dict:
+    """Build a section: one narration + a single default scene."""
+    return {
         "narration": {
             "id": narration_id,
             "content": content,
             "total_frame": 0,  # auto-filled in Step 7 (TTS)
             "audio_path": "",  # auto-filled in Step 7 (TTS)
         },
+        "scene_list": [build_default_scene(scene_id)],
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Generate scene_list narration skeleton from per-chapter script.md"
+        description="Generate section_list narration skeleton from per-chapter script.md"
     )
     parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
     parser.add_argument("--force", action="store_true",
-                        help="Regenerate scene_list even for stories that already have one")
+                        help="Regenerate section_list even for stories that already have one")
     args = parser.parse_args()
 
     from lib.net import require_abs
@@ -113,9 +122,10 @@ def main() -> None:
     existing_scene_ids: set[str] = set()
     existing_narration_ids: set[str] = set()
     for story in stories:
-        for scene in story.get("scene_list") or []:
-            existing_scene_ids.add(scene.get("id", ""))
-            existing_narration_ids.add((scene.get("narration") or {}).get("id", ""))
+        for section in story.get("section_list") or []:
+            existing_narration_ids.add((section.get("narration") or {}).get("id", ""))
+            for scene in section.get("scene_list") or []:
+                existing_scene_ids.add(scene.get("id", ""))
 
     scene_ids = id_generator(existing_scene_ids, "scene")
     narration_ids = id_generator(existing_narration_ids, "narration")
@@ -134,7 +144,7 @@ def main() -> None:
             errors.append(f"{prefix}: missing story id, cannot locate script.md")
             continue
 
-        if (story.get("scene_list") or []) and not args.force:
+        if (story.get("section_list") or []) and not args.force:
             skipped_stories += 1
             continue
 
@@ -148,18 +158,13 @@ def main() -> None:
             errors.append(f"{prefix}: no narration lines in {script_path}")
             continue
 
-        scenes = []
-        for li, line in enumerate(lines, start=1):
-            if len(line) > MAX_NARRATION_CHARS:
-                warnings.append(
-                    f"{prefix} line {li}: narration is {len(line)} chars "
-                    f"(> {MAX_NARRATION_CHARS}): {line[:24]}…"
-                )
-            scenes.append(build_scene(next(scene_ids), next(narration_ids), line))
+        sections = []
+        for line in lines:
+            sections.append(build_section(next(narration_ids), line, next(scene_ids)))
 
-        story["scene_list"] = scenes
+        story["section_list"] = sections
         generated_stories += 1
-        generated_scenes += len(scenes)
+        generated_scenes += len(sections)
 
     if generated_stories > 0:
         save_yaml(struct, args.video_struct)
@@ -186,7 +191,7 @@ def main() -> None:
         print(json.dumps({
             "status": "ok",
             "msg": f"generated {generated_scenes} scene(s) across {generated_stories} story(ies) "
-                   f"({skipped_stories} story(ies) skipped, already had scenes)",
+                   f"({skipped_stories} story(ies) skipped, already had sections)",
             "data": {"generated_stories": generated_stories, "generated_scenes": generated_scenes,
                      "skipped_stories": skipped_stories},
         }, ensure_ascii=False, indent=2))

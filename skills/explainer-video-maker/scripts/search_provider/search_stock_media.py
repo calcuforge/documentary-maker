@@ -31,6 +31,7 @@ from pathlib import Path
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL_ROOT))
 
+from lib.scene_frames import scene_frame_allocation
 from lib.yamlutil import load_yaml, save_yaml
 
 
@@ -359,13 +360,23 @@ def pick_best(results: list[dict], target_w: int, target_h: int,
 
 
 def collect_stock_scenes(video_struct: dict) -> list[dict]:
-    """Collect all scenes with asset_generation_method: stock."""
+    """Collect all scenes with asset_generation_method: stock.
+
+    Each scene's `total_frame` is its percentage share of the narration's
+    total_frame (largest-remainder), used to size stock video clips.
+    """
     scenes = []
     for story in video_struct.get("stories", []):
         story_id = story.get("id", "")
-        for scene in story.get("scene_list", []):
-            if scene.get("asset_generation_method") == "stock":
-                narration = scene.get("narration") or {}
+        for section in story.get("section_list", []):
+            narration = section.get("narration") or {}
+            section_scenes = section.get("scene_list", [])
+            percents = [s.get("percentage", 100) for s in section_scenes]
+            frames = scene_frame_allocation(int(narration.get("total_frame", 0) or 0), percents)
+            for idx, scene in enumerate(section_scenes):
+                if scene.get("asset_generation_method") != "stock":
+                    continue
+                scene_frame = frames[idx] if idx < len(frames) else narration.get("total_frame", 0)
                 scenes.append({
                     "story_id": story_id,
                     "scene_id": scene.get("id", ""),
@@ -373,7 +384,7 @@ def collect_stock_scenes(video_struct: dict) -> list[dict]:
                     "visual_content": scene.get("visual_content", ""),
                     "intent": scene.get("intent", ""),
                     "type": scene.get("type", "image"),
-                    "total_frame": narration.get("total_frame", 0),
+                    "total_frame": scene_frame,
                     "origin_asset_path": scene.get("origin_asset_path", ""),
                     "scene_ref": scene,
                 })

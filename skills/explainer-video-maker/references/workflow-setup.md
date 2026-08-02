@@ -9,10 +9,12 @@
 The pipeline produces narration-driven explainer videos through 13 steps.
 Audio drives visuals: narration audio length determines frame counts.
 
-Structure hierarchy: **Story → Scene** (each scene carries one narration)
-- 1 story contains N scene units
-- Each scene has exactly one nested `narration` (1 scene = 1 narration)
-- The narration audio duration determines the scene's total frame count
+Structure hierarchy: **Story → Section → Scene**
+- 1 story contains N sections; each section = exactly one narration
+- Each narration (section) maps to 1-N scenes; every scene carries an integer
+  `percentage` (Σ = 100 per narration)
+- The narration audio duration determines `narration.total_frame`; each scene's
+  frames = its percentage share (largest-remainder, Σ scene frames == total_frame)
 
 **Output confinement — ALL files under the project:** every file produced during
 the pipeline (search results, scripts, audio, AIGC assets, configs, video output)
@@ -285,7 +287,7 @@ projects/
    | medium   | 5-7              |
    | long     | 8-12             |
 
-2. Create `video_struct.yaml` with the chapter list ONLY — no `scene_list` yet:
+2. Create `video_struct.yaml` with the chapter list ONLY — no `section_list` yet:
    ```yaml
    stories:
      - id: story1

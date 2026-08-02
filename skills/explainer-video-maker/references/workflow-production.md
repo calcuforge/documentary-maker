@@ -163,8 +163,9 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
    - Use dimensions from `aigc` config:
      - Image tasks: `origin_image_width` × `origin_image_height` (default 1280×720)
      - Video tasks: `origin_video_width` × `origin_video_height` (default 1280×720)
-   - Calculate `total_frame` for video tasks from the scene's narration:
-     `scene_frames = narration.total_frame` (the scene owns its whole narration duration).
+   - Calculate `total_frame` for video tasks as the scene's percentage share of
+     the narration: `scene_frames = round(percentage/100 × narration.total_frame)`
+     (largest-remainder, so Σ scene frames == narration.total_frame).
 
 4. Repeat for every story until all AIGC tasks are in `video_tasks.yaml`.
 
@@ -324,10 +325,11 @@ bgm:
    ```
 
 2. **Fill `remotion_data` for each scene.** The generated structure is nested:
-   each `section_list` entry corresponds to one scene and its narration
-   (`audio` + a single-entry `scene_list`). The script auto-populates
-   `remotion_data` for AssetVideo/AssetImage and data/text scenes, but complex
-   components may need enrichment. Consult the remotion-video-template README.md:
+   each `section_list` entry corresponds to ONE narration (`audio`) and its 1-N
+   scenes (`scene_list`), with each scene's `total_frame` = its percentage share
+   of the narration's `total_frame`. The script auto-populates `remotion_data`
+   for AssetVideo/AssetImage and data/text scenes, but complex components may
+   need enrichment. Consult the remotion-video-template README.md:
 
    | Component | Key Fields |
    |-----------|-----------|
@@ -451,7 +453,7 @@ Generated artifacts:
 - {file_path_2}
 ...
 
-{Optional: key summary, e.g. "3 stories, 15 scenes (each with one narration)" or
+{Optional: key summary, e.g. "3 stories, 8 sections / 15 scenes (each section = one narration)" or
 "TTS generated 15 audio files, total duration 4:32"}
 
 Shall I proceed to Step {N+1}: {next step name}?
@@ -466,7 +468,7 @@ Per-step artifact summary:
 | 3 | `search_results/result{N}.md` (list all, count of results) |
 | 4 | `video_struct.yaml` (story count — chapter list) |
 | 5 | `stories/{story_id}/script.md` (count; total meets `min_story_chars` × chapters) |
-| 6 | `video_struct.yaml` (scene count; each scene = one narration) |
+| 6 | `video_struct.yaml` (section + scene counts; each section = one narration) |
 | 7 | `speech.wav` files (count, total duration) |
 | 8 | `scenes/origin_*` stock downloads (count, provider, resolution) |
 | 9 | `video_tasks.yaml` (task group count, total tasks) |

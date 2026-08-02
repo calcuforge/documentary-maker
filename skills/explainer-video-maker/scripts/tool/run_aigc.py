@@ -41,17 +41,19 @@ PLACEHOLDER_RE = re.compile(r"\$task(\d+)")
 def find_scene_context(video_struct: dict, scene_id: str) -> dict | None:
     """Find the story_id and narration_id for a given scene_id.
 
-    Each scene carries its narration as a nested property (scene.narration).
+    Narration lives on the section (section.narration); each section maps to 1-N
+    scenes.
     """
     for story in video_struct.get("stories", []):
-        for scene in story.get("scene_list", []):
-            if scene.get("id") == scene_id:
-                narration = scene.get("narration") or {}
-                return {
-                    "story_id": story.get("id", ""),
-                    "narration_id": narration.get("id", ""),
-                    "scene": scene,
-                }
+        for section in story.get("section_list", []):
+            narration = section.get("narration") or {}
+            for scene in section.get("scene_list", []):
+                if scene.get("id") == scene_id:
+                    return {
+                        "story_id": story.get("id", ""),
+                        "narration_id": narration.get("id", ""),
+                        "scene": scene,
+                    }
     return None
 
 

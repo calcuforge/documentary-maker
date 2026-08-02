@@ -99,6 +99,7 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
 
     # Subtitle
     subtitle = config.get("subtitle", {})
+    sub_list: list[dict] = []
     if not subtitle:
         warnings.append("[subtitle] section is missing")
     else:
@@ -111,6 +112,10 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
             if start is not None and end is not None:
                 if start > end:
                     errors.append(f"[subtitle.list[{i}]] start_frame ({start}) > end_frame ({end})")
+            scene_index = sub.get("scene_index")
+            if scene_index is not None:
+                if isinstance(scene_index, bool) or not isinstance(scene_index, int) or scene_index < 0:
+                    errors.append(f"[subtitle.list[{i}]] scene_index must be a non-negative integer, got '{scene_index}'")
 
     # Stories — nested structure: section_list[].{audio, scene_list[]}
     stories = config.get("stories", [])
@@ -187,6 +192,11 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
 
     if total_scenes == 0:
         errors.append("No scenes found in any story")
+    else:
+        for i, sub in enumerate(sub_list):
+            scene_index = sub.get("scene_index")
+            if scene_index is not None and scene_index >= total_scenes:
+                warnings.append(f"[subtitle.list[{i}]] scene_index {scene_index} out of range (only {total_scenes} scenes)")
 
     return errors, warnings
 

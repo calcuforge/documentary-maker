@@ -36,8 +36,9 @@ Automated pipeline for **narration-driven explainer videos** from any topic.
 Supports documentaries, knowledge sharing, news, data reports, product
 introductions, and any format suitable for narrated explanation.
 
-Audio drives visuals: each scene carries exactly one narration, and that
-narration's audio duration determines the scene's total frame count.
+Audio drives visuals: each section carries exactly one narration; its audio
+duration sets the narration's total frame count, which is split across the
+section's 1-N scenes by each scene's `percentage`.
 
 ## Contents
 
@@ -143,7 +144,7 @@ projects/
 │   ├── video1/
 │   │   ├── result.mp4             # Final rendered video
 │   │   ├── video_config.yaml      # Topic definition
-│   │   ├── video_struct.yaml      # Video structure (stories → scenes; each scene carries one narration)
+│   │   ├── video_struct.yaml      # Video structure (stories → sections (one narration) → scenes (1-N, percentage))
 │   │   ├── video_tasks.yaml       # AIGC task list
 │   │   ├── remotion_sections.yaml # Remotion render config
 │   │   ├── tmp/                   # General temporary files (cache, discovery results, etc.)
@@ -248,14 +249,15 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | **Projects under workspace** | All project directories MUST be under `projects/` in the workspace. Never create outside. |
 | **Project name = category** | `project.name` MUST be the video CATEGORY name (the `video_style` value, e.g. `documentary`) — never the specific video title. |
 | **New video dir per request** | Every video-making request creates a NEW `video{N}/` directory. Never reuse or overwrite an existing `video{N}/` — always pick the next available `N`. |
-| **Audio-master clock** | Each scene's narration audio duration determines that scene's total frames. `total_frame = ceil(audio_duration × fps)`. Never hand-estimate. |
-| **One scene = one narration** | Every scene carries exactly one nested `narration`. There is no separate narration layer and no `percent` splitting. |
-| **Script = merged narrations** | A chapter's `script.md` MUST equal all its scene narrations concatenated in order. Splitting a script into scenes must not add/drop/reword text. Enforced by `verify_video_struct.py`. |
+| **Audio-master clock** | Each narration's audio duration determines that narration's total frames: `narration.total_frame = ceil(audio_duration × fps)`. The narration's scenes split it by `percentage` (largest-remainder, Σ scene frames == narration.total_frame). Never hand-estimate. |
+| **One narration = one section** | Each section has exactly one `narration` and 1-N scenes; every scene carries an integer `percentage` (Σ = 100 per narration) that splits the narration's frames. |
+| **Scene percentage split** | Each section's scene `percentage` values MUST be integers summing to exactly 100. Enforced by `verify_video_struct.py`. |
+| **Script = merged narrations** | A chapter's `script.md` MUST equal all its narration contents concatenated in section order. Splitting a narration into scenes must not add/drop/reword text. Enforced by `verify_video_struct.py`. |
 | **Data fields ≠ narration** | In data/text components, `label`/`title`/`suffix`/`headers` hold SHORT labels only — never a narration sentence (no sentence punctuation). The full sentence stays in `narration.content`. Don't make a `StatCounter`/`DataBar` just because narration contains a number. Enforced by `verify_remotion_data`. |
 | **Locale-aware search** | Detect network locale. China → use Baidu Baike, Bing; elsewhere → Wikipedia, Google. |
 | **Playwright for web** | All website access uses Playwright Chromium (headless), except where `curl` is explicitly specified (RSS feeds). |
 | **Anti-slop narration** | Narration text MUST follow [references/natural-narration.md](references/natural-narration.md). No AI-sounding filler, no rhetorical hooks, no rule-of-three abuse. |
-| **Narration length** | Each scene's narration `content` MUST be ≤ 50 characters (a ceiling, not a target — aim for ~20-45 chars of substance and vary length; don't make them all tiny). Enforced by `verify_video_struct.py`. Split longer text into more scenes. |
+| **Narration length** | No hard character cap on narration `content`. Write substantive sentences and vary their length; split a narration into multiple scenes for visual reasons, not for length. |
 | **Verify before proceed** | Each step's verify script must pass before moving to the next step. |
 | **Absolute paths** | All script path arguments (`--config`, `--video-struct`, `--output`, etc.) MUST be absolute paths. Scripts reject relative paths with an error. |
 | **Output confined to project** | ALL agent-produced files (search results, scripts, audio, AIGC assets, remotion configs, rendered video) MUST be written under the project directory's pre-defined resource dirs or its `tmp/` directory. Scripts that produce output files MUST expose a `--output` (or equivalent) parameter so output paths are explicit. NEVER write to system temp dirs (`/tmp`, `%TEMP%`, `TMPDIR`), the workspace root, or any path outside the project. |

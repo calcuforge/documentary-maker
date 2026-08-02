@@ -16,11 +16,11 @@
 **What to do:**
 
 1. Write the narration script (讲稿) for each chapter using the format **one
-   narration per line** — each line is exactly one scene's narration (≤50
-   characters). Step 6 turns each line into a scene automatically, so the number
-   of lines = the number of scenes. The script is the chapter's single source of
-   narration: **all scene narrations merged together equal this script** (one
-   line = one narration).
+   narration per line** — each line is exactly one narration (a complete thought;
+   no character cap). Step 6 turns each line into a section (one narration) with
+   a default single scene; you may then split a narration into 1-N scenes. The
+   script is the chapter's single source of narration: **all narration contents
+   merged together equal this script** (one line = one narration).
 
    ```text
    1956年夏天，达特茅斯学院的一场研讨会，正式确立了人工智能这门学科的名字。
@@ -70,26 +70,29 @@
 
 1. **Generate the narration skeleton with a script.** Run `generate_scene_list.py`
    to turn each chapter's `script.md` (one narration per line) into the
-   `scene_list` in `video_struct.yaml` — one scene per line, each carrying that
-   line as its `narration.content`. The display fields are left empty for you to
-   fill next.
+   `section_list` in `video_struct.yaml` — one section per line, each carrying
+   that line as `narration.content` and a single default scene
+   (`percentage: 100`). The display fields are left empty for you to fill next.
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/generate_scene_list.py" --video-struct /abs/path/video_struct.yaml
    ```
-   - One scene is created per non-empty line; scene/narration ids are assigned
-     globally and stay unique. Stories that already have a `scene_list` are
-     skipped (pass `--force` to regenerate).
-   - **Do NOT hand-write the `scene_list` / narrations** — let the script generate
-     them so they match `script.md` exactly. `verify_video_struct.py` checks that
-     merging all scene narrations reproduces `script.md`.
+   - One section (narration) is created per non-empty line; scene/narration ids
+     are assigned globally and stay unique. Stories that already have a
+     `section_list` are skipped (pass `--force` to regenerate).
+   - **Do NOT hand-write the `section_list` / narrations** — let the script
+     generate them so they match `script.md` exactly. `verify_video_struct.py`
+     checks that merging all narration contents reproduces `script.md`.
 
-   **Narration length:** each line (scene narration) MUST be **≤ 50 characters —
-   a ceiling, not a target**. Aim for a substantive line of roughly **20-45
-   characters** and **vary the length**; do NOT reduce them all to 10-character
-   fragments. If a line is too long, fix it in `script.md` and re-run the
-   generator with `--force`.
+2. **Split scenes and set `percentage` — one narration at a time.** A narration
+   (section) can map to 1-N scenes. When one narration needs multiple visuals
+   (e.g. a long sentence, or one idea with two images), split its `scene_list`
+   into N scenes and set each scene's integer `percentage` so they sum to **100**
+   (e.g. 60/40, 70/30). A narration with a single scene stays at `percentage: 100`.
+   Scene frames are derived from the percentages in Step 12 (largest-remainder,
+   so Σ scene frames == narration.total_frame). Verify sums to 100 per narration
+   (`verify_video_struct.py`).
 
-2. **Fill the visuals, data and text — one story at a time.** Working one chapter
+3. **Fill the visuals, data and text — one story at a time.** Working one chapter
    at a time, complete that story's scenes before moving to the next (do NOT fill
    every story in one bulk pass). For each scene:
    - Decide the expression method using
@@ -128,13 +131,13 @@
      is the scene's point. See [special-rules.md](special-rules.md) general
      rules 4–5. (`verify_remotion_data` rejects sentence punctuation in labels.)
 
-3. **One scene = one narration:** each scene has exactly one nested `narration`
-   (already created from the script line). The scene occupies its whole narration
-   duration.
+4. **One narration = one section:** the narration (section.narration) is the
+   audio unit — one `speech.wav` per section, generated in Step 7. Its `total_frame`
+   is split across the section's scenes by their `percentage` in Step 12.
 
-4. **Reference:** [demo_projects/project1/video1/video_struct.yaml](demo_projects/project1/video1/video_struct.yaml)
+5. **Reference:** [demo_projects/project1/video1/video_struct.yaml](demo_projects/project1/video1/video_struct.yaml)
 
-5. **Validate:**
+6. **Validate:**
    ```bash
    python3 "${SKILL_DIR}/scripts/verify/verify_video_struct.py" --video-struct /abs/path/video_struct.yaml
    ```
@@ -157,10 +160,12 @@
    ```
    - `--timeout 3600` (default): per-TTS subprocess timeout (1h)
    This will:
-   - Generate `speech.wav` for each scene's narration
+   - Generate `speech.wav` for each narration (one per section)
    - Measure audio duration via ffprobe
-   - Calculate `total_frame = ceil(duration × fps)`
-   - Update `video_struct.yaml` `narration.audio_path` (pointing to .wav) and `narration.total_frame`
+   - Calculate `narration.total_frame = ceil(duration × fps)`
+   - Update `video_struct.yaml` `narration.audio_path` (pointing to .wav) and `narration.total_frame`.
+     Scene frames are derived later (Step 12) by splitting `narration.total_frame`
+     across the section's scenes via `percentage`.
 
    **Idempotent:** re-running skips narrations whose audio already exists
    (reported as `skipped`) — safe to resume after an interruption. Pass

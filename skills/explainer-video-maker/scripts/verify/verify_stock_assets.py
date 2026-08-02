@@ -37,29 +37,30 @@ def verify(struct: dict, check_upscaled: bool = False) -> tuple[list[str], list[
     upscaled_missing = []
 
     for story in stories:
-        for scene in story.get("scene_list", []):
-            if scene.get("asset_generation_method") != "stock":
-                continue
+        for section in story.get("section_list", []):
+            for scene in section.get("scene_list", []):
+                if scene.get("asset_generation_method") != "stock":
+                    continue
 
-            total_stock += 1
-            scene_id = scene.get("id", "?")
+                total_stock += 1
+                scene_id = scene.get("id", "?")
 
-            origin_path = scene.get("origin_asset_path", "")
-            if not origin_path:
-                origin_missing.append(f"{scene_id}: origin_asset_path is empty")
-            elif not Path(origin_path).exists():
-                origin_missing.append(f"{scene_id}: file not found: {origin_path}")
-            elif Path(origin_path).stat().st_size == 0:
-                origin_missing.append(f"{scene_id}: file is empty: {origin_path}")
+                origin_path = scene.get("origin_asset_path", "")
+                if not origin_path:
+                    origin_missing.append(f"{scene_id}: origin_asset_path is empty")
+                elif not Path(origin_path).exists():
+                    origin_missing.append(f"{scene_id}: file not found: {origin_path}")
+                elif Path(origin_path).stat().st_size == 0:
+                    origin_missing.append(f"{scene_id}: file is empty: {origin_path}")
 
-            if check_upscaled:
-                asset_path = scene.get("asset_path", "")
-                if not asset_path:
-                    upscaled_missing.append(f"{scene_id}: asset_path is empty")
-                elif not Path(asset_path).exists():
-                    upscaled_missing.append(f"{scene_id}: upscaled file not found: {asset_path}")
-                elif Path(asset_path).stat().st_size == 0:
-                    upscaled_missing.append(f"{scene_id}: upscaled file is empty: {asset_path}")
+                if check_upscaled:
+                    asset_path = scene.get("asset_path", "")
+                    if not asset_path:
+                        upscaled_missing.append(f"{scene_id}: asset_path is empty")
+                    elif not Path(asset_path).exists():
+                        upscaled_missing.append(f"{scene_id}: upscaled file not found: {asset_path}")
+                    elif Path(asset_path).stat().st_size == 0:
+                        upscaled_missing.append(f"{scene_id}: upscaled file is empty: {asset_path}")
 
     if origin_missing:
         errors.append(f"Missing stock assets ({len(origin_missing)}/{total_stock}):")

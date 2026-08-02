@@ -25,9 +25,9 @@ content.
 **Component choice:** always `AssetVideo` (background role for full-bleed B-roll).
 
 **Duration:** the search prefers the **shortest** clip that is still at least
-the scene's narration length (`total_frame / fps`); the download is then
-trimmed to exactly that length. If no clip is long enough, the longest
-available is used. Keep stock scenes to narration-driven lengths.
+the scene's share of the narration (`percentage/100 × narration.total_frame / fps`);
+the download is then trimmed to exactly that length. If no clip is long enough,
+the longest available is used. Keep stock scenes to narration-driven lengths.
 
 **Resolution:** the search targets the project's final resolution
 (`video.resolution`). If no exact match exists it downloads the largest

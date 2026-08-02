@@ -7,8 +7,12 @@ task_group_list: # ai生成任务组列表，按workflow_type分组，包含有�
         payload: '{"prompt":"1956年达特茅斯学院研讨会现场，学者们围坐讨论，复古黑白影像风格","width":1280,"height":720}' # 传给comfyui-scheduler的运行参数，JSON格式，用$taskn占位依赖任务产物
         dependent_task: 0 # 依赖任务的序号，0表示无依赖
       - ordinal: 2
-        scene_id: scene3
+        scene_id: scene3a
         payload: '{"prompt":"1960年代充满信心的计算机实验室，科学家在大型机前工作，明亮乐观的色调","width":1280,"height":720}'
+        dependent_task: 0
+      - ordinal: 11
+        scene_id: scene3b
+        payload: '{"prompt":"特写：科学家在大型机前记录数据，复古色调，明亮乐观","width":1280,"height":720}'
         dependent_task: 0
       - ordinal: 3
         scene_id: scene5

@@ -38,8 +38,8 @@ def verify(struct: dict) -> tuple[list[str], list[str]]:
     path_missing = []
 
     for story in stories:
-        for scene in story.get("scene_list", []):
-            narration = scene.get("narration") or {}
+        for section in story.get("section_list", []):
+            narration = section.get("narration") or {}
             total_narrations += 1
             narration_id = narration.get("id", "?")
 
