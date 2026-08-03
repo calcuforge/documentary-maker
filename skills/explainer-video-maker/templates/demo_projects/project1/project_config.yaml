@@ -56,6 +56,13 @@ tts:
     #   See comfyui-scheduler/doc/workflow.md for valid attributes.
   voice_file: ""
   voice_instruct: "男，中年，中音调"
+  # voice_ref_eq_db: high-frequency clarity boost (dB) for the auto-generated
+  #   reference voice — the qwen3 voice-design output is band-limited above
+  #   ~2 kHz (muffled, fricatives inaudible); 8-16 works well, 0 = disable.
+  voice_ref_eq_db: 12
+  # voice_ref_content: optional override for the reference spoken text (default
+  #   is a fricative-rich balanced sentence).
+  voice_ref_content: ""
     # ── HTTP TTS server config (only used when backend: http_server) ───────
     # Protocol: POST multipart/form-data
     #   Fields:  input      — narration text (form field)

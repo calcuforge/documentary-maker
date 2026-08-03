@@ -185,7 +185,17 @@ projects/
    ```bash
    comfyui-scheduler run -w qwen3_tts_voice_design -i '{"voice_instruct": "male, middle-aged, moderate pitch", "content": "This is a sample sentence for voice reference.", "language": "en-US"}'
    ```
-   Download the output and save as `projects/{name}/voice_file.wav`. Update `tts.voice_file` in the config.
+   Download the output and save as `projects/{name}/voice_file.wav`. Update
+   `tts.voice_file` in the config.
+
+   **Quality note:** the qwen3 voice-design output is band-limited — energy
+   above 2 kHz sits ~20 dB below the low band (muffled, s/f/l fricatives
+   inaudible), which degrades voice cloning. `run_tts.py` post-processes its
+   auto-generated reference with a 24 kHz normalize + high-shelf clarity boost
+   (`tts.voice_ref_eq_db`, default 12 dB; content defaults to a fricative-rich
+   balanced sentence, override with `tts.voice_ref_content`). When pre-
+   generating manually, apply the same treatment (or simply let Step 7
+   auto-generate instead).
 
 ---
 

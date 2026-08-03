@@ -24,6 +24,7 @@ import concurrent.futures
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -211,18 +212,92 @@ def collect_narration_units(video_struct: dict) -> list[dict]:
     return units
 
 
-def _run_voice_design(voice_instruct: str, output_path: str, timeout: int = 3600, language: str | None = None) -> str:
+# Phonetically balanced reference sentences with heavy fricative/plosive
+# coverage (s/sh/f/l/j/q/x/z/c/b/p/d...). The voice-clone model extracts
+# articulation features (esp. s/f/l fricatives) from the reference — a
+# consonant-poor sample gives it nothing to learn.
+_REFERENCE_CONTENT_ZH = (
+    "春风拂面，柳枝轻摆。十四岁的少年背着新书包，沿着山路数着石阶，"
+    "一步一步爬上山顶，山下的城市景色尽收眼底。"
+)
+_REFERENCE_CONTENT_EN = (
+    "Fresh spring air flows over the forest hills. She sells sixty fresh "
+    "strawberries, skipping softly along the silvery stream, smiling at the "
+    "sunshine."
+)
+
+
+def _mean_volume_db(path: str, filter_str: str | None = None) -> float | None:
+    """Mean volume in dB of an audio file (optionally after an ffmpeg filter)."""
+    af = f"{filter_str},volumedetect" if filter_str else "volumedetect"
+    result = subprocess.run(
+        ["ffmpeg", "-i", str(path), "-af", af, "-f", "null", "-"],
+        capture_output=True, text=True, timeout=60,
+    )
+    m = re.search(r"mean_volume:\s*([-\d.]+) dB", result.stderr)
+    return float(m.group(1)) if m else None
+
+
+def _postprocess_voice_ref(raw_path: str, output_path: str, eq_gain_db: float) -> dict:
+    """Normalize the voice-design output to a clean 24 kHz mono WAV and lift the
+    suppressed high-frequency band so s/f/l fricatives stay audible.
+
+    The qwen3 voice-design output is heavily band-limited: energy above 2 kHz
+    sits 19-28 dB below the low band (sounds "like a voice behind a thick
+    cloth"), so the clone model cannot extract fricative features and the
+    synthesis has to fabricate high-frequency content. A high-shelf boost
+    restores that band. Returns diagnostics for the caller's report.
+    """
+    filters = []
+    if eq_gain_db > 0:
+        filters.append(f"highshelf=f=2000:g={eq_gain_db:.1f}")
+    filters.append("alimiter=limit=0.95")
+    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw_path),
+           "-ar", "24000", "-ac", "1", "-sample_fmt", "s16",
+           "-af", ",".join(filters), str(output_path)]
+    subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=True)
+
+    diag: dict = {}
+    probe = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-print_format", "json",
+         "-show_format", "-show_streams", str(output_path)],
+        capture_output=True, text=True, timeout=30,
+    )
+    if probe.returncode == 0:
+        info = json.loads(probe.stdout)
+        diag["duration"] = round(float(info["format"]["duration"]), 2)
+        streams = info.get("streams") or []
+        if streams:
+            diag["sample_rate"] = int(streams[0].get("sample_rate", 0))
+
+    full_b, hp_b = _mean_volume_db(raw_path), _mean_volume_db(raw_path, "highpass=f=6000")
+    full_a, hp_a = _mean_volume_db(output_path), _mean_volume_db(output_path, "highpass=f=6000")
+    if None not in (full_b, hp_b, full_a, hp_a):
+        diag["hf_delta_before"] = round(hp_b - full_b, 1)
+        diag["hf_delta_after"] = round(hp_a - full_a, 1)
+
+    return diag
+
+
+def _run_voice_design(voice_instruct: str, output_path: str, timeout: int = 3600,
+                      language: str | None = None, eq_gain_db: float = 12.0,
+                      content_override: str = "") -> str:
     """Generate a reference voice via the qwen3_tts_voice_design workflow.
 
-    Returns the output audio file path.
+    The raw download is post-processed (_postprocess_voice_ref) into a clean
+    24 kHz mono WAV with a high-frequency clarity boost. Returns the output
+    audio file path.
     """
     lang = language or "zh-CN"
     # Qwen3VoiceDesign's `language` widget takes Chinese/English enum values,
     # not project language codes (zh-CN/en-US) — map before sending.
     node_language = {"zh-CN": "Chinese", "en-US": "English"}.get(lang, "Auto")
-    content = ("这是一个语音参考样本，用于确定解说视频的旁白音色。"
-               if lang == "zh-CN"
-               else "This is a voice reference sample for narration.")
+    if content_override:
+        content = content_override
+    elif lang == "zh-CN":
+        content = _REFERENCE_CONTENT_ZH
+    else:
+        content = _REFERENCE_CONTENT_EN
 
     inputs = json.dumps({
         "voice_instruct": voice_instruct,
@@ -259,7 +334,22 @@ def _run_voice_design(voice_instruct: str, output_path: str, timeout: int = 3600
         raise RuntimeError("No URL in voice design output")
 
     from lib.net import download_file
-    download_file(file_url, output_path)
+    raw_path = str(output_path) + ".raw"
+    download_file(file_url, raw_path)
+
+    try:
+        diag = _postprocess_voice_ref(raw_path, output_path, eq_gain_db)
+    finally:
+        Path(raw_path).unlink(missing_ok=True)
+
+    if "hf_delta_before" in diag:
+        print(
+            f"Voice reference ready: {diag.get('sample_rate', '?')}Hz, "
+            f"{diag.get('duration', '?')}s, HF(>6kHz) band delta "
+            f"{diag['hf_delta_before']}dB -> {diag['hf_delta_after']}dB "
+            f"(high-shelf {eq_gain_db}dB)",
+            file=sys.stderr,
+        )
 
     return output_path
 
@@ -290,6 +380,14 @@ def main() -> None:
     # Normalize each narration's loudness so the narration is clearly audible.
     loudnorm_enabled = tts_config.get("loudnorm", True)
     loudness_target = float(tts_config.get("loudness_target", -14.0))  # LUFS, negative
+    # High-frequency clarity boost (dB) for the auto-generated reference voice.
+    # The qwen3 voice-design output is band-limited above ~2 kHz (muffled, no
+    # audible fricatives); the shelf lift restores the band the clone model
+    # extracts s/f/l from. 0 = disable.
+    voice_ref_eq_db = float(tts_config.get("voice_ref_eq_db", 12.0))
+    # Optional override for the reference audio's spoken text (default is a
+    # fricative-rich phonetically balanced sentence).
+    voice_ref_content = tts_config.get("voice_ref_content", "")
     fps = project_config.get("video", {}).get("fps", 24)
 
     # Resolve voice file — auto-generate via voice design if missing
@@ -324,7 +422,10 @@ def main() -> None:
             sys.exit(1)
 
         print(f"Voice file not found. Running voice design (instruct: {voice_instruct})...", file=sys.stderr)
-        voice_file = _run_voice_design(voice_instruct, voice_output, timeout=tts_timeout, language=lang)
+        voice_file = _run_voice_design(
+            voice_instruct, voice_output, timeout=tts_timeout, language=lang,
+            eq_gain_db=voice_ref_eq_db, content_override=voice_ref_content,
+        )
 
         # Update project_config.yaml with the generated voice file
         tts_config["voice_file"] = voice_file

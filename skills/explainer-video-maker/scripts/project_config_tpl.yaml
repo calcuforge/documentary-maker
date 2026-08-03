@@ -70,6 +70,16 @@ tts:
   #   zh-CN: "男，中年，中音调"   en-US: "male, middle-aged, moderate pitch"
   #   See comfyui-scheduler/doc/workflow.md for the valid voice attributes.
   voice_instruct: ""
+  # voice_ref_eq_db: high-frequency clarity boost (dB) applied to the
+  #   AUTO-GENERATED reference voice (voice_file empty). The qwen3 voice-design
+  #   output is band-limited (energy above 2 kHz sits ~20 dB below the low band —
+  #   "muffled, s/f/l fricatives inaudible"), so the shelf lift restores the
+  #   fricative band the clone model extracts. 8-16 works well; 0 = disable.
+  voice_ref_eq_db: 12
+  # voice_ref_content: optional override for the reference audio's spoken text.
+  #   Default is a fricative-rich phonetically balanced sentence (covers
+  #   s/sh/f/l/j/q/x/z/c). Longer/denser content = clearer articulation features.
+  voice_ref_content: ""
   # HTTP TTS server config (only used when backend: http_server).
   # Protocol: POST multipart/form-data (fields: input, speed, voice_file).
   # The URL is resolved via os.path.expandvars(); ${BACKEND_PROXY_ENDPOINT}
