@@ -61,21 +61,17 @@ Every scene falls into one of two buckets:
   `FlowChart`, `CodeBlock`, `DataTable`, `DiagramReveal`, `AnimationDemo`;
   `is_aigc_scene: false`). They explain, quantify, and organize information.
 
-The right mix depends on `project.video_style`. Use the table as a planning
-target for the whole video (not a hard per-chapter quota), then apply the
-matching style section's rule:
+Only the `documentary` style sets a content-balance target (footage-led
+storytelling); for other styles the mix is left to the intent mapping and the
+style rules below. Use the table as a planning target for the whole video (not
+a hard per-chapter quota):
 
 | Style | Visual scenes | Data/text scenes | Character |
 |-------|--------------:|-----------------:|-----------|
 | documentary | **75–85%** | 15–25% | Show, don't tell — footage-led, data as seasoning |
-| knowledge_sharing | 30–40% | **60–70%** | Explain — diagrams/cards lead, visuals illustrate |
-| news_broadcast | 40–50% | 50–60% | Report — footage and facts in balance |
-| product_intro | 50–60% | 40–50% | Showcase — product shots + feature breakdown |
-| data_report | 15–25% | **75–85%** | Quantify — data-dominant, visuals frame the numbers |
-| tutorial | 25–35% | 65–75% | Instruct — steps/code lead, visuals demo |
 
-A lopsided video (e.g. a documentary that is 80% text cards, or a data report
-that is 80% B-roll) feels off-genre. Aim for the target band.
+A lopsided video (e.g. a documentary that is 80% text cards) feels off-genre.
+Aim for the target band.
 
 ---
 
@@ -102,9 +98,6 @@ that is 80% B-roll) feels off-genre. Aim for the target band.
 2. **Prefer explanatory components.** Concept scenes should favor
    `DiagramReveal`, `FlowChart`, `FeatureGrid`, and `AnimationDemo` over plain
    text.
-3. **Content balance: 30–40% visual, 60–70% data/text.** Explanatory components
-   carry the teaching; drop in an image/animation to introduce or reinforce each
-   major concept so it doesn't become a wall of cards.
 
 ## news_broadcast (新闻播报)
 
@@ -113,9 +106,6 @@ that is 80% B-roll) feels off-genre. Aim for the target band.
    story.
 2. **Lead with facts and numbers.** Use `StatCounter`, `DataBar`, `Timeline`,
    and `DataTable` to present the news concretely; keep claims tied to data.
-3. **Content balance: 40–50% visual, 50–60% data/text.** Alternate footage with
-   the facts it supports — a clip establishing the event, then the numbers, then
-   context — so the report feels grounded and concrete.
 
 ## product_intro (产品介绍)
 
@@ -125,9 +115,6 @@ that is 80% B-roll) feels off-genre. Aim for the target band.
 2. **Selling points via structured components.** Use `FeatureGrid` /
    `IconCard` for features and `ComparisonCard` for positioning against
    alternatives.
-3. **Content balance: 50–60% visual, 40–50% data/text.** Pair product shots with
-   the feature/spec breakdowns they illustrate; lead and close on the product
-   itself.
 
 ## data_report (数据报告)
 
@@ -137,9 +124,6 @@ that is 80% B-roll) feels off-genre. Aim for the target band.
 2. **Every number needs a component.** Present figures with `StatCounter`,
    `DataBar`, or `DataTable` rather than embedding raw numbers in narration-only
    scenes.
-3. **Content balance: 15–25% visual, 75–85% data/text.** Data components are the
-   core; use an occasional image only to frame the subject or give the eye a
-   rest between dense figures.
 
 ## tutorial (教程)
 
@@ -147,6 +131,3 @@ that is 80% B-roll) feels off-genre. Aim for the target band.
    viewer will build/achieve (a visual or a framing card).
 2. **Steps are sequential.** Present procedures with `FlowChart` and show code
    with `CodeBlock`; keep step order explicit.
-3. **Content balance: 25–35% visual, 65–75% data/text.** Steps and code lead;
-   use a visual to show the end result or a concept demo at key points, not as
-   filler between steps.
