@@ -167,14 +167,16 @@
 
 **What to do:**
 
-1. Run TTS synthesis **(use `--timeout 3600` for safety — TTS may take several minutes per narration)**:
+1. Run TTS synthesis **(run in the background — Bash `run_in_background: true`; use `--timeout 10800` (3h) for safety — TTS may take several minutes per narration and many narrations run sequentially)**:
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/run_tts.py" \
      --project-config /abs/path/project_config.yaml \
      --video-struct /abs/path/video_struct.yaml \
-     --timeout 3600
+     --timeout 10800
    ```
-   - `--timeout 3600` (default): per-TTS subprocess timeout (1h)
+   - `--timeout 10800`: per-TTS subprocess timeout (3h) — never use the 1h default for this step
+   - Do NOT block waiting: continue with other ready work; when the background completion
+     notification arrives, check the exit status and `video_struct.yaml` updates
    This will:
    - Generate `speech.wav` for each narration (one per section)
    - Normalize each narration's loudness via ffmpeg loudnorm (`tts.loudnorm`,

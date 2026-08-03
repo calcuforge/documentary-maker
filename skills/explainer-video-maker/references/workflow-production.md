@@ -188,16 +188,17 @@ scene), and **8b** plans the AIGC tasks in `video_tasks.yaml` using those prompt
 
 **What to do:**
 
-1. Run AIGC generation **(use `--total-timeout 7200` for safety — video generation may take 1-2h per task, set higher for many tasks)**:
+1. Run AIGC generation **(run in the background — Bash `run_in_background: true`; use `--total-timeout 10800` (3h) minimum for safety — video generation may take 1-2h per task, set higher for many tasks)**:
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/run_aigc.py" \
      --project-config /abs/path/project_config.yaml \
      --video-struct /abs/path/video_struct.yaml \
      --video-tasks /abs/path/video_tasks.yaml \
-     --total-timeout 7200
+     --total-timeout 10800
    ```
    - `--timeout 1800` (default): per-task subprocess timeout (30min per task)
-   - `--total-timeout 7200` (default): entire script wall-clock timeout (2h). **Increase for longer videos with many tasks.**
+   - `--total-timeout 10800` (3h): entire script wall-clock timeout. **Must be at least 10800 — never use the 2h default; increase further for longer videos with many tasks.**
+   - Do NOT block waiting: continue with other ready work (e.g. next story's prompts); when the background completion notification arrives, check the exit status and generated assets.
    - Executes task groups in order, resolves `$taskN` dependencies,
      saves outputs as `origin_{scene_id}.{ext}`, and updates `origin_asset_path`.
    - **Idempotent:** tasks whose `origin_{scene_id}.{ext}` already exists
@@ -290,10 +291,11 @@ bgm:
    documentary or `upbeat corporate tech background music` for a product intro.
    It is left empty at project init; `run_bgm.py` errors if it is still empty.
 
-2. Run the BGM generation script:
+2. Run the BGM generation script **(run in the background — Bash `run_in_background: true`; use `--timeout 10800` (3h) for safety)**:
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/run_bgm.py" \
-     --project-config /abs/path/project_config.yaml
+     --project-config /abs/path/project_config.yaml \
+     --timeout 10800
    ```
    - Calls `comfyui-scheduler run -w stable_audio_3_medium` with `prompt` +
      `duration` (from `bgm.length`), downloads the result to
@@ -408,13 +410,16 @@ bgm:
      --studio
    ```
 
-2. Render final video:
+2. Render final video **(run in the background — Bash `run_in_background: true`; always pass `--timeout 10800` (3h) minimum — renders of long/4K videos can take hours)**:
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/render.py" \
      --remotion-sections /abs/path/remotion_sections.yaml \
      --project-config /abs/path/project_config.yaml \
-     --output /abs/path/projects/{project}/video{N}/result.mp4
+     --output /abs/path/projects/{project}/video{N}/result.mp4 \
+     --timeout 10800
    ```
+   Do NOT block waiting: continue with other ready work; when the background completion
+   notification arrives, verify `result.mp4` exists and is non-empty.
    Rendering is **segmented + adaptive**: the video is split into frame-range
    segments (default 600 frames each) and concatenated with ffmpeg. Per-render
    concurrency (parallel frames inside one headless Chrome) is capped at 8 so
@@ -439,7 +444,7 @@ bgm:
    | `JavaScript heap out of memory` | Very long composition or high total parallelism | Workers are memory-bounded, but if it still OOMs lower `render.segment_workers` (set it explicitly) and/or `render.segment_frames` (smaller segments), or render at 1080p instead of 4K; as a last resort set `NODE_OPTIONS=--max-old-space-size=<MB>` for the render command |
    | `ENOENT: no such file` on an asset/audio path | Missing or mis-pathed file in remotion_sections.yaml | Check `src` / `audio` paths; re-run Step 10 (AIGC) or Step 12 (remotion config) |
    | `FFmpeg ... error` during concat | A segment failed to render, producing a corrupt partial file | Look earlier in the log for the segment's error; fix and re-render |
-   | `timeout` / process killed | Render exceeded `--timeout` (default 1h) | Increase `--timeout`, or reduce video length / complexity |
+   | `timeout` / process killed | Render exceeded `--timeout` (default 1h) | Increase `--timeout` (min 10800 / 3h), or reduce video length / complexity |
    | `Cannot find module` / bundler error | `node_modules` missing or stale in remotion-video-template | Run `npm install` in the template directory |
 
 5. **Deliver the video — faststart + progressive playback.** When outputting the
