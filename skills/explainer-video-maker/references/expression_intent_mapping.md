@@ -93,6 +93,8 @@ Keep single-image intents on the single-image components:
 | Express era transitions | Agricultural age to industrial age | text-to-video | AssetVideo | Long-term evolution is best represented through animated scenes. |
 | Show before-and-after changes | City before and after renovation | image-edit → first-last-frame-to-video | AssetVideo | Explicit start and end states make transition animation natural. |
 | Express memories | Childhood rural life | text-to-video | AssetVideo | Video better conveys nostalgia and emotional storytelling. |
+| Voice/audio emphasis | Podcast-style voice segment | - | AudioWaveform | The visible spectrum reacts to the narration — the voice itself becomes the visual. |
+| Geographic narrative | Where the AI hubs are | - | MapPins | Schematic pulsing pins place the story on a map without stock footage. |
 
 ---
 
@@ -122,6 +124,8 @@ Keep single-image intents on the single-image components:
 | Show a workflow | AI model training pipeline | - | FlowChart | Sequential processes are naturally represented as flowcharts. |
 | Show categories | Types of AI | - | FeatureGrid | Categories are easy to compare in a grid layout. |
 | Show hierarchy | Internet technology architecture | - | DiagramReveal | Hierarchical structures benefit from node diagrams. |
+| Emphasize key terms | 深度学习核心名词 | - | KeywordCloud | Floating weighted chips focus attention on the terms themselves. |
+| Text + visual side-by-side | Principle + product photo | text-to-image (or stock) | SplitLayout | Explanation on one side, image/icon list on the other — no full-bleed needed. |
 
 ---
 
@@ -136,6 +140,9 @@ Keep single-image intents on the single-image components:
 | Show proportions | Energy mix | - | DataBar | Relative values are easy to compare visually. |
 | Highlight statistics | 95% customer satisfaction | - | StatCounter | Large animated numbers attract attention. |
 | Show yearly evolution | Company history over 20 years | - | Timeline | Time-based data belongs on a timeline. |
+| Hero metric (whole scene) | 1 billion users | - | StatHighlight | One number owns the entire scene — maximum impact for the single most important metric. |
+| Multiple KPIs | 3 key performance indicators | - | MetricsRow | Dashboard-style cards compare several numbers in one scene. |
+| Completion / share rate | 85% adoption, 60% penetration | - | ProgressRing | The animated donut arc reads a 0-100% quantity better than a bar. |
 
 ---
 
@@ -178,6 +185,7 @@ Keep single-image intents on the single-image components:
 | Explain an algorithm | Machine learning workflow | - | FlowChart | Algorithms are process-oriented. |
 | Show architecture | Cloud computing architecture | - | DiagramReveal | Architecture is best communicated visually. |
 | Summarize knowledge | Three key takeaways | - | IconCard | Summary cards improve retention. |
+| Step-by-step progression | 3 stages of a process | - | StepProgress | The active-step highlight shows "where we are now" in a sequence. |
 
 ---
 
@@ -203,6 +211,7 @@ Keep single-image intents on the single-image components:
 | Compare viewpoints | Pros vs Cons | - | ComparisonCard | Contrasting ideas are clearer side by side. |
 | Explain reasoning | Why renewable energy matters | - | FlowChart | Logical reasoning follows a causal flow. |
 | Support with data | User growth statistics | - | DataBar | Data strengthens arguments visually. |
+| Alternating points | Pros and cons list | - | ZigzagCards | Left/right alternating cards scan better than a uniform grid for contrasting points. |
 
 ---
 
@@ -226,3 +235,24 @@ Keep single-image intents on the single-image components:
 | Show ecosystem | AI ecosystem | - | DiagramReveal | Ecosystems contain interconnected entities. |
 | Show causality | Causes of an economic crisis | - | FlowChart | Cause-and-effect relationships are sequential. |
 | Show decision path | Customer purchase journey | - | FlowChart | Decision making follows a stepwise process. |
+---
+
+## New component quick reference (added 2026-08-04)
+
+| Component | Best intent | Key remotion_data fields |
+|---|---|---|
+| StatHighlight | One metric owns the whole scene | `value`, `unit`, `label`, `description?`, `icon?` |
+| MetricsRow | Compare 2-4 KPIs in one scene | `title?`, `items[{value, label, suffix?, icon?}]` |
+| ProgressRing | 0-100% rate / share / adoption | `value`, `suffix?`, `unit?`, `label`, `size?` |
+| StepProgress | Sequential stages, "where we are now" | `title?`, `steps[{label, description?}]`, `activeStep?` |
+| SplitLayout | Text + image/icon list side-by-side | `title`, `description?`, `rightImage?` (auto from asset_path), `rightCaption?`, `rightItems?`, `accent?` |
+| ZigzagCards | Feature list / pros-cons / short sequences | `title?`, `items[{icon?, title, description?}]` |
+| KeywordCloud | Term/concept emphasis (names, keywords) | `title?`, `keywords[{text, weight? 1-3}]` |
+| MapPins | Geographic narrative (abstract, no real borders) | `title?`, `pins[{label, x, y (0-100), description?}]`, `lines?[{from, to}]` |
+| AudioWaveform | Voice/audio emphasis; reacts to narration | `audioSrc` (required — narration wav or http), `mode?` bars/wave/dots, `position?` bottom/top/inline, `barCount?`, `height?`, `opacity?` |
+
+**Usage decisions:**
+- `SplitLayout` right side: set `rightItems` in `data` for an icon list (no asset needed), or leave `rightItems` empty and let the scene's `asset_path` auto-inject `rightImage` (single stock/AIGC image).
+- `AudioWaveform.audioSrc` points at the narration WAV (e.g. `stories/{story_id}/{narration_id}/speech.wav`, relative to the video dir) or any http URL. `barCount` must be a power of 2.
+- `MapPins` x/y are percent coordinates (0-100) of the schematic grid — place pins freely; `lines` connects pins by index with dashed arcs.
+- All 9 components are theme-aware and vertical-safe (9:16 stacks/condenses automatically).

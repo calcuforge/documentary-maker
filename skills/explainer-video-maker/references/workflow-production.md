@@ -353,6 +353,15 @@ bgm:
    | AssetVideo | `src`, `role`, `muted` |
    | KenBurnsImage | `src`, `role`, `zoom` (in/out/none), `pan` (left/right/up/down/up-left/up-right/down-left/down-right/none), `caption`, `dim`, `totalFrame` |
    | MediaSection | `items[{src, alt, caption}]`, `columns` (2/3), `layout` (card/full), `text`, `data[{value, label, suffix}]` — auto-populated from `media_list` + `text` + `data` |
+   | StatHighlight | `value`, `unit`, `label`, `description`, `icon` |
+   | MetricsRow | `title`, `items[{value, label, suffix, icon}]` |
+   | ProgressRing | `value` (0-100), `suffix`, `unit`, `label`, `size` |
+   | StepProgress | `title`, `activeStep` (0-based), `steps[{label, description}]` |
+   | SplitLayout | `title`, `description`, `rightImage` (auto-injected from asset_path), `rightCaption`, `rightItems[{icon, title, description}]`, `accent` (left/right) |
+   | ZigzagCards | `title`, `items[{icon, title, description}]` |
+   | KeywordCloud | `title`, `keywords[{text, weight}]` (weight 1-3) |
+   | MapPins | `title`, `pins[{label, x, y, description}]` (x/y 0-100), `lines[{from, to}]` |
+   | AudioWaveform | `audioSrc` (required — narration wav path), `mode` (bars/wave/dots), `position` (bottom/top/inline), `barCount`, `height`, `opacity` |
 
    **Icon field usage** — Components `FeatureGrid`, `IconCard`, `StatCounter`,
    `FlowChart` accept an `icon` field. Two formats are supported:

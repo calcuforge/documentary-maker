@@ -53,92 +53,92 @@ subtitle:
     scene_index: 4
   - text: 然而现实的进展远比设想缓慢，有限的算力和匮乏的数据，
     start_frame: 661
-    end_frame: 816
+    end_frame: 749
     scene_index: 5
   - text: 让许多宏大的目标落空。
-    start_frame: 817
+    start_frame: 750
     end_frame: 882
-    scene_index: 5
+    scene_index: 6
   - text: 到了20世纪70年代，政府和企业纷纷削减资金，
     start_frame: 883
     end_frame: 1020
-    scene_index: 6
+    scene_index: 7
   - text: 人工智能跌入了历史上的第一次寒冬。
     start_frame: 1021
     end_frame: 1122
-    scene_index: 6
+    scene_index: 7
   - text: 直到80年代专家系统开始商用，才重新点燃了工业界对这项技术的
     start_frame: 1123
-    end_frame: 1302
-    scene_index: 7
+    end_frame: 1230
+    scene_index: 8
   - text: 兴趣和投入。
-    start_frame: 1303
+    start_frame: 1231
     end_frame: 1338
-    scene_index: 7
+    scene_index: 9
   - text: 1997年，IBM的深蓝计算机击败了国际象棋世界冠军卡斯帕罗
     start_frame: 1339
-    end_frame: 1518
-    scene_index: 8
+    end_frame: 1461
+    scene_index: 10
   - text: 夫，让全世界为之震惊。
-    start_frame: 1519
+    start_frame: 1462
     end_frame: 1584
-    scene_index: 8
+    scene_index: 11
   - text: 2012年，深度神经网络在一场图像识别竞赛中取得了压倒性的胜
     start_frame: 1585
     end_frame: 1764
-    scene_index: 9
+    scene_index: 12
   - text: 利，掀起了新的浪潮。
     start_frame: 1765
     end_frame: 1824
-    scene_index: 9
+    scene_index: 12
   - text: 在此之后，神经网络迅速渗透到搜索引擎、
     start_frame: 1825
     end_frame: 1957
-    scene_index: 10
+    scene_index: 13
   - text: 机器翻译和个性化推荐等日常应用之中。
     start_frame: 1958
     end_frame: 2046
-    scene_index: 11
+    scene_index: 14
   - text: 2022年，生成式模型突然迎来爆发，机器开始学会写作、作画，
     start_frame: 2047
     end_frame: 2226
-    scene_index: 12
+    scene_index: 15
   - text: 甚至编写程序代码。
     start_frame: 2227
     end_frame: 2280
-    scene_index: 12
+    scene_index: 15
   - text: 与此同时，开源社区不断壮大，让越来越多的开发者能够参与到模型
     start_frame: 2281
-    end_frame: 2460
-    scene_index: 13
+    end_frame: 2388
+    scene_index: 16
   - text: 的创新中来。
-    start_frame: 2461
+    start_frame: 2389
     end_frame: 2496
-    scene_index: 13
+    scene_index: 17
   - text: 各国政府也纷纷出台战略，把人工智能视为决定未来国家竞争力的关
     start_frame: 2497
-    end_frame: 2676
-    scene_index: 14
+    end_frame: 2598
+    scene_index: 18
   - text: 键力量。
-    start_frame: 2677
+    start_frame: 2599
     end_frame: 2700
-    scene_index: 14
+    scene_index: 19
   - text: 短短几十年间，人工智能从一间间实验室走进了千家万户，
     start_frame: 2701
     end_frame: 2856
-    scene_index: 15
+    scene_index: 20
   - text: 成为这个时代最关键的技术。
     start_frame: 2857
     end_frame: 2934
-    scene_index: 15
+    scene_index: 20
   - text: 展望未来，人工智能仍在快速演进，它带来的机遇和挑战，
     start_frame: 2935
     end_frame: 3090
-    scene_index: 16
+    scene_index: 21
   - text: 需要全社会共同去面对。
     start_frame: 3091
     end_frame: 3156
-    scene_index: 16
+    scene_index: 21
 stories:
 - story_name: 人工智能的崛起
   story_id: story1
@@ -180,12 +180,18 @@ stories:
   - audio: stories\story1\narration4\speech.wav
     volume: 1.0
     scene_list:
+    - remotion_component: StepProgress
+      remotion_data: '{"title": "早期历程", "activeStep": 2, "steps": [{"label": "1956",
+        "description": "达特茅斯会议，学科诞生"}, {"label": "1960s", "description": "乐观探索，目标宏大"},
+        {"label": "1970s", "description": "进展放缓，遭遇瓶颈"}]}'
+      total_frame: 89
+      scene_id: scene4a
     - remotion_component: Timeline
       remotion_data: '{"heading": "早期历程", "items": [{"label": "1956", "description":
         "达特茅斯会议，学科诞生"}, {"label": "1960s", "description": "乐观探索，目标宏大"}, {"label":
         "1970s", "description": "进展放缓，遭遇瓶颈"}]}'
-      total_frame: 222
-      scene_id: scene4
+      total_frame: 133
+      scene_id: scene4b
   - audio: stories\story1\narration5\speech.wav
     volume: 1.0
     scene_list:
@@ -197,19 +203,30 @@ stories:
   - audio: stories\story1\narration6\speech.wav
     volume: 1.0
     scene_list:
+    - remotion_component: ZigzagCards
+      remotion_data: '{"title": "专家系统三大优势", "items": [{"icon": "zap", "title": "规则推理",
+        "description": "用规则库模拟专家决策"}, {"icon": "rocket", "title": "商业落地", "description":
+        "企业采购热情回升"}, {"icon": "shield", "title": "可靠性", "description": "结果可解释可追溯"}]}'
+      total_frame: 108
+      scene_id: scene6a
     - remotion_component: IconCard
       remotion_data: '{"heading": "复苏契机", "icon": "zap", "title": "专家系统商用", "description":
         "80年代专家系统走向商业应用，重新点燃工业界的兴趣与投入。"}'
-      total_frame: 216
-      scene_id: scene6
+      total_frame: 108
+      scene_id: scene6b
   - audio: stories\story1\narration7\speech.wav
     volume: 1.0
     scene_list:
+    - remotion_component: StatHighlight
+      remotion_data: '{"value": "1997", "unit": "年", "label": "深蓝击败卡斯帕罗夫", "description":
+        "计算机首次战胜人类国际象棋世界冠军", "icon": "trophy"}'
+      total_frame: 123
+      scene_id: scene7a
     - remotion_component: StatCounter
       remotion_data: '{"heading": "里程碑", "items": [{"value": 1997, "suffix": "年",
         "label": "深蓝击败卡斯帕罗夫", "icon": "trophy"}]}'
-      total_frame: 246
-      scene_id: scene7
+      total_frame: 123
+      scene_id: scene7b
   - audio: stories\story1\narration8\speech.wav
     volume: 1.0
     scene_list:
@@ -247,19 +264,31 @@ stories:
   - audio: stories\story1\narration11\speech.wav
     volume: 1.0
     scene_list:
+    - remotion_component: MetricsRow
+      remotion_data: '{"title": "开源力量", "items": [{"value": 80, "label": "开源模型", "icon":
+        "box"}, {"value": 65, "label": "社区贡献者", "icon": "users"}, {"value": 90, "label":
+        "衍生应用", "icon": "app-window"}]}'
+      total_frame: 108
+      scene_id: scene11a
     - remotion_component: DataBar
       remotion_data: '{"heading": "开源力量", "items": [{"label": "开源模型", "value": 80},
         {"label": "社区贡献者", "value": 65}, {"label": "衍生应用", "value": 90}]}'
-      total_frame: 216
-      scene_id: scene11
+      total_frame: 108
+      scene_id: scene11b
   - audio: stories\story1\narration12\speech.wav
     volume: 1.0
     scene_list:
+    - remotion_component: MapPins
+      remotion_data: '{"title": "各国 AI 战略", "pins": [{"label": "美国", "x": 18, "y":
+        42}, {"label": "中国", "x": 74, "y": 55}, {"label": "欧盟", "x": 52, "y": 35}],
+        "lines": [{"from": 0, "to": 1}, {"from": 1, "to": 2}]}'
+      total_frame: 102
+      scene_id: scene12a
     - remotion_component: IconCard
       remotion_data: '{"heading": "国家战略", "icon": "globe", "title": "上升为竞争力关键", "description":
         "各国纷纷出台战略，把人工智能视为决定未来国家竞争力的关键力量。"}'
-      total_frame: 204
-      scene_id: scene12
+      total_frame: 102
+      scene_id: scene12b
   - audio: stories\story1\narration13\speech.wav
     volume: 1.0
     scene_list:

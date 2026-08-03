@@ -178,7 +178,16 @@ def build_stories(video_struct: dict, video_dir: str, narration_volume: float = 
                 text_content = scene.get("text", "")
 
                 remotion_data = {}
-                if component == "MediaSection":
+                if component == "SplitLayout":
+                    # rightImage comes from the scene's own asset path (single
+                    # image scene); the rest of the payload lives in `data`.
+                    try:
+                        remotion_data = json.loads(data_content) if isinstance(data_content, str) and data_content else {}
+                    except (json.JSONDecodeError, TypeError):
+                        remotion_data = {}
+                    if asset_path:
+                        remotion_data["rightImage"] = _to_relative(asset_path, video_dir)
+                elif component == "MediaSection":
                     items = []
                     for item in scene.get("media_list", []):
                         raw_src = item.get("asset_path") or item.get("origin_asset_path", "")

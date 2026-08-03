@@ -35,6 +35,8 @@ VALID_COMPONENTS = [
     "StatCounter", "DataBar", "Timeline", "FlowChart",
     "CodeBlock", "DataTable", "DiagramReveal", "AnimationDemo",
     "AssetImage", "AssetVideo", "KenBurnsImage", "MediaSection",
+    "StatHighlight", "MetricsRow", "ProgressRing", "StepProgress",
+    "SplitLayout", "ZigzagCards", "KeywordCloud", "MapPins", "AudioWaveform",
 ]
 
 VALID_RESOLUTIONS = ["1080P", "4K", "1080p", "4k"]

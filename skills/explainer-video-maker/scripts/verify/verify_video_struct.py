@@ -44,6 +44,8 @@ VALID_COMPONENTS = [
     "StatCounter", "DataBar", "Timeline", "FlowChart",
     "CodeBlock", "DataTable", "DiagramReveal", "AnimationDemo",
     "AssetImage", "AssetVideo", "KenBurnsImage", "MediaSection",
+    "StatHighlight", "MetricsRow", "ProgressRing", "StepProgress",
+    "SplitLayout", "ZigzagCards", "KeywordCloud", "MapPins", "AudioWaveform",
 ]
 
 VALID_SCENE_TYPES = ["image", "video", "none"]
