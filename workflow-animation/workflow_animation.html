@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>explainer-video-maker 制作流程</title>
+<style>
+  :root{
+    --bg:#0b0f1a;
+    --setup:#5ea8ff;
+    --content:#4ade80;
+    --prod:#fbbf24;
+    --text:#f3f6ff;
+    --muted:#8b9bb4;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    min-height:100vh;
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  }
+  .wrap{position:relative;width:min(100vw - 32px, calc(100vh * 16 / 9))}
+  svg{display:block;width:100%;height:auto;background:var(--bg);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  button#replay{
+    position:absolute;top:14px;right:14px;z-index:10;
+    background:#1b2740;color:#cfe0ff;border:1px solid #2c3d63;border-radius:999px;
+    padding:8px 18px;font-size:14px;cursor:pointer;font-family:inherit;
+  }
+  button#replay:hover{background:#24335a}
+
+  /* ---- text ---- */
+  .h1{fill:var(--text);font-size:46px;font-weight:800;letter-spacing:1px}
+  .h2{fill:var(--muted);font-size:26px}
+  .phase-t{font-size:24px;font-weight:700}
+  .phase-s{font-size:16px;fill:var(--muted)}
+
+  /* ---- boxes ---- */
+  .box rect{fill:#131c2e;stroke-width:1.5}
+  .box.setup rect{stroke:var(--setup)}
+  .box.content rect{stroke:var(--content)}
+  .box.prod rect{stroke:var(--prod)}
+  .box.setup circle{fill:var(--setup)}
+  .box.content circle{fill:var(--content)}
+  .box.prod circle{fill:var(--prod)}
+  .num-text{fill:#0b0f1a;font-size:22px;font-weight:800}
+  .title{fill:var(--text);font-size:30px;font-weight:700}
+  .art{fill:rgba(243,246,255,.5);font-size:17px;font-family:Consolas,ui-monospace,monospace}
+
+  /* ---- pills ---- */
+  .pill{fill:#121a2b;stroke-width:1.5}
+  .pill.setup{stroke:var(--setup)} .phase.setup .phase-t{fill:var(--setup)}
+  .pill.content{stroke:var(--content)} .phase.content .phase-t{fill:var(--content)}
+  .pill.prod{stroke:var(--prod)} .phase.prod .phase-t{fill:var(--prod)}
+
+  /* ---- arrows ---- */
+  .arrow{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1 1;stroke-dashoffset:1;animation:draw .45s ease-out both}
+  .arrow.setup{stroke:var(--setup)}
+  .arrow.content{stroke:var(--content)}
+  .arrow.prod{stroke:var(--prod)}
+  .head.setup{fill:var(--setup)}
+  .head.content{fill:var(--content)}
+  .head.prod{fill:var(--prod)}
+
+  /* ---- animations ---- */
+  .header-h1{animation:fadeDown .5s .05s both}
+  .header-h2{animation:fadeDown .5s .12s both}
+  .phase{animation:pop .4s both}
+  .box{animation:rise .55s cubic-bezier(.2,.85,.3,1.08) both}
+  .head{animation:pop .3s both}
+  @keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes pop{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <button id="replay">↻ 重新播放</button>
+  <svg viewBox="0 0 1920 1080" role="img" aria-label="explainer-video-maker 13 步制作流程">
+    <defs>
+      <radialGradient id="gSetup" cx="50%" cy="50%" r="60%">
+        <stop offset="0" stop-color="#5ea8ff" stop-opacity="0.08"/>
+        <stop offset="1" stop-color="#5ea8ff" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="gContent" cx="50%" cy="50%" r="60%">
+        <stop offset="0" stop-color="#4ade80" stop-opacity="0.08"/>
+        <stop offset="1" stop-color="#4ade80" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="gProd" cx="50%" cy="50%" r="60%">
+        <stop offset="0" stop-color="#fbbf24" stop-opacity="0.08"/>
+        <stop offset="1" stop-color="#fbbf24" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <!-- ambient glows -->
+    <rect x="200" y="250" width="1560" height="300" fill="url(#gSetup)"/>
+    <rect x="200" y="520" width="1560" height="300" fill="url(#gContent)"/>
+    <rect x="200" y="790" width="1560" height="300" fill="url(#gProd)"/>
+
+    <!-- header -->
+    <text x="960" y="96" text-anchor="middle" class="h1 header-h1">explainer-video-maker</text>
+    <text x="960" y="142" text-anchor="middle" class="h2 header-h2">13 步流水线 · 每步产出自动校验 · 音频驱动画面时长</text>
+
+    <!-- phase pills -->
+    <g class="phase setup" style="animation-delay:.22s">
+      <rect x="56" y="365" width="120" height="70" rx="14" class="pill setup"/>
+      <text x="116" y="398" text-anchor="middle" class="phase-t">① 准备</text>
+      <text x="116" y="423" text-anchor="middle" class="phase-s">Setup · 1-4</text>
+    </g>
+    <g class="phase content" style="animation-delay:.25s">
+      <rect x="56" y="635" width="120" height="70" rx="14" class="pill content"/>
+      <text x="116" y="668" text-anchor="middle" class="phase-t">② 内容</text>
+      <text x="116" y="693" text-anchor="middle" class="phase-s">Content · 5-7</text>
+    </g>
+    <g class="phase prod" style="animation-delay:.28s">
+      <rect x="56" y="905" width="120" height="70" rx="14" class="pill prod"/>
+      <text x="116" y="938" text-anchor="middle" class="phase-t">③ 制作</text>
+      <text x="116" y="963" text-anchor="middle" class="phase-s">Production · 8-13</text>
+    </g>
+
+    <!-- traveling dot (behind boxes) -->
+    <g>
+      <animateMotion begin="3.2s" dur="5.5s" repeatCount="indefinite"
+        path="M530 400 H1430 V535 H1300 V670 H980 H660 V805 H293 V940 H1668"/>
+      <circle r="16" fill="#ffffff" opacity="0.18"/>
+      <circle r="8" fill="#ffffff" opacity="0.95"/>
+    </g>
+
+    <!-- ============ row 1 : setup ============ -->
+    <g class="box setup" style="animation-delay:.35s">
+      <rect x="415" y="330" width="230" height="140" rx="16"/>
+      <circle cx="451" cy="366" r="21"/>
+      <text x="451" y="373" text-anchor="middle" class="num-text">1</text>
+      <text x="530" y="408" text-anchor="middle" class="title">项目初始化</text>
+      <text x="530" y="440" text-anchor="middle" class="art">project_config.yaml</text>
+    </g>
+    <g class="box setup" style="animation-delay:.51s">
+      <rect x="715" y="330" width="230" height="140" rx="16"/>
+      <circle cx="751" cy="366" r="21"/>
+      <text x="751" y="373" text-anchor="middle" class="num-text">2</text>
+      <text x="830" y="408" text-anchor="middle" class="title">主题定义</text>
+      <text x="830" y="440" text-anchor="middle" class="art">video_config.yaml</text>
+    </g>
+    <g class="box setup" style="animation-delay:.67s">
+      <rect x="1015" y="330" width="230" height="140" rx="16"/>
+      <circle cx="1051" cy="366" r="21"/>
+      <text x="1051" y="373" text-anchor="middle" class="num-text">3</text>
+      <text x="1130" y="408" text-anchor="middle" class="title">主题研究</text>
+      <text x="1130" y="440" text-anchor="middle" class="art">search_results/</text>
+    </g>
+    <g class="box setup" style="animation-delay:.83s">
+      <rect x="1315" y="330" width="230" height="140" rx="16"/>
+      <circle cx="1351" cy="366" r="21"/>
+      <text x="1351" y="373" text-anchor="middle" class="num-text">4</text>
+      <text x="1430" y="408" text-anchor="middle" class="title">章节设计</text>
+      <text x="1430" y="440" text-anchor="middle" class="art">video_struct.yaml</text>
+    </g>
+
+    <!-- ============ row 2 : content ============ -->
+    <g class="box content" style="animation-delay:.99s">
+      <rect x="1185" y="600" width="230" height="140" rx="16"/>
+      <circle cx="1221" cy="636" r="21"/>
+      <text x="1221" y="643" text-anchor="middle" class="num-text">5</text>
+      <text x="1300" y="678" text-anchor="middle" class="title">脚本撰写</text>
+      <text x="1300" y="710" text-anchor="middle" class="art">script.md</text>
+    </g>
+    <g class="box content" style="animation-delay:1.15s">
+      <rect x="865" y="600" width="230" height="140" rx="16"/>
+      <circle cx="901" cy="636" r="21"/>
+      <text x="901" y="643" text-anchor="middle" class="num-text">6</text>
+      <text x="980" y="678" text-anchor="middle" class="title">场景设计</text>
+      <text x="980" y="710" text-anchor="middle" class="art">scenes · percentage</text>
+    </g>
+    <g class="box content" style="animation-delay:1.31s">
+      <rect x="545" y="600" width="230" height="140" rx="16"/>
+      <circle cx="581" cy="636" r="21"/>
+      <text x="581" y="643" text-anchor="middle" class="num-text">7</text>
+      <text x="660" y="678" text-anchor="middle" class="title">TTS 配音</text>
+      <text x="660" y="710" text-anchor="middle" class="art">speech.wav</text>
+    </g>
+
+    <!-- ============ row 3 : production ============ -->
+    <g class="box prod" style="animation-delay:1.47s">
+      <rect x="178" y="870" width="230" height="140" rx="16"/>
+      <circle cx="214" cy="906" r="21"/>
+      <text x="214" y="913" text-anchor="middle" class="num-text">8</text>
+      <text x="293" y="948" text-anchor="middle" class="title">素材搜索</text>
+      <text x="293" y="980" text-anchor="middle" class="art">stock media</text>
+    </g>
+    <g class="box prod" style="animation-delay:1.63s">
+      <rect x="453" y="870" width="230" height="140" rx="16"/>
+      <circle cx="489" cy="906" r="21"/>
+      <text x="489" y="913" text-anchor="middle" class="num-text">9</text>
+      <text x="568" y="948" text-anchor="middle" class="title">AIGC 提示词</text>
+      <text x="568" y="980" text-anchor="middle" class="art">video_prompt.yaml</text>
+    </g>
+    <g class="box prod" style="animation-delay:1.79s">
+      <rect x="728" y="870" width="230" height="140" rx="16"/>
+      <circle cx="764" cy="906" r="21"/>
+      <text x="764" y="913" text-anchor="middle" class="num-text">10</text>
+      <text x="843" y="948" text-anchor="middle" class="title">AIGC 生成</text>
+      <text x="843" y="980" text-anchor="middle" class="art">scenes/*.png</text>
+    </g>
+    <g class="box prod" style="animation-delay:1.95s">
+      <rect x="1003" y="870" width="230" height="140" rx="16"/>
+      <circle cx="1039" cy="906" r="21"/>
+      <text x="1039" y="913" text-anchor="middle" class="num-text">11</text>
+      <text x="1118" y="948" text-anchor="middle" class="title">背景音乐</text>
+      <text x="1118" y="980" text-anchor="middle" class="art">bgm.mp3</text>
+    </g>
+    <g class="box prod" style="animation-delay:2.11s">
+      <rect x="1278" y="870" width="230" height="140" rx="16"/>
+      <circle cx="1314" cy="906" r="21"/>
+      <text x="1314" y="913" text-anchor="middle" class="num-text">12</text>
+      <text x="1393" y="948" text-anchor="middle" class="title">Remotion 配置</text>
+      <text x="1393" y="980" text-anchor="middle" class="art">remotion_sections.yaml</text>
+    </g>
+    <g class="box prod" style="animation-delay:2.27s">
+      <rect x="1553" y="870" width="230" height="140" rx="16"/>
+      <circle cx="1589" cy="906" r="21"/>
+      <text x="1589" y="913" text-anchor="middle" class="num-text">13</text>
+      <text x="1668" y="948" text-anchor="middle" class="title">渲染输出</text>
+      <text x="1668" y="980" text-anchor="middle" class="art">result.mp4</text>
+    </g>
+
+    <!-- ============ arrows : row 1 ============ -->
+    <path class="arrow setup" pathLength="1" d="M645 400 H715" style="animation-delay:.47s"/>
+    <path class="head setup" d="M703 394 L703 406 L715 400 Z" style="animation-delay:.63s"/>
+    <path class="arrow setup" pathLength="1" d="M945 400 H1015" style="animation-delay:.63s"/>
+    <path class="head setup" d="M1003 394 L1003 406 L1015 400 Z" style="animation-delay:.79s"/>
+    <path class="arrow setup" pathLength="1" d="M1245 400 H1315" style="animation-delay:.79s"/>
+    <path class="head setup" d="M1303 394 L1303 406 L1315 400 Z" style="animation-delay:.95s"/>
+
+    <!-- elbow 4 -> 5 (setup -> content) -->
+    <path class="arrow content" pathLength="1" d="M1545 400 V535 H1300 V600" style="animation-delay:.95s"/>
+    <path class="head content" d="M1294 600 L1306 600 L1300 588 Z" style="animation-delay:1.11s"/>
+
+    <!-- ============ arrows : row 2 ============ -->
+    <path class="arrow content" pathLength="1" d="M1185 670 H1095" style="animation-delay:1.11s"/>
+    <path class="head content" d="M1107 664 L1107 676 L1095 670 Z" style="animation-delay:1.27s"/>
+    <path class="arrow content" pathLength="1" d="M865 670 H775" style="animation-delay:1.27s"/>
+    <path class="head content" d="M787 664 L787 676 L775 670 Z" style="animation-delay:1.43s"/>
+
+    <!-- elbow 7 -> 8 (content -> production) -->
+    <path class="arrow prod" pathLength="1" d="M545 670 V805 H293 V870" style="animation-delay:1.43s"/>
+    <path class="head prod" d="M287 870 L299 870 L293 858 Z" style="animation-delay:1.59s"/>
+
+    <!-- ============ arrows : row 3 ============ -->
+    <path class="arrow prod" pathLength="1" d="M408 940 H453" style="animation-delay:1.59s"/>
+    <path class="head prod" d="M441 934 L441 946 L453 940 Z" style="animation-delay:1.75s"/>
+    <path class="arrow prod" pathLength="1" d="M683 940 H728" style="animation-delay:1.75s"/>
+    <path class="head prod" d="M716 934 L716 946 L728 940 Z" style="animation-delay:1.91s"/>
+    <path class="arrow prod" pathLength="1" d="M958 940 H1003" style="animation-delay:1.91s"/>
+    <path class="head prod" d="M991 934 L991 946 L1003 940 Z" style="animation-delay:2.07s"/>
+    <path class="arrow prod" pathLength="1" d="M1233 940 H1278" style="animation-delay:2.07s"/>
+    <path class="head prod" d="M1266 934 L1266 946 L1278 940 Z" style="animation-delay:2.23s"/>
+    <path class="arrow prod" pathLength="1" d="M1508 940 H1553" style="animation-delay:2.23s"/>
+    <path class="head prod" d="M1541 934 L1541 946 L1553 940 Z" style="animation-delay:2.39s"/>
+  </svg>
+</div>
+<script>
+  document.getElementById('replay').addEventListener('click', () => {
+    const svg = document.querySelector('.wrap svg');
+    const fresh = svg.cloneNode(true);
+    svg.replaceWith(fresh);
+  });
+</script>
+</body>
+</html>
