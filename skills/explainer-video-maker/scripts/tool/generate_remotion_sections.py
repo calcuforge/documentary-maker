@@ -288,6 +288,7 @@ def main() -> None:
             "accent_color": theme_cfg.get("accent_color", "#FF6B6B"),
             "transition_type": theme_cfg.get("transition_type", "fade"),
             "transition_duration": float(theme_cfg.get("transition_duration", 12)),
+            "show_progress_bar": bool(theme_cfg.get("show_progress_bar", True)),
         },
         "subtitle": {
             "font_size": subtitle_cfg.get("font_size", 26),

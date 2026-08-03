@@ -89,6 +89,9 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
         transition = theme.get("transition_type", "")
         if transition and transition not in VALID_TRANSITIONS:
             errors.append(f"[theme.transition_type] invalid '{transition}'")
+        show_bar = theme.get("show_progress_bar")
+        if show_bar is not None and not isinstance(show_bar, bool):
+            errors.append(f"[theme.show_progress_bar] must be a boolean, got '{show_bar}'")
 
     # BGM (optional top-level block emitted by generate_remotion_sections.py)
     bgm = config.get("bgm", {})

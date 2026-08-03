@@ -113,6 +113,9 @@ theme:
   accent_color: "#FF6B6B"
   transition_type: fade # fade | slide | wipe | none
   transition_duration: 12 # frames @ fps
+  # show_progress_bar: whether to render the bottom chapter progress bar.
+  #   true (default) = show; false = hide.
+  show_progress_bar: true
 content:
   # duration: controls the number of chapters (stories) only —
   #   short = 2-3 chapters, medium = 5-7 chapters, long = 8-12 chapters.
