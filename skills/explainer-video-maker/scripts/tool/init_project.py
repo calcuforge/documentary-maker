@@ -11,8 +11,10 @@ the created file DIRECTLY to supply request-dependent fields (project.name,
 language, video_style, target_audience, dependence_paths, ...).
 
 The project directory is created under --projects-dir, named --project-dir-name
-(convention: the video_style category). If that name already exists, a numeric
-suffix is appended (documentary, documentary2, documentary3, ...).
+(the categorized name: content_structure_params, e.g.
+air_crash_documentary_1080p_horizontal). If that name already exists, a numeric
+suffix is appended (air_crash_documentary_1080p_horizontal,
+air_crash_documentary_1080p_horizontal2, ...).
 
 Note: the generated config is NOT validated here, because the template
 intentionally leaves some required fields (e.g. dependence_paths.remotion_template)
@@ -58,7 +60,7 @@ def resolve_project_dir(projects_dir: Path, name: str) -> tuple[Path, str]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Initialize a new project from project_config_tpl.yaml")
     parser.add_argument("--projects-dir", required=True, help="Workspace projects/ directory (absolute)")
-    parser.add_argument("--project-dir-name", required=True, help="Project directory name (convention: the video_style category)")
+    parser.add_argument("--project-dir-name", required=True, help="Project directory name (categorized: content_structure_params, e.g. air_crash_documentary_1080p_horizontal)")
     args = parser.parse_args()
 
     from lib.net import require_abs

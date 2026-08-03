@@ -107,12 +107,33 @@ workspace) instead of the `dep/` default.
 
 **Project directory naming:** `scripts/tool/init_project.py` creates the project
 directory from the `scripts/project_config_tpl.yaml` template, named via its
-`--project-dir-name` argument (convention: the `video_style` value). If the name
-already exists, a numeric suffix is appended automatically: `documentary`,
-`documentary2`, `documentary3`, ... After creation, edit `project_config.yaml`
-to set the actual `project.name`, `project.video_style`, and other
-request-dependent fields. **`project.name` MUST be the video CATEGORY name (the
-`video_style` value, e.g. `documentary`) — never the specific video title.**
+`--project-dir-name` argument. **The project name is categorized across THREE
+dimensions** (joined with `_`):
+
+1. **Content category (内容分类)** — what the video is *about*: `air_crash`
+   (空难事件), `history` (历史), `tech` (科技), `hardware` (硬件), ... Derive it
+   from the user's topic.
+2. **Narrative structure (叙事结构)** — how it is *told*: `documentary` (纪录片),
+   `knowledge_sharing` (知识分享), `news_broadcast` (新闻播报), `product_intro`,
+   `data_report`, `tutorial`, ...
+3. **Fine-grained parameters (细分参数)** — include only what the user explicitly
+   specified and is important: `resolution` (`1080p`/`4k`), `orientation`
+   (`horizontal`/`vertical`), theme, language, target audience, ...
+
+If the name already exists, a numeric suffix is appended automatically:
+`air_crash_documentary_1080p_horizontal`,
+`air_crash_documentary_1080p_horizontal2`, ...
+
+**Example:** user asks "制作一个1080P横屏的空难纪录片" → content=`air_crash`,
+structure=`documentary`, params=`1080p`+`horizontal` →
+`projects/air_crash_documentary_1080p_horizontal/`. Check whether a project whose
+**all three dimensions match** already exists; if not, create a new one.
+
+After creation, edit `project_config.yaml` to set `project.name` (the same
+categorized name, e.g. `air_crash_documentary_1080p_horizontal`),
+`project.video_style`, `project.target_audience`, and other request-dependent
+fields. **`project.name` MUST be the categorized name — never the specific video
+title.**
 
 **Video directory — never reuse.** Every video-making request creates a NEW
 `video{N}/` directory (`video1`, `video2`, ...). Each time the user asks to make
@@ -125,13 +146,17 @@ video dir):
 
 | Situation | Action |
 |-----------|--------|
-| First video request | Run Step 1: create `projects/{video_style}/` |
-| Same category + same parameters | Reuse existing project, then create a new `video{N}/` inside it |
-| Different category or parameters | Run Step 1: create a new project directory |
+| First video request | Run Step 1: create `projects/{content}_{structure}_{params}/` |
+| Same content + structure + params | Reuse existing project, then create a new `video{N}/` inside it |
+| Any dimension differs | Run Step 1: create a new project directory |
 
-To determine project reuse: compare `project.video_style`, `project.target_audience`,
-and `video.resolution`/`video.orientation`. If all match, reuse the project (but
-still create a new `video{N}/`).
+To determine project reuse: compare **ALL** categorization dimensions — content
+category, narrative structure, and every explicitly-specified fine parameter
+(resolution, orientation, theme, language, target audience). **Reuse only if
+every dimension matches.** If the request maps to a different content category or
+structure, or adds/removes a fine parameter (e.g. 1080p vs 4K, horizontal vs
+vertical), create a new project — even when one dimension (e.g. `documentary`) is
+shared. Each video request still creates a fresh `video{N}/` inside.
 
 ### Project Output Layout
 
@@ -247,7 +272,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | Rule | Requirement |
 |------|-------------|
 | **Projects under workspace** | All project directories MUST be under `projects/` in the workspace. Never create outside. |
-| **Project name = category** | `project.name` MUST be the video CATEGORY name (the `video_style` value, e.g. `documentary`) — never the specific video title. |
+| **Project name = categorized** | `project.name` MUST be the categorized project name derived from content + narrative structure + fine params (e.g. `air_crash_documentary_1080p_horizontal`) — never the specific video title. |
 | **New video dir per request** | Every video-making request creates a NEW `video{N}/` directory. Never reuse or overwrite an existing `video{N}/` — always pick the next available `N`. |
 | **Audio-master clock** | Each narration's audio duration (plus `tts.pause_seconds` silence, default 0.5s) determines that narration's total frames: `narration.total_frame = ceil((audio_duration + pause_seconds) × fps)`. The narration's scenes split it by `percentage` (largest-remainder, Σ scene frames == narration.total_frame). Never hand-estimate. |
 | **One narration = one section, split into scenes** | Each section has exactly one `narration` and 1-N scenes. A narration should usually drive MULTIPLE scenes — split long (>30-40 chars) or multi-idea narrations into 2+ scenes and set each scene's integer `percentage` (Σ = 100). A single scene is the exception for short, single-idea narrations. |

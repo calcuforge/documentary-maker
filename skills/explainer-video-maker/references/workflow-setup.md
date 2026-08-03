@@ -101,11 +101,16 @@ projects/
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/init_project.py" \
      --projects-dir /abs/path/projects \
-     --project-dir-name air_crash_documentary
+     --project-dir-name air_crash_documentary_1080p_horizontal
    ```
-   - `--project-dir-name` is the project directory name (convention: the
-     `video_style` category). A numeric suffix is appended if it already exists
-     (`air_crash_documentary`, `air_crash_documentary2`, ...).
+   - `--project-dir-name` is the project directory name, **categorized across
+     three dimensions** joined with `_`: content category (e.g. `air_crash` 空难,
+     `history`, `tech`, `hardware`) + narrative structure (e.g. `documentary`,
+     `knowledge_sharing`, `news_broadcast`) + fine params the user specified
+     (e.g. `1080p`, `horizontal`). A numeric suffix is appended if the name
+     already exists (`air_crash_documentary_1080p_horizontal`,
+     `air_crash_documentary_1080p_horizontal2`, ...). Reuse a project only when
+     ALL dimensions match; otherwise create a new one.
    - The JSON output's `data.project_dir` and `data.project_config` give the created
      project directory and `project_config.yaml` locations. `data.agent_supplement`
      lists the fields left empty for you to fill.
