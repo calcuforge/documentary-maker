@@ -360,10 +360,13 @@ def pick_best(results: list[dict], target_w: int, target_h: int,
 
 
 def collect_stock_scenes(video_struct: dict) -> list[dict]:
-    """Collect all scenes with asset_generation_method: stock.
+    """Collect all scenes (or media_list items) with asset_generation_method: stock.
 
     Each scene's `total_frame` is its percentage share of the narration's
     total_frame (largest-remainder), used to size stock video clips.
+    For MediaSection scenes (media_list non-empty), one entry per stock item is
+    emitted; `scene_ref` points at the item dict so the downloader's write-back
+    lands on the item's own origin_asset_path/asset_path.
     """
     scenes = []
     for story in video_struct.get("stories", []):
@@ -374,20 +377,37 @@ def collect_stock_scenes(video_struct: dict) -> list[dict]:
             percents = [s.get("percentage", 100) for s in section_scenes]
             frames = scene_frame_allocation(int(narration.get("total_frame", 0) or 0), percents)
             for idx, scene in enumerate(section_scenes):
-                if scene.get("asset_generation_method") != "stock":
-                    continue
                 scene_frame = frames[idx] if idx < len(frames) else narration.get("total_frame", 0)
-                scenes.append({
-                    "story_id": story_id,
-                    "scene_id": scene.get("id", ""),
-                    "narration_id": narration.get("id", ""),
-                    "visual_content": scene.get("visual_content", ""),
-                    "intent": scene.get("intent", ""),
-                    "type": scene.get("type", "image"),
-                    "total_frame": scene_frame,
-                    "origin_asset_path": scene.get("origin_asset_path", ""),
-                    "scene_ref": scene,
-                })
+                media_list = scene.get("media_list") or []
+                if media_list:
+                    for item in media_list:
+                        if item.get("asset_generation_method") != "stock":
+                            continue
+                        scenes.append({
+                            "story_id": story_id,
+                            "scene_id": item.get("id", "") or scene.get("id", ""),
+                            "narration_id": narration.get("id", ""),
+                            "visual_content": item.get("visual_content", ""),
+                            "intent": scene.get("intent", ""),
+                            "type": item.get("type", "image"),
+                            "total_frame": scene_frame,
+                            "origin_asset_path": item.get("origin_asset_path", ""),
+                            "scene_ref": item,
+                        })
+                elif scene.get("asset_generation_method") != "stock":
+                    continue
+                else:
+                    scenes.append({
+                        "story_id": story_id,
+                        "scene_id": scene.get("id", ""),
+                        "narration_id": narration.get("id", ""),
+                        "visual_content": scene.get("visual_content", ""),
+                        "intent": scene.get("intent", ""),
+                        "type": scene.get("type", "image"),
+                        "total_frame": scene_frame,
+                        "origin_asset_path": scene.get("origin_asset_path", ""),
+                        "scene_ref": scene,
+                    })
     return scenes
 
 

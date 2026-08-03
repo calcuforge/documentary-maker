@@ -350,6 +350,7 @@ bgm:
    | AssetImage | `src`, `role`, `caption` |
    | AssetVideo | `src`, `role`, `muted` |
    | KenBurnsImage | `src`, `role`, `zoom` (in/out/none), `pan` (left/right/up/down/up-left/up-right/down-left/down-right/none), `caption`, `dim`, `totalFrame` |
+   | MediaSection | `items[{src, alt, caption}]`, `columns` (2/3), `layout` (card/full), `text`, `data[{value, label, suffix}]` — auto-populated from `media_list` + `text` + `data` |
 
    **Icon field usage** — Components `FeatureGrid`, `IconCard`, `StatCounter`,
    `FlowChart` accept an `icon` field. Two formats are supported:

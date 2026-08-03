@@ -93,57 +93,57 @@ subtitle:
     scene_index: 9
   - text: 在此之后，神经网络迅速渗透到搜索引擎、
     start_frame: 1825
-    end_frame: 1938
+    end_frame: 1957
     scene_index: 10
   - text: 机器翻译和个性化推荐等日常应用之中。
-    start_frame: 1939
+    start_frame: 1958
     end_frame: 2046
-    scene_index: 10
+    scene_index: 11
   - text: 2022年，生成式模型突然迎来爆发，机器开始学会写作、作画，
     start_frame: 2047
     end_frame: 2226
-    scene_index: 11
+    scene_index: 12
   - text: 甚至编写程序代码。
     start_frame: 2227
     end_frame: 2280
-    scene_index: 11
+    scene_index: 12
   - text: 与此同时，开源社区不断壮大，让越来越多的开发者能够参与到模型
     start_frame: 2281
     end_frame: 2460
-    scene_index: 12
+    scene_index: 13
   - text: 的创新中来。
     start_frame: 2461
     end_frame: 2496
-    scene_index: 12
+    scene_index: 13
   - text: 各国政府也纷纷出台战略，把人工智能视为决定未来国家竞争力的关
     start_frame: 2497
     end_frame: 2676
-    scene_index: 13
+    scene_index: 14
   - text: 键力量。
     start_frame: 2677
     end_frame: 2700
-    scene_index: 13
+    scene_index: 14
   - text: 短短几十年间，人工智能从一间间实验室走进了千家万户，
     start_frame: 2701
     end_frame: 2856
-    scene_index: 14
+    scene_index: 15
   - text: 成为这个时代最关键的技术。
     start_frame: 2857
     end_frame: 2934
-    scene_index: 14
+    scene_index: 15
   - text: 展望未来，人工智能仍在快速演进，它带来的机遇和挑战，
     start_frame: 2935
     end_frame: 3090
-    scene_index: 15
+    scene_index: 16
   - text: 需要全社会共同去面对。
     start_frame: 3091
     end_frame: 3156
-    scene_index: 15
+    scene_index: 16
 stories:
 - story_name: 人工智能的崛起
   story_id: story1
   section_list:
-  - audio: stories/story1/narration1/speech.wav
+  - audio: stories\story1\narration1\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: AssetVideo
@@ -156,7 +156,7 @@ stories:
         "role": "background", "totalFrame": 91}'
       total_frame: 91
       scene_id: scene1b
-  - audio: stories/story1/narration2/speech.wav
+  - audio: stories\story1\narration2\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: QuoteBlock
@@ -164,20 +164,20 @@ stories:
         "麦卡锡、明斯基等学者"}'
       total_frame: 222
       scene_id: scene2
-  - audio: stories/story1/narration3/speech.wav
+  - audio: stories\story1\narration3\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: KenBurnsImage
-      remotion_data: '{"src": "stories/story1/narration3/scenes/scene3a.jpg", "role":
-        "background", "totalFrame": 126}'
+      remotion_data: '{"src": "stories\\story1\\narration3\\scenes\\scene3a.jpg",
+        "role": "background", "totalFrame": 126}'
       total_frame: 126
       scene_id: scene3a
     - remotion_component: KenBurnsImage
-      remotion_data: '{"src": "stories/story1/narration3/scenes/scene3b.jpg", "role":
-        "background", "totalFrame": 84}'
+      remotion_data: '{"src": "stories\\story1\\narration3\\scenes\\scene3b.jpg",
+        "role": "background", "totalFrame": 84}'
       total_frame: 84
       scene_id: scene3b
-  - audio: stories/story1/narration4/speech.wav
+  - audio: stories\story1\narration4\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: Timeline
@@ -186,7 +186,7 @@ stories:
         "1970s", "description": "进展放缓，遭遇瓶颈"}]}'
       total_frame: 222
       scene_id: scene4
-  - audio: stories/story1/narration5/speech.wav
+  - audio: stories\story1\narration5\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: AssetVideo
@@ -194,7 +194,7 @@ stories:
         "background", "totalFrame": 240}'
       total_frame: 240
       scene_id: scene5
-  - audio: stories/story1/narration6/speech.wav
+  - audio: stories\story1\narration6\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: IconCard
@@ -202,7 +202,7 @@ stories:
         "80年代专家系统走向商业应用，重新点燃工业界的兴趣与投入。"}'
       total_frame: 216
       scene_id: scene6
-  - audio: stories/story1/narration7/speech.wav
+  - audio: stories\story1\narration7\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: StatCounter
@@ -210,7 +210,7 @@ stories:
         "label": "深蓝击败卡斯帕罗夫", "icon": "trophy"}]}'
       total_frame: 246
       scene_id: scene7
-  - audio: stories/story1/narration8/speech.wav
+  - audio: stories\story1\narration8\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: AssetImage
@@ -218,17 +218,25 @@ stories:
         "background", "totalFrame": 240}'
       total_frame: 240
       scene_id: scene8
-  - audio: stories/story1/narration9/speech.wav
+  - audio: stories\story1\narration9\speech.wav
     volume: 1.0
     scene_list:
+    - remotion_component: MediaSection
+      remotion_data: '{"items": [{"src": "stories\\story1\\narration9\\scenes\\scene9a-1.jpg",
+        "alt": "搜索引擎界面，搜索结果页特写，科技感蓝白配色", "caption": "搜索引擎"}, {"src": "stories\\story1\\narration9\\scenes\\scene9a-2.jpg",
+        "alt": "机器翻译界面，双语对照文本，科技感蓝白配色", "caption": "机器翻译"}, {"src": "stories\\story1\\narration9\\scenes\\scene9a-3.jpg",
+        "alt": "个性化推荐信息流界面，卡片式内容，科技感蓝白配色", "caption": "个性推荐"}], "text": "神经网络渗透日常应用",
+        "data": [{"value": "3", "label": "日常应用", "suffix": "类"}]}'
+      total_frame: 133
+      scene_id: scene9a
     - remotion_component: FeatureGrid
       remotion_data: '{"heading": "日常应用", "columns": 3, "items": [{"icon": "search",
         "title": "搜索引擎", "description": "更精准的检索"}, {"icon": "languages", "title":
         "机器翻译", "description": "跨语言沟通"}, {"icon": "thumbs-up", "title": "个性推荐", "description":
         "懂你所好"}]}'
-      total_frame: 222
+      total_frame: 89
       scene_id: scene9
-  - audio: stories/story1/narration10/speech.wav
+  - audio: stories\story1\narration10\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: AssetVideo
@@ -236,7 +244,7 @@ stories:
         "role": "background", "totalFrame": 234}'
       total_frame: 234
       scene_id: scene10
-  - audio: stories/story1/narration11/speech.wav
+  - audio: stories\story1\narration11\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: DataBar
@@ -244,7 +252,7 @@ stories:
         {"label": "社区贡献者", "value": 65}, {"label": "衍生应用", "value": 90}]}'
       total_frame: 216
       scene_id: scene11
-  - audio: stories/story1/narration12/speech.wav
+  - audio: stories\story1\narration12\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: IconCard
@@ -252,7 +260,7 @@ stories:
         "各国纷纷出台战略，把人工智能视为决定未来国家竞争力的关键力量。"}'
       total_frame: 204
       scene_id: scene12
-  - audio: stories/story1/narration13/speech.wav
+  - audio: stories\story1\narration13\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: AssetVideo
@@ -260,7 +268,7 @@ stories:
         "role": "background", "totalFrame": 234}'
       total_frame: 234
       scene_id: scene13
-  - audio: stories/story1/narration14/speech.wav
+  - audio: stories\story1\narration14\speech.wav
     volume: 1.0
     scene_list:
     - remotion_component: QuoteBlock

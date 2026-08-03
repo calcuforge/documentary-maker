@@ -126,6 +126,15 @@
    - Fill the display fields from the research and the chapter script: `intent`,
      `is_aigc_scene`, `type`, `remotion_component`, `visual_content`, `data`,
      `text`, `workflows`.
+   - **Multi-image scenes** (`remotion_component: MediaSection`): fill the
+     `media_list` field instead of a single scene-level visual. Each item is one
+     image: `id` (convention `<scene_id>-<n>`), `visual_content`, optional
+     `caption`, `type: image`, `asset_generation_method` (`stock` | `aigc`), and
+     `workflows` (aigc items only). Scene-level `visual_content`/`type`/
+     `workflows`/`asset_path` are then unused for asset production. `is_aigc_scene`
+     must be true if ANY item is aigc; aigc items become per-item tasks in
+     `video_tasks.yaml` (referenced by their item id). See
+     [expression_intent_mapping.md](expression_intent_mapping.md).
    - Leave EMPTY (auto-filled later): `asset_path`, `origin_asset_path`,
      `narration.total_frame`, `narration.audio_path`.
    - **Do NOT change `narration.content`** — it must stay equal to its `script.md`

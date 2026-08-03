@@ -82,6 +82,23 @@ def normalize_loudness(path: str, target_lufs: float = -14.0) -> bool:
         return False
 
 
+# Terminal punctuation / closing marks stripped before TTS synthesis.
+_TRAILING_PUNCT = set("。！？；，、：．.?!;,:…·～—~”’'\"」』）】〉》)]}>")
+
+
+def strip_trailing_punct(text: str) -> str:
+    """Remove trailing punctuation / closing marks before TTS synthesis.
+
+    Terminal marks make the TTS engine add an unnatural pause at the line end;
+    the stored narration.content keeps its punctuation (used for subtitles).
+    Returns the original text if stripping would empty it.
+    """
+    s = text.rstrip()
+    while s and s[-1] in _TRAILING_PUNCT:
+        s = s[:-1].rstrip()
+    return s or text
+
+
 def synth_comfyui_indextts(
     content: str,
     voice_file: str,
@@ -362,9 +379,10 @@ def main() -> None:
     def generate_one(unit: dict) -> dict:
         """Generate TTS for a single narration unit."""
         try:
+            content = strip_trailing_punct(unit["content"])
             if backend == "comfyui_indextts":
                 synth_comfyui_indextts(
-                    content=unit["content"],
+                    content=content,
                     voice_file=voice_file,
                     output_path=unit["output_path"],
                     speed=speed,
@@ -372,7 +390,7 @@ def main() -> None:
                 )
             elif backend == "http_server":
                 synth_http_server(
-                    content=unit["content"],
+                    content=content,
                     voice_file=voice_file,
                     output_path=unit["output_path"],
                     url=http_url,

@@ -119,21 +119,38 @@ def upscale_asset(
     return output_path
 
 
-def collect_scenes_to_upscale(video_struct: dict) -> list[dict]:
-    """Collect all AIGC scenes that have origin_asset_path but no asset_path."""
-    scenes = []
+def iter_asset_refs(video_struct: dict):
+    """Yield (ref, asset_type, is_aigc) for every asset holder.
+
+    A MediaSection scene (media_list non-empty) holds its assets on the item
+    dicts, not on the scene — those are yielded per item; ordinary scenes yield
+    themselves. `ref` is the dict whose origin_asset_path/asset_path get
+    updated, so write-backs always land on the right place.
+    """
     for story in video_struct.get("stories", []):
         for section in story.get("section_list", []):
             for scene in section.get("scene_list", []):
-                origin = scene.get("origin_asset_path", "")
-                asset = scene.get("asset_path", "")
-                if origin and not asset and scene.get("is_aigc_scene", False):
-                    scenes.append({
-                        "scene_id": scene.get("id", ""),
-                        "origin_asset_path": origin,
-                        "type": scene.get("type", "image"),
-                        "scene_ref": scene,
-                    })
+                media_list = scene.get("media_list") or []
+                if media_list:
+                    for item in media_list:
+                        yield item, item.get("type", "image"), item.get("asset_generation_method") == "aigc"
+                else:
+                    yield scene, scene.get("type", "image"), scene.get("is_aigc_scene", False)
+
+
+def collect_scenes_to_upscale(video_struct: dict) -> list[dict]:
+    """Collect all AIGC assets (scenes or media_list items) that have origin_asset_path but no asset_path."""
+    scenes = []
+    for scene_ref, asset_type, is_aigc in iter_asset_refs(video_struct):
+        origin = scene_ref.get("origin_asset_path", "")
+        asset = scene_ref.get("asset_path", "")
+        if origin and not asset and is_aigc:
+            scenes.append({
+                "scene_id": scene_ref.get("id", ""),
+                "origin_asset_path": origin,
+                "type": asset_type,
+                "scene_ref": scene_ref,
+            })
     return scenes
 
 
@@ -170,20 +187,18 @@ def main() -> None:
     # Collect scenes
     scenes = collect_scenes_to_upscale(video_struct)
     if args.force:
-        # Include scenes that already have asset_path
-        for story in video_struct.get("stories", []):
-            for section in story.get("section_list", []):
-                for scene in section.get("scene_list", []):
-                    origin = scene.get("origin_asset_path", "")
-                    if origin and scene.get("is_aigc_scene", False):
-                        already_in = any(s["scene_id"] == scene.get("id") for s in scenes)
-                        if not already_in:
-                            scenes.append({
-                                "scene_id": scene.get("id", ""),
-                                "origin_asset_path": origin,
-                                "type": scene.get("type", "image"),
-                                "scene_ref": scene,
-                            })
+        # Include assets that already have asset_path
+        for scene_ref, asset_type, is_aigc in iter_asset_refs(video_struct):
+            origin = scene_ref.get("origin_asset_path", "")
+            if origin and is_aigc:
+                already_in = any(s["scene_id"] == scene_ref.get("id") for s in scenes)
+                if not already_in:
+                    scenes.append({
+                        "scene_id": scene_ref.get("id", ""),
+                        "origin_asset_path": origin,
+                        "type": asset_type,
+                        "scene_ref": scene_ref,
+                    })
 
     if not scenes:
         print(json.dumps({

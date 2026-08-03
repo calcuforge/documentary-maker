@@ -34,7 +34,7 @@ VALID_COMPONENTS = [
     "QuoteBlock", "FeatureGrid", "IconCard", "ComparisonCard",
     "StatCounter", "DataBar", "Timeline", "FlowChart",
     "CodeBlock", "DataTable", "DiagramReveal", "AnimationDemo",
-    "AssetImage", "AssetVideo", "KenBurnsImage",
+    "AssetImage", "AssetVideo", "KenBurnsImage", "MediaSection",
 ]
 
 VALID_RESOLUTIONS = ["1080P", "4K", "1080p", "4k"]
@@ -187,6 +187,10 @@ def validate(config: dict) -> tuple[list[str], list[str]]:
                         parsed = json.loads(remotion_data)
                         if not parsed:
                             warnings.append(f"{scn_prefix}: 'remotion_data' is empty JSON '{{}}'")
+                        elif component == "MediaSection" and not isinstance(parsed.get("items"), list):
+                            errors.append(f"{scn_prefix}: MediaSection requires a non-empty 'items' list in remotion_data")
+                        elif component == "MediaSection" and len(parsed.get("items") or []) == 0:
+                            errors.append(f"{scn_prefix}: MediaSection 'items' list is empty (no asset paths resolved)")
                     except json.JSONDecodeError as e:
                         errors.append(f"{scn_prefix}: invalid JSON in remotion_data: {e}")
 

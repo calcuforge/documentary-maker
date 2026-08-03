@@ -178,7 +178,26 @@ def build_stories(video_struct: dict, video_dir: str, narration_volume: float = 
                 text_content = scene.get("text", "")
 
                 remotion_data = {}
-                if component in ("AssetVideo", "AssetImage", "KenBurnsImage"):
+                if component == "MediaSection":
+                    items = []
+                    for item in scene.get("media_list", []):
+                        raw_src = item.get("asset_path") or item.get("origin_asset_path", "")
+                        if not raw_src:
+                            continue
+                        items.append({
+                            "src": _to_relative(raw_src, video_dir),
+                            "alt": item.get("visual_content", ""),
+                            "caption": item.get("caption", "") or None,
+                        })
+                    remotion_data = {"items": items}
+                    if text_content:
+                        remotion_data["text"] = text_content
+                    if data_content:
+                        try:
+                            remotion_data["data"] = json.loads(data_content) if isinstance(data_content, str) else data_content
+                        except (json.JSONDecodeError, TypeError):
+                            remotion_data["data"] = []
+                elif component in ("AssetVideo", "AssetImage", "KenBurnsImage"):
                     raw_src = asset_path if asset_path else scene.get("origin_asset_path", "")
                     remotion_data = {"src": _to_relative(raw_src, video_dir), "role": "background", "totalFrame": f}
                 elif data_content:

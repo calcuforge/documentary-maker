@@ -57,59 +57,68 @@ def main() -> None:
     deleted = 0
     errors = []
 
+    refs = []
     for story in video_struct.get("stories", []):
         for section in story.get("section_list", []):
             for scene in section.get("scene_list", []):
-                for field in ("asset_path", "origin_asset_path"):
-                    path_str = scene.get(field, "")
-                    if not path_str:
-                        continue
+                media_list = scene.get("media_list") or []
+                if media_list:
+                    for item in media_list:
+                        refs.append((item, item.get("id", "?")))
+                else:
+                    refs.append((scene, scene.get("id", "?")))
 
-                    path = Path(path_str)
-                    if not path.exists():
-                        continue
+    for ref, ref_id in refs:
+        for field in ("asset_path", "origin_asset_path"):
+            path_str = ref.get(field, "")
+            if not path_str:
+                continue
 
-                    ext = path.suffix.lower()
-                    if ext in SKIP_EXTS:
-                        continue
-                    if ext in VIDEO_EXTS:
-                        continue
-                    if ext not in {".png", ".webp", ".bmp", ".tiff", ".tif", ".gif"}:
-                        continue
+            path = Path(path_str)
+            if not path.exists():
+                continue
 
-                    jpg_path = path.with_suffix(".jpg")
+            ext = path.suffix.lower()
+            if ext in SKIP_EXTS:
+                continue
+            if ext in VIDEO_EXTS:
+                continue
+            if ext not in {".png", ".webp", ".bmp", ".tiff", ".tif", ".gif"}:
+                continue
 
-                    # Idempotent: skip if the JPEG already exists and is non-empty
-                    if jpg_path.exists() and jpg_path.stat().st_size > 0:
-                        skipped += 1
-                        continue
+            jpg_path = path.with_suffix(".jpg")
 
-                    result = subprocess.run(
-                        ["ffmpeg", "-y", "-i", str(path),
-                         "-q:v", str(args.quality), str(jpg_path)],
-                        capture_output=True, text=True, timeout=120,
-                    )
-                    if result.returncode != 0:
-                        detail = (result.stderr or result.stdout or "").strip()
-                        errors.append({
-                            "scene_id": scene.get("id", "?"),
-                            "field": field,
-                            "source": str(path),
-                            "error": detail[:300],
-                        })
-                        continue
+            # Idempotent: skip if the JPEG already exists and is non-empty
+            if jpg_path.exists() and jpg_path.stat().st_size > 0:
+                skipped += 1
+                continue
 
-                    # Update the YAML reference to point at the JPEG
-                    scene[field] = str(jpg_path)
+            result = subprocess.run(
+                ["ffmpeg", "-y", "-i", str(path),
+                 "-q:v", str(args.quality), str(jpg_path)],
+                capture_output=True, text=True, timeout=120,
+            )
+            if result.returncode != 0:
+                detail = (result.stderr or result.stdout or "").strip()
+                errors.append({
+                    "scene_id": ref_id,
+                    "field": field,
+                    "source": str(path),
+                    "error": detail[:300],
+                })
+                continue
 
-                    # Remove the original (now replaced by the JPEG).
-                    # Guard with exists() — another scene may have shared the same
-                    # source file and already deleted it.
-                    if path.resolve() != jpg_path.resolve() and path.exists():
-                        path.unlink()
-                        deleted += 1
+            # Update the YAML reference to point at the JPEG
+            ref[field] = str(jpg_path)
 
-                    converted += 1
+            # Remove the original (now replaced by the JPEG).
+            # Guard with exists() — another scene may have shared the same
+            # source file and already deleted it.
+            if path.resolve() != jpg_path.resolve() and path.exists():
+                path.unlink()
+                deleted += 1
+
+            converted += 1
 
     if converted or deleted:
         save_yaml(video_struct, args.video_struct)

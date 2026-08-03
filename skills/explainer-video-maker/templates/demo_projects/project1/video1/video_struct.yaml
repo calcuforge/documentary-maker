@@ -193,9 +193,47 @@ stories:
       total_frame: 0
       audio_path: ''
     scene_list:
+    - intent: 多应用场景展示
+      id: scene9a
+      percentage: 60
+      data: '[{"value":"3","label":"日常应用","suffix":"类"}]'
+      text: 神经网络渗透日常应用
+      visual_content: ''
+      is_aigc_scene: false
+      asset_generation_method: none
+      type: image
+      remotion_component: MediaSection
+      origin_asset_path: ''
+      asset_path: ''
+      workflows: []
+      media_list:
+      - id: scene9a-1
+        visual_content: 搜索引擎界面，搜索结果页特写，科技感蓝白配色
+        caption: 搜索引擎
+        type: image
+        asset_generation_method: stock
+        origin_asset_path: ''
+        asset_path: ''
+        workflows: []
+      - id: scene9a-2
+        visual_content: 机器翻译界面，双语对照文本，科技感蓝白配色
+        caption: 机器翻译
+        type: image
+        asset_generation_method: stock
+        origin_asset_path: ''
+        asset_path: ''
+        workflows: []
+      - id: scene9a-3
+        visual_content: 个性化推荐信息流界面，卡片式内容，科技感蓝白配色
+        caption: 个性推荐
+        type: image
+        asset_generation_method: stock
+        origin_asset_path: ''
+        asset_path: ''
+        workflows: []
     - intent: 应用场景展示
       id: scene9
-      percentage: 100
+      percentage: 40
       data: '{"heading":"日常应用","columns":3,"items":[{"icon":"search","title":"搜索引擎","description":"更精准的检索"},{"icon":"languages","title":"机器翻译","description":"跨语言沟通"},{"icon":"thumbs-up","title":"个性推荐","description":"懂你所好"}]}'
       text: ''
       visual_content: ''

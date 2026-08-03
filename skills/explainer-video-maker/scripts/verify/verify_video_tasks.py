@@ -66,13 +66,20 @@ def check_workflow_code_valid(code: str) -> bool | None:
 
 
 def collect_aigc_scenes(video_struct: dict) -> set[str]:
-    """Collect scene IDs that require AIGC generation."""
+    """Collect scene IDs (and MediaSection media_list item IDs) that require AIGC.
+
+    Tasks may reference either a scene id or an aigc media_list item id; both
+    are collected so coverage checks accept item-level tasks.
+    """
     aigc_scenes = set()
     for story in video_struct.get("stories", []):
         for section in story.get("section_list", []):
             for scene in section.get("scene_list", []):
                 if scene.get("is_aigc_scene", False):
                     aigc_scenes.add(scene.get("id", ""))
+                for item in scene.get("media_list") or []:
+                    if item.get("asset_generation_method") == "aigc":
+                        aigc_scenes.add(item.get("id", ""))
     return aigc_scenes
 
 

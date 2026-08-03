@@ -10,6 +10,9 @@ Key validations:
 - is_aigc_scene=true + asset_generation_method=aigc → workflows and type must not be empty
 - is_aigc_scene=true + asset_generation_method=stock → type required, workflows may be empty
 - is_aigc_scene=false → data and text must not BOTH be empty
+- media_list scenes (MediaSection): per-item checks — id unique, type=image,
+  asset_generation_method ∈ stock|aigc (aigc → workflows required), and
+  is_aigc_scene must match whether any item is aigc
 - each section has a narration with a non-empty content (no length cap)
 - each scene has an integer `percentage` 0-100; Σ percentage per narration = 100
 - All IDs (story / scene / narration) must be globally unique
@@ -40,7 +43,7 @@ VALID_COMPONENTS = [
     "QuoteBlock", "FeatureGrid", "IconCard", "ComparisonCard",
     "StatCounter", "DataBar", "Timeline", "FlowChart",
     "CodeBlock", "DataTable", "DiagramReveal", "AnimationDemo",
-    "AssetImage", "AssetVideo", "KenBurnsImage",
+    "AssetImage", "AssetVideo", "KenBurnsImage", "MediaSection",
 ]
 
 VALID_SCENE_TYPES = ["image", "video", "none"]
@@ -77,6 +80,7 @@ def validate(struct: dict, video_dir: str | None = None) -> tuple[list[str], lis
     story_ids = set()
     narration_ids = set()
     scene_ids = set()
+    media_item_ids = set()
 
     for si, story in enumerate(stories):
         story_id = story.get("id", "")
@@ -141,8 +145,57 @@ def validate(struct: dict, video_dir: str | None = None) -> tuple[list[str], lis
 
                 # AIGC vs non-AIGC validation
                 is_aigc = scene.get("is_aigc_scene", False)
+                media_list = scene.get("media_list") or []
 
-                if is_aigc:
+                if media_list:
+                    # MediaSection scenes: assets come from per-item entries;
+                    # scene-level type/workflows/visual_content are not used.
+                    item_aigc = False
+                    for mi, item in enumerate(media_list):
+                        item_prefix = f"{scn_prefix}.media_list[{mi}]"
+                        if not isinstance(item, dict):
+                            errors.append(f"{item_prefix}: must be an object")
+                            continue
+
+                        item_id = item.get("id", "")
+                        if not item_id:
+                            errors.append(f"{item_prefix}: 'id' is required")
+                        elif item_id in media_item_ids:
+                            errors.append(f"{item_prefix}: duplicate media item id '{item_id}'")
+                        media_item_ids.add(item_id)
+
+                        item_type = item.get("type", "")
+                        if item_type != "image":
+                            errors.append(
+                                f"{item_prefix}: 'type' must be 'image' (MediaSection renders images only), got '{item_type}'"
+                            )
+
+                        gen_method = item.get("asset_generation_method", "")
+                        if gen_method not in ("stock", "aigc"):
+                            errors.append(
+                                f"{item_prefix}: 'asset_generation_method' must be 'stock' or 'aigc', got '{gen_method}'"
+                            )
+                        elif gen_method == "aigc":
+                            item_aigc = True
+                            workflows = item.get("workflows", [])
+                            if not workflows:
+                                errors.append(f"{item_prefix}: asset_generation_method=aigc but 'workflows' is empty")
+                            else:
+                                for wi, wf in enumerate(workflows):
+                                    wt = wf.get("workflow_type", "")
+                                    if not wt:
+                                        errors.append(f"{item_prefix}.workflows[{wi}]: 'workflow_type' is required")
+                                    elif wt not in VALID_WORKFLOW_TYPES:
+                                        errors.append(f"{item_prefix}.workflows[{wi}]: invalid workflow_type '{wt}'. Valid: {VALID_WORKFLOW_TYPES}")
+
+                        if not item.get("visual_content"):
+                            warnings.append(f"{item_prefix}: 'visual_content' is empty (recommended)")
+
+                    if is_aigc != item_aigc:
+                        errors.append(
+                            f"{scn_prefix}: is_aigc_scene={is_aigc} but media_list contains aigc items={item_aigc}"
+                        )
+                elif is_aigc:
                     scene_type = scene.get("type", "")
                     if not scene_type or scene_type == "none":
                         errors.append(f"{scn_prefix}: is_aigc_scene=true but 'type' is empty/none")

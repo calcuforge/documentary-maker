@@ -82,6 +82,7 @@ def build_default_scene(scene_id: str) -> dict:
         "origin_asset_path": "",
         "asset_path": "",
         "workflows": [],
+        "media_list": [],  # agent fills (Step 6, MediaSection scenes): multi-image items
         "percentage": 100,  # split by agent (Step 6); Σ per narration = 100
     }
 

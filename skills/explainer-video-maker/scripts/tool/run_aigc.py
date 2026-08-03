@@ -42,7 +42,9 @@ def find_scene_context(video_struct: dict, scene_id: str) -> dict | None:
     """Find the story_id and narration_id for a given scene_id.
 
     Narration lives on the section (section.narration); each section maps to 1-N
-    scenes.
+    scenes. MediaSection scenes also accept a media_list item id (e.g.
+    "scene3a-1"); the returned `scene` is then the item dict, so the caller's
+    origin_asset_path write-back lands on the item.
     """
     for story in video_struct.get("stories", []):
         for section in story.get("section_list", []):
@@ -54,6 +56,13 @@ def find_scene_context(video_struct: dict, scene_id: str) -> dict | None:
                         "narration_id": narration.get("id", ""),
                         "scene": scene,
                     }
+                for item in scene.get("media_list") or []:
+                    if item.get("id") == scene_id:
+                        return {
+                            "story_id": story.get("id", ""),
+                            "narration_id": narration.get("id", ""),
+                            "scene": item,
+                        }
     return None
 
 

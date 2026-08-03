@@ -29,6 +29,58 @@ the tables below.
 
 ---
 
+## Choosing MediaSection (multi-image + text + data)
+
+`MediaSection` renders **one scene with multiple images** (grid), plus an
+optional description line above and a stat row below. Use it when a single
+visual cannot carry the content — several parallel examples, screenshots, or
+cases that share one narration.
+
+| Expression Intent | Example | Component | Reason |
+|---|---|---|---|
+| Multi-case showcase | 3 application scenarios of AI | **MediaSection** | A grid shows cases in parallel; one narration covers them all. |
+| Product screenshots / UI series | Login, main page, settings | **MediaSection** | Multiple screenshots are clearer side by side than a single image. |
+| Series of images + metric | 3 milestones + total count | **MediaSection** (text + data) | Images carry the cases, the stat row carries the number. |
+| Before / after pairs | Two states of the same subject | **MediaSection** (2 items) | A 2-column grid reads naturally as a comparison. |
+
+Keep single-image intents on the single-image components:
+
+- One representative image → **AssetImage** / **KenBurnsImage** (see table above)
+- Video material → **AssetVideo** (never put videos in `media_list` — the grid
+  renders images only)
+
+### Scene authoring rules (Step 6)
+
+```yaml
+- intent: 多案例展示
+  id: scene3a
+  percentage: 100
+  remotion_component: MediaSection
+  is_aigc_scene: true            # true if ANY media item uses aigc
+  text: 'AI 落地三大场景'          # description above the grid
+  data: '[{"value":"3","label":"落地场景","suffix":"个"}]'   # stat row below
+  media_list:
+  - id: scene3a-1                # convention: <scene_id>-<n>; aigc items are
+    visual_content: 'AI 医疗影像'  # referenced as task scene_id in video_tasks
+    caption: '医疗影像'            # optional per-image caption
+    type: image                  # image only
+    asset_generation_method: stock   # stock | aigc
+    workflows: []                # required for aigc items
+  - id: scene3a-2
+    visual_content: 'AI 自动驾驶'
+    asset_generation_method: stock
+```
+
+- `media_list` items are **image-only**; aigc items need their own `workflows`
+  and become **per-item tasks** in `video_tasks.yaml` (`scene_id: scene3a-1`),
+  each with its own `video_prompt_{item_id}.yaml`.
+- `data` is the stat row (`value`/`label`/`suffix` — labels ≤10 chars), NOT a
+  QuoteBlock-style JSON object; `text` is the plain description.
+- Item asset paths are auto-filled by the pipeline (stock search → upscale →
+  compress), same as single-image scenes.
+
+---
+
 ## 1. Narrative / Atmosphere
 
 | Expression Intent | Example | Workflow Type | Remotion Component | Reason |

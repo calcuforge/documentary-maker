@@ -40,30 +40,38 @@ def verify(struct: dict, check_upscaled: bool = False) -> tuple[list[str], list[
     for story in stories:
         for section in story.get("section_list", []):
             for scene in section.get("scene_list", []):
-                if not scene.get("is_aigc_scene", False):
-                    continue
+                media_list = scene.get("media_list") or []
+                if media_list:
+                    # MediaSection scenes: verify aigc items only (stock items are
+                    # covered by verify_stock_assets.py); the scene itself is not
+                    # an asset holder.
+                    refs = [item for item in media_list
+                            if item.get("asset_generation_method") == "aigc"]
+                else:
+                    refs = [scene] if scene.get("is_aigc_scene", False) else []
 
-                total_aigc += 1
-                scene_id = scene.get("id", "?")
+                for ref in refs:
+                    total_aigc += 1
+                    label = ref.get("id") or scene.get("id", "?")
 
-                # Check origin_asset_path
-                origin_path = scene.get("origin_asset_path", "")
-                if not origin_path:
-                    origin_missing.append(f"{scene_id}: origin_asset_path is empty")
-                elif not Path(origin_path).exists():
-                    origin_missing.append(f"{scene_id}: file not found: {origin_path}")
-                elif Path(origin_path).stat().st_size == 0:
-                    origin_missing.append(f"{scene_id}: file is empty: {origin_path}")
+                    # Check origin_asset_path
+                    origin_path = ref.get("origin_asset_path", "")
+                    if not origin_path:
+                        origin_missing.append(f"{label}: origin_asset_path is empty")
+                    elif not Path(origin_path).exists():
+                        origin_missing.append(f"{label}: file not found: {origin_path}")
+                    elif Path(origin_path).stat().st_size == 0:
+                        origin_missing.append(f"{label}: file is empty: {origin_path}")
 
-                # Check upscaled asset_path
-                if check_upscaled:
-                    asset_path = scene.get("asset_path", "")
-                    if not asset_path:
-                        upscaled_missing.append(f"{scene_id}: asset_path is empty")
-                    elif not Path(asset_path).exists():
-                        upscaled_missing.append(f"{scene_id}: upscaled file not found: {asset_path}")
-                    elif Path(asset_path).stat().st_size == 0:
-                        upscaled_missing.append(f"{scene_id}: upscaled file is empty: {asset_path}")
+                    # Check upscaled asset_path
+                    if check_upscaled:
+                        asset_path = ref.get("asset_path", "")
+                        if not asset_path:
+                            upscaled_missing.append(f"{label}: asset_path is empty")
+                        elif not Path(asset_path).exists():
+                            upscaled_missing.append(f"{label}: upscaled file not found: {asset_path}")
+                        elif Path(asset_path).stat().st_size == 0:
+                            upscaled_missing.append(f"{label}: upscaled file is empty: {asset_path}")
 
     if origin_missing:
         errors.append(f"Missing origin assets ({len(origin_missing)}/{total_aigc}):")
