@@ -125,6 +125,10 @@ def render_distributed(args, project_config, template_path) -> None:
                     continue
                 if p.is_file() and rel.name == "result.mp4":
                     continue
+                if p.is_file() and rel.name.startswith("origin_"):
+                    # Pre-upscale / pre-compression raw inputs (scenes/origin_*)
+                    # — Remotion renders from asset_path only, so skip them.
+                    continue
                 arc = "public/" + rel.as_posix()
                 tar.add(str(p), arcname=arc, recursive=False)
             skip_dirs = {"node_modules", ".git", "tmp"}
