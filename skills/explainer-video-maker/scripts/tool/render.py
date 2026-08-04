@@ -157,7 +157,6 @@ def render_distributed(args, project_config, template_path) -> None:
         log(f"Payload: {payload_path} ({size_mb:.1f} MB)")
 
         # 2. 发起分布式渲染(只传元数据;压缩文件由 proxy_agent 通过
-        #    远程 k8s 命令(kubectl cp)从容器内路径拷贝,不经过 HTTP 上传)
         submit_url = f"{proxy_endpoint}/render/submit"
         log(f"Submitting render task to {submit_url} ...")
         last_err = None
