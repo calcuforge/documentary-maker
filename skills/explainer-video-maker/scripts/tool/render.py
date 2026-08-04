@@ -46,6 +46,65 @@ DISTRIBUTED_POLL_INTERVAL = 10  # 轮询间隔(秒)
 DISTRIBUTED_TIMEOUT = 7200  # 轮询总超时(秒)，服务端 max_exec_time_sec 超时后会返回 timeout 状态
 
 
+def build_codec_args(codec: str, crf: int) -> list[str]:
+    """ffmpeg encoder + quality args for a project render.codec value.
+
+    Keeps the AIGC-video compression consistent with the final render settings
+    (project_config.yaml → render.codec / render.crf). Unknown values fall back
+    to libx264.
+    """
+    if codec in ("h265", "hevc"):
+        return ["-c:v", "libx265", "-crf", str(crf), "-preset", "fast"]
+    if codec == "vp8":
+        return ["-c:v", "libvpx", "-b:v", "5M", "-preset", "fast"]
+    if codec == "vp9":
+        return ["-c:v", "libvpx-vp9", "-crf", str(crf), "-b:v", "0", "-preset", "fast"]
+    if codec == "av1":
+        return ["-c:v", "libaom-av1", "-crf", str(crf), "-cpu-used", "4"]
+    if codec == "prores":
+        return ["-c:v", "prores_ks", "-q:v", "15"]
+    return ["-c:v", "libx264", "-crf", str(crf), "-preset", "fast"]
+
+
+def compress_aigc_videos(public_dir: Path, project_config: dict) -> None:
+    """压缩 AIGC 视频素材(降低 Remotion 渲染内存),本地渲染前调用。
+    按 project_config render.codec/crf 重编码 video_struct.yaml 中的 AIGC 视频。"""
+    video_struct_path = public_dir / "video_struct.yaml"
+    if not video_struct_path.exists():
+        return
+    render_cfg = project_config.get("render") or {}
+    codec_args = build_codec_args(
+        str(render_cfg.get("codec", "h264")).lower(),
+        int(render_cfg.get("crf", 23)),
+    )
+    video_struct = load_yaml(str(video_struct_path))
+    compressed = 0
+    for story in video_struct.get("stories", []):
+        for section in story.get("section_list", []):
+            for scene in section.get("scene_list", []):
+                asset = scene.get("asset_path", "")
+                if not asset or scene.get("type") != "video" or not scene.get("is_aigc_scene"):
+                    continue
+                p = public_dir / asset
+                if not p.exists():
+                    continue
+                tmp = str(p) + ".tmp.mp4"
+                try:
+                    subprocess.run(
+                        ["ffmpeg", "-y", "-i", str(p), *codec_args,
+                         "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k",
+                         "-map_metadata", "-1", tmp],
+                        capture_output=True, text=True, timeout=300, check=True,
+                    )
+                    Path(tmp).replace(p)  # atomic replace
+                    compressed += 1
+                except subprocess.SubprocessError as e:
+                    print(f"    WARNING: video compression failed for {p}: {e}", file=sys.stderr)
+                    Path(tmp).unlink(missing_ok=True)
+    if compressed:
+        print(f"  Compressed {compressed} AIGC video asset(s) (render codec/crf)", file=sys.stderr)
+
+
 def resolve_template_path(project_config: dict) -> Path:
     """Resolve the remotion-video-template path from project config.
 
@@ -313,6 +372,9 @@ def main() -> None:
         except KeyboardInterrupt:
             pass
         return
+
+    # 压缩 AIGC 视频素材,降低 Remotion 渲染内存(本地渲染;分布式渲染由节点解压后压缩)
+    compress_aigc_videos(Path(public_dir), project_config)
 
     # Render — render-yaml.mjs splits the video into frame-range segments and
     # concatenates them with ffmpeg, with adaptive parallelism (per-render

@@ -29,24 +29,6 @@ sys.path.insert(0, str(SKILL_ROOT))
 from lib.yamlutil import load_yaml, save_yaml
 
 
-def build_codec_args(codec: str, crf: int) -> list[str]:
-    """ffmpeg encoder + quality args for a project render.codec value.
-
-    Keeps the AIGC-video compression consistent with the final render settings
-    (project_config.yaml → render.codec / render.crf). Unknown values fall back
-    to libx264.
-    """
-    if codec in ("h265", "hevc"):
-        return ["-c:v", "libx265", "-crf", str(crf), "-preset", "fast"]
-    if codec == "vp8":
-        return ["-c:v", "libvpx", "-b:v", "5M", "-preset", "fast"]
-    if codec == "vp9":
-        return ["-c:v", "libvpx-vp9", "-crf", str(crf), "-b:v", "0", "-preset", "fast"]
-    if codec == "av1":
-        return ["-c:v", "libaom-av1", "-crf", str(crf), "-cpu-used", "4"]
-    if codec == "prores":
-        return ["-c:v", "prores_ks", "-q:v", "15"]
-    return ["-c:v", "libx264", "-crf", str(crf), "-preset", "fast"]
 
 
 def get_target_dimensions(project_config: dict) -> tuple[int, int]:
@@ -292,44 +274,8 @@ def main() -> None:
 
     print(f"  Upscale: {upscaled} new, {skipped} skipped", file=sys.stderr)
 
-    # Compress video assets to reduce memory during Remotion render, using the
-    # project's render codec/crf (project_config.yaml) so the intermediates match
-    # the final output settings.
-    render_cfg = project_config.get("render", {})
-    codec_args = build_codec_args(
-        render_cfg.get("codec", "h264"),
-        int(render_cfg.get("crf", 23)),
-    )
-
-    def _compress_video(filepath: str) -> None:
-        tmp = filepath + ".tmp.mp4"
-        try:
-            subprocess.run(
-                ["ffmpeg", "-y", "-i", filepath, *codec_args,
-                 "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k",
-                 "-map_metadata", "-1", tmp],
-                capture_output=True, text=True, timeout=120,
-                check=True,
-            )
-            Path(tmp).replace(filepath)  # atomic replace
-        except subprocess.SubprocessError as e:
-            print(f"    WARNING: video compression failed for {filepath}: {e}", file=sys.stderr)
-            Path(tmp).unlink(missing_ok=True)
-
-    compressed = 0
-    for story in video_struct.get("stories", []):
-        for section in story.get("section_list", []):
-            for scene in section.get("scene_list", []):
-                asset = scene.get("asset_path", "")
-                if not asset or not Path(asset).exists():
-                    continue
-                if scene.get("type") != "video":
-                    continue
-                if scene.get("is_aigc_scene"):
-                    _compress_video(asset)
-                    compressed += 1
-    if compressed:
-        print(f"  Compressed {compressed} video asset(s) (h264 crf 18)", file=sys.stderr)
+    # 视频素材压缩已移除:本地渲染在 render.py 渲染前压缩,
+    # 分布式渲染在 remotion-render 节点解压后压缩(见 render.py / server.py)
 
     # Save updated video_struct
     save_yaml(video_struct, args.video_struct)
