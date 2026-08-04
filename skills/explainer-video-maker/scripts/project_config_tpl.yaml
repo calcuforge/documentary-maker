@@ -126,6 +126,7 @@ content:
   #   verify_story_scripts.py (Step 5).
   min_story_chars: 300
 render:
+  mode: local # 渲染方式: local(容器内本地渲染) | distributed(集群分布式渲染,按渲染时长计费)
   codec: h264 # video codec: h264 | h265 | vp8 | vp9 | av1 | prores
   crf: 23 # quality/size tradeoff 0-51 (lower = higher quality, larger file)
   timeout_ms: 120000 # per-frame component/delayRender timeout (Remotion default 30000; raise if large AIGC assets load slowly)

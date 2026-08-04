@@ -152,6 +152,9 @@ def validate(config: dict) -> list[str]:
 
     # --- render section ---
     render_cfg = config.get("render", {})
+    mode = render_cfg.get("mode", "local")
+    if mode not in ("local", "distributed"):
+        errors.append(f"[render.mode] invalid '{mode}'. Valid: local, distributed")
     codec = render_cfg.get("codec", "")
     if codec and codec.lower() not in VALID_CODECS:
         errors.append(f"[render.codec] invalid '{codec}'. Valid: {VALID_CODECS}")

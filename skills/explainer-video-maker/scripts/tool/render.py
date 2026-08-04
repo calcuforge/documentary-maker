@@ -22,14 +22,27 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tarfile
+import time
+import uuid
 from pathlib import Path
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL_ROOT))
 
 from lib.yamlutil import load_yaml
+
+try:
+    import requests
+except ImportError:
+    requests = None
+
+DISTRIBUTED_WORK_DIR = ".distributed_render"  # workspace 下的分布式渲染工作目录
+DISTRIBUTED_POLL_INTERVAL = 10  # 轮询间隔(秒)
+DISTRIBUTED_TIMEOUT = 7200  # 轮询总超时(秒)，服务端 max_exec_time_sec 超时后会返回 timeout 状态
 
 
 def resolve_template_path(project_config: dict) -> Path:
@@ -50,6 +63,168 @@ def resolve_template_path(project_config: dict) -> Path:
     project_root = project_config.get("project", {}).get("project_root_path", "")
     base = Path(project_root).parent.parent if project_root else Path.cwd()
     return (base / expanded).resolve()
+
+
+def render_distributed(args, project_config, template_path) -> None:
+    """Distributed render via proxy_agent (render.mode=distributed).
+
+    Packs the video assets (public-dir) and the remotion template source into a
+    tar.xz, uploads it to the proxy agent, polls the render task and moves the
+    rendered result.mp4 (copied back into the container by the proxy agent)
+    into the project output path. Billing is handled server-side by duration.
+    """
+    if requests is None:
+        print(json.dumps({
+            "status": "error",
+            "msg": "requests library not available — install requests to use distributed rendering",
+            "data": {},
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
+
+    proxy_endpoint = os.path.expandvars(os.environ.get("BACKEND_PROXY_ENDPOINT", "${BACKEND_PROXY_ENDPOINT}"))
+    if proxy_endpoint.startswith("${"):
+        print(json.dumps({
+            "status": "error",
+            "msg": "BACKEND_PROXY_ENDPOINT is not set — distributed rendering unavailable",
+            "data": {},
+        }, ensure_ascii=False, indent=2))
+        sys.exit(1)
+    proxy_endpoint = proxy_endpoint.rstrip("/")
+
+    sections_path = str(Path(args.remotion_sections).resolve())
+    output_path = str(Path(args.output).resolve())
+    public_dir = Path(args.remotion_sections).resolve().parent
+
+    project_root = project_config.get("project", {}).get("project_root_path", "")
+    workspace = Path(project_root).parent.parent if project_root else public_dir.parent
+
+    render_cfg = project_config.get("render") or {}
+    poll_interval = render_cfg.get("poll_interval_sec") or DISTRIBUTED_POLL_INTERVAL
+    sections_file = render_cfg.get("sections_file") or "remotion_sections.yaml"
+
+    task_id = uuid.uuid4().hex[:12]
+    workdir = workspace / DISTRIBUTED_WORK_DIR / task_id
+    workdir.mkdir(parents=True, exist_ok=True)
+    payload_path = workdir / "render_payload.tar.xz"
+
+    try:
+        # 1. 打包素材(public-dir)+ 模板源码(不含 node_modules/.git/tmp)
+        print(f"Packing assets + template...", file=sys.stderr)
+        with tarfile.open(str(payload_path), "w:xz") as tar:
+            for p in sorted(public_dir.rglob("*")):
+                rel = p.relative_to(public_dir)
+                if any(part == "tmp" for part in rel.parts):
+                    continue
+                if p.is_file() and rel.name == "result.mp4":
+                    continue
+                arc = "public/" + rel.as_posix()
+                tar.add(str(p), arcname=arc, recursive=False)
+            skip_dirs = {"node_modules", ".git", "tmp"}
+            for p in sorted(template_path.rglob("*")):
+                rel = p.relative_to(template_path)
+                if any(part in skip_dirs for part in rel.parts):
+                    continue
+                arc = "template/remotion-video-template/" + rel.as_posix()
+                tar.add(str(p), arcname=arc, recursive=False)
+        size_mb = payload_path.stat().st_size / (1024 * 1024)
+        print(f"Payload: {payload_path} ({size_mb:.1f} MB)", file=sys.stderr)
+
+        # 2. 上传发起分布式渲染
+        submit_url = f"{proxy_endpoint}/render/submit"
+        print(f"Submitting render task to {submit_url} ...", file=sys.stderr)
+        last_err = None
+        for attempt in range(2):
+            try:
+                with open(payload_path, "rb") as f:
+                    r = requests.post(
+                        submit_url,
+                        files={"file": (payload_path.name, f, "application/x-xz")},
+                        data={
+                            "container_payload_path": str(payload_path),
+                            "sections_file": sections_file,
+                        },
+                        timeout=600,
+                    )
+                if r.status_code != 200:
+                    last_err = f"submit returned status {r.status_code}: {r.text[:500]}"
+                    continue
+                resp = r.json()
+                task_id = resp.get("task_id", task_id)
+                break
+            except requests.RequestException as e:
+                last_err = str(e)
+                time.sleep(2)
+        else:
+            print(json.dumps({
+                "status": "error",
+                "msg": f"Failed to submit distributed render task: {last_err}",
+                "data": {},
+            }, ensure_ascii=False, indent=2))
+            sys.exit(1)
+        print(f"Render task submitted: {task_id}", file=sys.stderr)
+
+        # 3. 轮询任务状态
+        status_url = f"{proxy_endpoint}/render/status"
+        deadline = time.time() + DISTRIBUTED_TIMEOUT
+        final_status = None
+        final_error = ""
+        while time.time() < deadline:
+            time.sleep(int(poll_interval))
+            try:
+                r = requests.get(status_url, params={"task_id": task_id}, timeout=60)
+                if r.status_code != 200:
+                    print(json.dumps({
+                        "status": "error",
+                        "msg": f"status query failed: {r.status_code} {r.text[:500]}",
+                        "data": {"task_id": task_id},
+                    }, ensure_ascii=False, indent=2))
+                    sys.exit(1)
+                j = r.json()
+                final_status = j.get("status")
+                final_error = j.get("error") or ""
+                if final_status in ("success", "failed", "timeout", "cancelled"):
+                    break
+                print(f"  render status: {final_status} ...", file=sys.stderr)
+            except requests.RequestException as e:
+                print(json.dumps({
+                    "status": "error",
+                    "msg": f"status query failed: {e}",
+                    "data": {"task_id": task_id},
+                }, ensure_ascii=False, indent=2))
+                sys.exit(1)
+
+        if final_status != "success":
+            print(json.dumps({
+                "status": "error",
+                "msg": f"Distributed render {final_status or 'timeout'}: {final_error or 'no result'}"[:2000],
+                "data": {"task_id": task_id},
+            }, ensure_ascii=False, indent=2))
+            sys.exit(1)
+
+        # 4. 结果已由 proxy_agent 拷回容器工作目录,移动到项目输出路径
+        result_src = workdir / "result.mp4"
+        if not result_src.exists():
+            print(json.dumps({
+                "status": "error",
+                "msg": f"result.mp4 not found in container work dir: {result_src}",
+                "data": {"task_id": task_id},
+            }, ensure_ascii=False, indent=2))
+            sys.exit(1)
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(result_src), output_path)
+        out_size_mb = Path(output_path).stat().st_size / (1024 * 1024)
+        print(json.dumps({
+            "status": "ok",
+            "msg": f"Video rendered successfully (distributed): {output_path}",
+            "data": {
+                "output": output_path,
+                "size_mb": round(out_size_mb, 1),
+                "task_id": task_id,
+            },
+        }, ensure_ascii=False, indent=2))
+    finally:
+        # 5. 清理容器内工作目录(压缩包+下载结果)
+        shutil.rmtree(workdir, ignore_errors=True)
 
 
 def main() -> None:
@@ -84,6 +259,13 @@ def main() -> None:
         }, ensure_ascii=False, indent=2))
         sys.exit(1)
 
+    render_cfg = project_config.get("render") or {}
+    mode = str(render_cfg.get("mode", "local")).strip().lower()
+
+    if mode == "distributed" and not args.studio:
+        render_distributed(args, project_config, template_path)
+        return
+
     sections_path = str(Path(args.remotion_sections).resolve())
     output_path = str(Path(args.output).resolve())
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -108,7 +290,6 @@ def main() -> None:
     # concurrency capped at 8, extra segment workers when CPU allows).
     # segment_frames / segment_workers are optional tuning knobs (render-yaml.mjs
     # applies its own defaults when they are not set).
-    render_cfg = project_config.get("render") or {}
     segment_frames = render_cfg.get("segment_frames")
     segment_workers = render_cfg.get("segment_workers")
 
