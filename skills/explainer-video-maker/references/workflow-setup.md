@@ -160,10 +160,13 @@ projects/
 
 6. **Environment connectivity check (ComfyUI + TTS).** Confirm the runtime
    services the pipeline depends on are reachable before investing in later
-   steps. The check does a lightweight TCP connect (no HTTP, no workflow run) to
-   each registered ComfyUI node and to the TTS endpoint (for
-   `tts.backend: http_server`; the `comfyui_indextts` backend reuses the ComfyUI
-   nodes):
+   steps. Node availability is determined EXCLUSIVELY by this script — never
+   probe nodes yourself (no curl/nc/Test-NetConnection/manual TCP checks, no
+   guessing from config values). The script lists the registered nodes via
+   `comfyui-scheduler node list` (empty list → fails fast, no fallback), env-
+   expands node URLs, TCP-probes each node, and checks the TTS endpoint only
+   for `tts.backend: http_server` (the `comfyui_indextts` backend reuses the
+   ComfyUI nodes):
    ```bash
    python3 "${SKILL_DIR}/scripts/tool/check_environment.py" \
      --project-config /abs/path/project_config.yaml
@@ -178,7 +181,9 @@ projects/
        `comfyui_indextts` in `project_config.yaml`.
 
    Resolve any failure before continuing — AIGC (Step 9) and TTS (Step 7) cannot
-   run without a reachable backend.
+   run without a reachable backend. If a later backend step fails with a
+   connectivity error, re-run this script (never diagnose by probing on your
+   own) and act on its `data.guidance`.
 
 7. (Optional) `tts.voice_file` is empty by default and auto-generates during the
    audio/TTS step (pipeline Step 7). To pre-generate a reference voice now:

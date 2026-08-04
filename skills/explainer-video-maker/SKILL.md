@@ -238,7 +238,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 
 | # | Step | Key Script | Output |
 |---|------|-----------|--------|
-| 1 | Project initialization | `scripts/tool/init_project.py`, `scripts/verify/verify_project_config.py` | `project_config.yaml` |
+| 1 | Project initialization | `scripts/tool/init_project.py`, `scripts/verify/verify_project_config.py`, `scripts/tool/check_environment.py` | `project_config.yaml` |
 | 2 | Define topic | — (agent research) | `video_config.yaml` |
 | 3 | Topic research | `scripts/search_provider/search.py`, `scripts/search_provider/search_rss.py` | `search_results/*.md` |
 | 4 | Design chapter list | `scripts/verify/verify_stories.py` | `video_struct.yaml` (stories only) |
@@ -255,6 +255,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 **Mandatory validation gates:**
 
 - After Step 1: `verify_project_config.py` must exit 0
+- After Step 1: `check_environment.py` must exit 0 (ComfyUI + TTS nodes reachable — the ONLY way node availability is determined)
 - After Step 4: `verify_stories.py` must exit 0 (re-do step if not)
 - After Step 5: `verify_story_scripts.py` must exit 0
 - After Step 6: `verify_video_struct.py` must exit 0
@@ -284,6 +285,7 @@ confirms (e.g., "ok", "continue", "next", "确认", "继续").
 | **Anti-slop narration** | Narration text MUST follow [references/natural-narration.md](references/natural-narration.md). No AI-sounding filler, no rhetorical hooks, no rule-of-three abuse. |
 | **Narration length** | No hard character cap on narration `content`. Write substantive sentences and vary their length; split a narration into multiple scenes for visual reasons, not for length. |
 | **Verify before proceed** | Each step's verify script must pass before moving to the next step. |
+| **Node availability = script only** | Determine ComfyUI/TTS node availability EXCLUSIVELY via `scripts/tool/check_environment.py` (Step 1 gate): run it and read its JSON `data.guidance` on failure. NEVER probe nodes yourself — no curl/nc/Test-NetConnection/manual TCP/socket checks, no guessing from config values. If a backend step (7/9/10/11) later fails with a connectivity error, re-run `check_environment.py` to diagnose, then act on its guidance. |
 | **Long tasks: background + 3h timeout** | All long-running scripts (TTS, AIGC, upscale, BGM, render) MUST be launched in the background (Bash `run_in_background: true`) so the conversation is never blocked waiting; continue with other ready work instead, and proceed when the completion notification arrives (then check exit status + artifacts). Set generous timeouts — at least 3 hours (10800s): `run_aigc.py --total-timeout 10800`, `render.py --timeout 10800`, `run_tts.py --timeout 10800`, `run_bgm.py --timeout 10800`. Never use default 1-2h timeouts for these steps. |
 | **Absolute paths** | All script path arguments (`--config`, `--video-struct`, `--output`, etc.) MUST be absolute paths. Scripts reject relative paths with an error. |
 | **Output confined to project** | ALL agent-produced files (search results, scripts, audio, AIGC assets, remotion configs, rendered video) MUST be written under the project directory's pre-defined resource dirs or its `tmp/` directory. Scripts that produce output files MUST expose a `--output` (or equivalent) parameter so output paths are explicit. NEVER write to system temp dirs (`/tmp`, `%TEMP%`, `TMPDIR`), the workspace root, or any path outside the project. |

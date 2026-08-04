@@ -6,12 +6,15 @@ Run right after project creation (Step 1) to confirm the runtime services the
 pipeline depends on are actually reachable before investing in later steps. It
 performs a lightweight TCP connect (no HTTP, no workflow run) to:
 
-  - each registered ComfyUI node (from `comfyui-scheduler node list`); if no
-    node is registered, the default http://127.0.0.1:8188 is probed. Used by
-    AIGC and by the comfyui_indextts TTS backend.
-  - the TTS endpoint:
-      * tts.backend = comfyui_indextts → reuses the ComfyUI nodes (index_tts_2).
-      * tts.backend = http_server      → probes tts.http.url (env-expanded).
+  - each registered ComfyUI node (from `comfyui-scheduler node list`). If the
+    scheduler cannot list nodes, or NO node is registered, the check fails
+    immediately (no default-URL fallback). Node URLs are env-expanded
+    (${VAR}/$VAR/%VAR%) before probing; a leftover unexpanded variable is an
+    error. Used by AIGC and by the comfyui_indextts TTS backend.
+  - the TTS endpoint — only when `tts.backend = http_server`:
+      * http_server → probes the configured tts.http.url (env-expanded).
+      * comfyui_indextts → no separate check; index_tts_2 runs on the ComfyUI
+        node covered above.
 
 If something is unreachable, the JSON `data.guidance` lists concrete fixes
 (register/start a ComfyUI node, or switch/configure the TTS backend).
@@ -37,7 +40,6 @@ sys.path.insert(0, str(SKILL_ROOT))
 
 from lib.yamlutil import load_yaml
 
-DEFAULT_COMFYUI_URL = "http://127.0.0.1:8188"
 # Matches a leftover, unexpanded env reference such as ${VAR}, $VAR or %VAR%.
 UNRESOLVED_VAR_RE = re.compile(r"\$\{?\w|\%\w+\%")
 
@@ -87,59 +89,76 @@ def list_comfyui_nodes() -> tuple[list[dict] | None, str | None]:
 
 
 def check_comfyui(timeout: float) -> dict:
-    """TCP-probe the ComfyUI nodes. Returns a result dict."""
+    """TCP-probe the registered ComfyUI nodes. Returns a result dict.
+
+    Node URLs are env-expanded (${VAR}/$VAR/%VAR%) before probing. When the
+    scheduler cannot list nodes, or NO node is registered, the check fails
+    immediately — no default-URL fallback.
+    """
     nodes, list_error = list_comfyui_nodes()
 
-    if list_error is not None or not nodes:
-        candidates = [{"id": "default", "url": DEFAULT_COMFYUI_URL}]
-        source = "default"
-    else:
-        candidates = [{"id": n.get("id", "node"), "url": n.get("url", "")} for n in nodes]
-        source = "registered"
+    if list_error is not None:
+        return {"reachable": False, "source": "none", "nodes": [],
+                "guidance": [list_error]}
+    if not nodes:
+        return {"reachable": False, "source": "none", "nodes": [],
+                "guidance": [
+                    "No ComfyUI node is registered (comfyui-scheduler node list is empty). "
+                    "Register one first: comfyui-scheduler node add --id node1 "
+                    "--url http://<HOST>:8188, then re-run this check."
+                ]}
 
     node_results = []
-    for cand in candidates:
-        url = cand["url"]
-        host, port = url_host_port(url)
-        if not host:
-            node_results.append({"id": cand["id"], "url": url, "reachable": False,
-                                 "error": "invalid URL"})
-            continue
-        ok = tcp_reachable(host, port, timeout)
-        node_results.append({"id": cand["id"], "url": url, "reachable": ok})
+    for node in nodes:
+        node_id = node.get("id", "node")
+        raw_url = node.get("url", "")
+        url = os.path.expandvars(raw_url)
+        entry = {"id": node_id, "url": url}
 
-    reachable = any(r["reachable"] for r in node_results)
+        if not raw_url:
+            entry["reachable"] = False
+            entry["error"] = "empty URL"
+        elif UNRESOLVED_VAR_RE.search(url):
+            entry["reachable"] = False
+            entry["error"] = ("unexpanded environment variable in URL — export it "
+                              "(e.g. set the env var), or update the node URL")
+        else:
+            host, port = url_host_port(url)
+            if not host:
+                entry["reachable"] = False
+                entry["error"] = "invalid URL"
+            else:
+                entry["reachable"] = tcp_reachable(host, port, timeout)
+        node_results.append(entry)
+
+    reachable = any(r.get("reachable") for r in node_results)
 
     guidance = []
-    if list_error:
-        guidance.append(list_error)
     if not reachable:
-        if source == "registered":
-            guidance.append(
-                "ComfyUI node(s) unreachable. Start the ComfyUI server, or fix the "
-                "registered address: comfyui-scheduler node add --id <id> --url http://<HOST>:8188"
-            )
-        else:
-            guidance.append(
-                "No reachable ComfyUI node (none registered; default "
-                f"{DEFAULT_COMFYUI_URL} is down). Start ComfyUI and register a node: "
-                "comfyui-scheduler node add --id node1 --url http://<HOST>:8188"
-            )
+        guidance.append(
+            "ComfyUI node(s) unreachable. Start the ComfyUI server, or fix the "
+            "registered address: comfyui-scheduler node add --id <id> --url http://<HOST>:8188"
+        )
 
-    return {"reachable": reachable, "source": source, "nodes": node_results,
+    return {"reachable": reachable, "source": "registered", "nodes": node_results,
             "guidance": guidance}
 
 
 def check_tts(project_config: dict, comfyui: dict, timeout: float) -> dict:
-    """TCP-probe the TTS endpoint implied by tts.backend. Returns a result dict."""
+    """TCP-probe the TTS endpoint implied by tts.backend. Returns a result dict.
+
+    The index/TTS endpoint is checked ONLY for the http_server backend (its
+    configured server URL). The comfyui_indextts backend has no separate
+    check — index_tts_2 runs on the ComfyUI node covered by check_comfyui.
+    """
     tts_config = project_config.get("tts", {})
     backend = tts_config.get("backend", "comfyui_indextts")
 
     if backend == "comfyui_indextts":
-        reachable = comfyui["reachable"]
-        result = {"backend": backend, "endpoint": "comfyui (index_tts_2 workflow)",
-                  "reachable": reachable, "guidance": []}
-        if not reachable:
+        result = {"backend": backend, "checked": False,
+                  "endpoint": "comfyui (index_tts_2 workflow)",
+                  "reachable": comfyui["reachable"], "guidance": []}
+        if not comfyui["reachable"]:
             result["guidance"].append(
                 "TTS backend comfyui_indextts runs on ComfyUI, so it is blocked by the "
                 "ComfyUI failure above. Fix the ComfyUI node, or set tts.backend: http_server."
@@ -149,7 +168,8 @@ def check_tts(project_config: dict, comfyui: dict, timeout: float) -> dict:
     if backend == "http_server":
         raw_url = tts_config.get("http", {}).get("url", "")
         url = os.path.expandvars(raw_url)
-        result = {"backend": backend, "endpoint": url, "reachable": False, "guidance": []}
+        result = {"backend": backend, "checked": True, "endpoint": url,
+                  "reachable": False, "guidance": []}
 
         if not raw_url:
             result["guidance"].append(
@@ -182,10 +202,11 @@ def check_tts(project_config: dict, comfyui: dict, timeout: float) -> dict:
             )
         return result
 
-    return {"backend": backend, "endpoint": "", "reachable": False, "guidance": [
-        f"Unknown tts.backend '{backend}'. Set tts.backend to comfyui_indextts or http_server "
-        "in project_config.yaml."
-    ]}
+    return {"backend": backend, "checked": True, "endpoint": "", "reachable": False,
+            "guidance": [
+                f"Unknown tts.backend '{backend}'. Set tts.backend to comfyui_indextts or http_server "
+                "in project_config.yaml."
+            ]}
 
 
 def main() -> None:
