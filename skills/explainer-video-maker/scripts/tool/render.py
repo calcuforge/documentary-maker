@@ -229,6 +229,7 @@ def render_distributed(args, project_config, template_path) -> None:
                     data={
                         "container_payload_path": str(payload_path),
                         "sections_file": sections_file,
+                        "payload_size": payload_path.stat().st_size,  # 预期大小,节点解压前校验
                     },
                     timeout=120,
                 )
