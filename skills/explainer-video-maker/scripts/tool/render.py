@@ -51,19 +51,22 @@ def build_codec_args(codec: str, crf: int) -> list[str]:
 
     Keeps the AIGC-video compression consistent with the final render settings
     (project_config.yaml → render.codec / render.crf). Unknown values fall back
-    to libx264.
+    to libx264. Threads are explicit so multi-core hosts are saturated.
     """
     if codec in ("h265", "hevc"):
-        return ["-c:v", "libx265", "-crf", str(crf), "-preset", "fast"]
+        # x265 需显式指定线程 + wpp(波前并行),否则默认线程数很少
+        return ["-c:v", "libx265", "-crf", str(crf), "-preset", "fast",
+                "-x265-params", "threads=0:wpp=1"]
     if codec == "vp8":
-        return ["-c:v", "libvpx", "-b:v", "5M", "-preset", "fast"]
+        return ["-c:v", "libvpx", "-b:v", "5M", "-preset", "fast", "-threads", "0"]
     if codec == "vp9":
-        return ["-c:v", "libvpx-vp9", "-crf", str(crf), "-b:v", "0", "-preset", "fast"]
+        return ["-c:v", "libvpx-vp9", "-crf", str(crf), "-b:v", "0", "-preset", "fast",
+                "-threads", "0"]
     if codec == "av1":
-        return ["-c:v", "libaom-av1", "-crf", str(crf), "-cpu-used", "4"]
+        return ["-c:v", "libaom-av1", "-crf", str(crf), "-cpu-used", "4", "-threads", "0"]
     if codec == "prores":
-        return ["-c:v", "prores_ks", "-q:v", "15"]
-    return ["-c:v", "libx264", "-crf", str(crf), "-preset", "fast"]
+        return ["-c:v", "prores_ks", "-q:v", "15", "-threads", "0"]
+    return ["-c:v", "libx264", "-crf", str(crf), "-preset", "fast", "-threads", "0"]
 
 
 def compress_aigc_videos(public_dir: Path, project_config: dict) -> None:
