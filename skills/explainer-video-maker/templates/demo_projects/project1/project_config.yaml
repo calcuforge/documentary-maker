@@ -106,6 +106,7 @@ content:
   duration: medium # 仅控制章节数：short=2-3 章 / medium=5-7 章 / long=8-12 章
   min_story_chars: 300 # 每章基准字数：全部章节讲稿（stories/{story_id}/script.md）总字数须 ≥ min_story_chars×章节数（无单章下限），verify_story_scripts.py 校验
 render:
+  mode: local # 渲染方式: local(容器内本地渲染) | distributed(集群分布式渲染,按渲染时长计费)
   codec: h264 # 视频编码：h264 | h265 | vp8 | vp9 | av1 | prores
   crf: 23 # 画质/体积权衡 0-51（越小画质越高、文件越大）
   timeout_ms: 60000 # 单帧组件/delayRender 超时（Remotion 默认 30000；大体积 AIGC 资产加载慢时可调大）
