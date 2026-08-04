@@ -25,6 +25,7 @@ import os
 import shutil
 import subprocess
 import sys
+import lzma
 import tarfile
 import time
 import uuid
@@ -109,8 +110,15 @@ def render_distributed(args, project_config, template_path) -> None:
 
     try:
         # 1. 打包素材(public-dir)+ 模板源码(不含 node_modules/.git/tmp)
-        print(f"Packing assets + template...", file=sys.stderr)
-        with tarfile.open(str(payload_path), "w:xz") as tar:
+        # 最快模式压缩(LZMA preset 0:体积最大、压缩速度最快;素材多为已压缩的媒体文件)
+        print(f"Packing assets + template (fast compression)...", file=sys.stderr)
+        xz_f = lzma.LZMAFile(str(payload_path), mode="w", preset=0)
+        try:
+            tar = tarfile.open(fileobj=xz_f, mode="w")
+        except Exception:
+            xz_f.close()
+            raise
+        with tar:
             for p in sorted(public_dir.rglob("*")):
                 rel = p.relative_to(public_dir)
                 if any(part == "tmp" for part in rel.parts):
@@ -126,6 +134,9 @@ def render_distributed(args, project_config, template_path) -> None:
                     continue
                 arc = "template/remotion-video-template/" + rel.as_posix()
                 tar.add(str(p), arcname=arc, recursive=False)
+        # tarfile 关闭时不关闭外部 fileobj,需显式写入 xz 尾部
+        if not xz_f.closed:
+            xz_f.close()
         size_mb = payload_path.stat().st_size / (1024 * 1024)
         print(f"Payload: {payload_path} ({size_mb:.1f} MB)", file=sys.stderr)
 
