@@ -172,10 +172,14 @@ projects/
      --project-config /abs/path/project_config.yaml
    ```
    - **Exit 0** → environment ready, proceed.
-   - **Exit 1** → read `data.guidance` and fix, then re-run. Typically:
-     - **ComfyUI unreachable** → start the ComfyUI server, or register a
-       reachable node: `comfyui-scheduler node add --id node1 --url http://<HOST>:8188`
-       (list current nodes with `comfyui-scheduler node list`).
+   - **Exit 1** → read `data.guidance`, which tells you to ASK THE USER for the
+     node information (ComfyUI address), then fix and re-run. Typically:
+     - **ComfyUI unreachable** → ask the user for the ComfyUI node address
+       (e.g. `http://<HOST>:8188`), register it with
+       `comfyui-scheduler node add --id node1 --url http://<HOST>:8188`, import
+       the workflows with `comfyui-scheduler workflow import-all`, then re-run
+       this check. (Never guess the address or probe nodes yourself — the
+       address always comes from the user.)
      - **TTS unreachable** → for `http_server`, start the TTS server / export the
        required env var (e.g. `BACKEND_PROXY_ENDPOINT`); or set `tts.backend` to
        `comfyui_indextts` in `project_config.yaml`.
@@ -185,22 +189,19 @@ projects/
    connectivity error, re-run this script (never diagnose by probing on your
    own) and act on its `data.guidance`.
 
-7. (Optional) `tts.voice_file` is empty by default and auto-generates during the
-   audio/TTS step (pipeline Step 7). To pre-generate a reference voice now:
-   ```bash
-   comfyui-scheduler run -w qwen3_tts_voice_design -i '{"voice_instruct": "male, middle-aged, moderate pitch", "content": "This is a sample sentence for voice reference.", "language": "en-US"}'
-   ```
-   Download the output and save as `projects/{name}/voice_file.wav`. Update
-   `tts.voice_file` in the config.
+7. `tts.voice_file` is empty by default and auto-generates during the audio/TTS
+   step (pipeline Step 7): `run_tts.py` runs the `qwen3_tts_voice_design`
+   workflow itself, post-processes the output, and writes
+   `projects/{name}/voice_file.wav` (updating `tts.voice_file`). No manual
+   workflow run is needed — keep `voice_file` empty and fill
+   `tts.voice_instruct` now (it is REQUIRED before Step 7).
 
    **Quality note:** the qwen3 voice-design output is band-limited — energy
    above 2 kHz sits ~20 dB below the low band (muffled, s/f/l fricatives
    inaudible), which degrades voice cloning. `run_tts.py` post-processes its
    auto-generated reference with a 24 kHz normalize + high-shelf clarity boost
    (`tts.voice_ref_eq_db`, default 12 dB; content defaults to a fricative-rich
-   balanced sentence, override with `tts.voice_ref_content`). When pre-
-   generating manually, apply the same treatment (or simply let Step 7
-   auto-generate instead).
+   balanced sentence, override with `tts.voice_ref_content`).
 
 ---
 

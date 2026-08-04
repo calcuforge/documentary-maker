@@ -16,8 +16,10 @@ performs a lightweight TCP connect (no HTTP, no workflow run) to:
       * comfyui_indextts → no separate check; index_tts_2 runs on the ComfyUI
         node covered above.
 
-If something is unreachable, the JSON `data.guidance` lists concrete fixes
-(register/start a ComfyUI node, or switch/configure the TTS backend).
+If something is unreachable, the JSON `data.guidance` tells the agent to ask
+the user for the node information (address), then lists the concrete
+`comfyui-scheduler` commands to register the node (`node add`) and import the
+workflows (`workflow import-all`), then re-run the check.
 
 Usage:
     python check_environment.py --project-config /abs/path/project_config.yaml
@@ -103,9 +105,11 @@ def check_comfyui(timeout: float) -> dict:
     if not nodes:
         return {"reachable": False, "source": "none", "nodes": [],
                 "guidance": [
-                    "No ComfyUI node is registered (comfyui-scheduler node list is empty). "
-                    "Register one first: comfyui-scheduler node add --id node1 "
-                    "--url http://<HOST>:8188, then re-run this check."
+                    "No ComfyUI node is registered. Ask the user for the ComfyUI node "
+                    "address (e.g. http://<HOST>:8188), then register it with: "
+                    "comfyui-scheduler node add --id node1 --url http://<HOST>:8188. "
+                    "After registering, import the workflows with: "
+                    "comfyui-scheduler workflow import-all. Then re-run this check."
                 ]}
 
     node_results = []
@@ -136,8 +140,10 @@ def check_comfyui(timeout: float) -> dict:
     guidance = []
     if not reachable:
         guidance.append(
-            "ComfyUI node(s) unreachable. Start the ComfyUI server, or fix the "
-            "registered address: comfyui-scheduler node add --id <id> --url http://<HOST>:8188"
+            "ComfyUI node(s) unreachable. Ask the user for the correct node address "
+            "(or to start the ComfyUI server), then fix the registration with: "
+            "comfyui-scheduler node add --id <id> --url http://<HOST>:8188. "
+            "Then re-run this check."
         )
 
     return {"reachable": reachable, "source": "registered", "nodes": node_results,

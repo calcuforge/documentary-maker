@@ -269,7 +269,9 @@ the final video in-render by Remotion `<Audio>` (no post-render ffmpeg step).
 
 **Prerequisite:** A ComfyUI server reachable via `comfyui-scheduler` that has the
 `stable_audio_3_medium` checkpoint and its text encoders installed, and the
-workflow imported (`comfyui-scheduler workflow import-all`).
+workflow imported (`comfyui-scheduler workflow import-all` — the agent runs
+this once after registering the node, following `check_environment.py`'s
+Step 1 guidance).
 
 **Config:** `project_config.yaml` → `bgm` block:
 
