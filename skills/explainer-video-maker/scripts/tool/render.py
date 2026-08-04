@@ -108,10 +108,22 @@ def render_distributed(args, project_config, template_path) -> None:
     workdir.mkdir(parents=True, exist_ok=True)
     payload_path = workdir / "render_payload.tar.xz"
 
+    # 分布式渲染进度日志写到项目目录的 render.log(与本地模式一致)
+    log_path = Path(output_path).parent / "render.log"
+    log_file = open(log_path, "w", encoding="utf-8", errors="replace")
+
+    def log(msg: str) -> None:
+        print(msg, file=sys.stderr)
+        try:
+            log_file.write(msg + "\n")
+            log_file.flush()
+        except Exception:
+            pass
+
     try:
         # 1. 打包素材(public-dir)+ 模板源码(不含 node_modules/.git/tmp)
         # 最快模式压缩(LZMA preset 0:体积最大、压缩速度最快;素材多为已压缩的媒体文件)
-        print(f"Packing assets + template (fast compression)...", file=sys.stderr)
+        log(f"Packing assets + template (fast compression)...")
         xz_f = lzma.LZMAFile(str(payload_path), mode="w", preset=0)
         try:
             tar = tarfile.open(fileobj=xz_f, mode="w")
@@ -142,11 +154,11 @@ def render_distributed(args, project_config, template_path) -> None:
         if not xz_f.closed:
             xz_f.close()
         size_mb = payload_path.stat().st_size / (1024 * 1024)
-        print(f"Payload: {payload_path} ({size_mb:.1f} MB)", file=sys.stderr)
+        log(f"Payload: {payload_path} ({size_mb:.1f} MB)")
 
         # 2. 上传发起分布式渲染
         submit_url = f"{proxy_endpoint}/render/submit"
-        print(f"Submitting render task to {submit_url} ...", file=sys.stderr)
+        log(f"Submitting render task to {submit_url} ...")
         last_err = None
         for attempt in range(2):
             try:
@@ -176,7 +188,7 @@ def render_distributed(args, project_config, template_path) -> None:
                 "data": {},
             }, ensure_ascii=False, indent=2))
             sys.exit(1)
-        print(f"Render task submitted: {task_id}", file=sys.stderr)
+        log(f"Render task submitted: {task_id}")
 
         # 3. 轮询任务状态
         status_url = f"{proxy_endpoint}/render/status"
@@ -199,7 +211,7 @@ def render_distributed(args, project_config, template_path) -> None:
                 final_error = j.get("error") or ""
                 if final_status in ("success", "failed", "timeout", "cancelled"):
                     break
-                print(f"  render status: {final_status} ...", file=sys.stderr)
+                log(f"  render status: {final_status} ...")
             except requests.RequestException as e:
                 print(json.dumps({
                     "status": "error",
@@ -240,6 +252,10 @@ def render_distributed(args, project_config, template_path) -> None:
     finally:
         # 5. 清理容器内工作目录(压缩包+下载结果)
         shutil.rmtree(workdir, ignore_errors=True)
+        try:
+            log_file.close()
+        except Exception:
+            pass
 
 
 def main() -> None:
