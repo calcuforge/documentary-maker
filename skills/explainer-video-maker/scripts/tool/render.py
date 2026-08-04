@@ -156,22 +156,21 @@ def render_distributed(args, project_config, template_path) -> None:
         size_mb = payload_path.stat().st_size / (1024 * 1024)
         log(f"Payload: {payload_path} ({size_mb:.1f} MB)")
 
-        # 2. 上传发起分布式渲染
+        # 2. 发起分布式渲染(只传元数据;压缩文件由 proxy_agent 通过
+        #    远程 k8s 命令(kubectl cp)从容器内路径拷贝,不经过 HTTP 上传)
         submit_url = f"{proxy_endpoint}/render/submit"
         log(f"Submitting render task to {submit_url} ...")
         last_err = None
         for attempt in range(2):
             try:
-                with open(payload_path, "rb") as f:
-                    r = requests.post(
-                        submit_url,
-                        files={"file": (payload_path.name, f, "application/x-xz")},
-                        data={
-                            "container_payload_path": str(payload_path),
-                            "sections_file": sections_file,
-                        },
-                        timeout=600,
-                    )
+                r = requests.post(
+                    submit_url,
+                    data={
+                        "container_payload_path": str(payload_path),
+                        "sections_file": sections_file,
+                    },
+                    timeout=120,
+                )
                 if r.status_code != 200:
                     last_err = f"submit returned status {r.status_code}: {r.text[:500]}"
                     continue
