@@ -7,9 +7,9 @@
 > matching section below, plus the general rules that apply to every style.
 
 These rules capture craft conventions that the generic intent→component mapping
-does not express — for example, that a documentary should open on moving
-footage, not a static card. When a rule conflicts with a cheaper default
-(e.g. "use a text card"), the rule wins.
+does not express — for example, that a product intro must open on the product
+itself, or that a documentary should close on a wide shot + quote. When a rule
+conflicts with a cheaper default (e.g. "use a text card"), the rule wins.
 
 ---
 
@@ -77,15 +77,12 @@ Aim for the target band.
 
 ## documentary (纪录片)
 
-1. **First scene is a video.** The opening scene MUST be a `video` type scene
-   rendered with `AssetVideo` (an establishing/atmosphere shot), not a static
-   image and not a text card. Prefer a slow, wide establishing shot.
-2. **Favor cinematic visuals.** Establishing shots, era/atmosphere scenes, and
+1. **Favor cinematic visuals.** Establishing shots, era/atmosphere scenes, and
    the closing scene should be video or `KenBurnsImage`; avoid stacking static
    `AssetImage` scenes.
-3. **Close on a wide shot + quote.** The final scene should be a cinematic
+2. **Close on a wide shot + quote.** The final scene should be a cinematic
    visual (video or KenBurnsImage) or a `QuoteBlock` summarizing the theme.
-4. **Content balance: 75–85% visual, 15–25% data/text.** Footage (video +
+3. **Content balance: 75–85% visual, 15–25% data/text.** Footage (video +
    KenBurnsImage) is the body of a documentary; use data/text components only as
    occasional accents (a milestone Timeline, a key StatCounter, a closing
    QuoteBlock). Avoid consecutive data/text scenes.
