@@ -32,6 +32,7 @@ from pathlib import Path
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL_ROOT))
 
+from lib.scene_frames import strip_trailing_punct
 from lib.yamlutil import load_yaml, save_yaml
 
 
@@ -81,23 +82,6 @@ def normalize_loudness(path: str, target_lufs: float = -14.0) -> bool:
         except OSError:
             pass
         return False
-
-
-# Terminal punctuation / closing marks stripped before TTS synthesis.
-_TRAILING_PUNCT = set("。！？；，、：．.?!;,:…·～—~”’'\"」』）】〉》)]}>")
-
-
-def strip_trailing_punct(text: str) -> str:
-    """Remove trailing punctuation / closing marks before TTS synthesis.
-
-    Terminal marks make the TTS engine add an unnatural pause at the line end;
-    the stored narration.content keeps its punctuation (used for subtitles).
-    Returns the original text if stripping would empty it.
-    """
-    s = text.rstrip()
-    while s and s[-1] in _TRAILING_PUNCT:
-        s = s[:-1].rstrip()
-    return s or text
 
 
 def synth_comfyui_indextts(

@@ -61,6 +61,25 @@ def scene_frame_allocation(total_frame: int, percentages: list[int]) -> list[int
     return frames
 
 
+# Terminal punctuation / closing marks stripped from text sent to TTS or shown
+# as subtitles (narration.content keeps its punctuation — it drives the
+# audio-master clock and the script-merge check).
+_TRAILING_PUNCT = set("。！？；，、：．.?!;,:…·～—~”’'\"」』）】〉》)]}>")
+
+
+def strip_trailing_punct(text: str) -> str:
+    """Remove trailing Chinese/English punctuation and closing marks.
+
+    Terminal marks make TTS add an unnatural pause at the line end and leave
+    dangling punctuation in subtitles. Returns the original text if stripping
+    would empty it.
+    """
+    s = text.rstrip()
+    while s and s[-1] in _TRAILING_PUNCT:
+        s = s[:-1].rstrip()
+    return s or text
+
+
 _SENTENCE_RE = re.compile(r"(?<=[。！？；．.?!;…])")
 
 

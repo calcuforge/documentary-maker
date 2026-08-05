@@ -32,7 +32,7 @@ from pathlib import Path
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL_ROOT))
 
-from lib.scene_frames import largest_remainder, scene_frame_allocation, split_narration_chunks
+from lib.scene_frames import largest_remainder, scene_frame_allocation, split_narration_chunks, strip_trailing_punct
 from lib.yamlutil import load_yaml, save_yaml
 
 
@@ -74,8 +74,11 @@ def build_subtitle_list(video_struct: dict) -> list[dict]:
                     spans = largest_remainder(f, [len(c) for c in scene_chunks])
                     for span, ch in zip(spans, scene_chunks):
                         span = max(1, span)
+                        # Trailing punctuation (。！？, etc.) stripped for display —
+                        # spans stay based on the raw chunk length so the timeline
+                        # is unaffected.
                         subtitles.append({
-                            "text": ch,
+                            "text": strip_trailing_punct(ch),
                             "start_frame": current_frame,
                             "end_frame": current_frame + span - 1,
                             "scene_index": flat_scene_index,
