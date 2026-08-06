@@ -160,7 +160,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Upscale AIGC assets")
     parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
     parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
-    parser.add_argument("--workers", type=int, default=2, help="Concurrent upscale workers")
+    parser.add_argument("--workers", type=int, default=5, help="Concurrent upscale workers")
     parser.add_argument("--timeout", type=int, default=300, help="Per-task timeout (seconds)")
     parser.add_argument("--force", action="store_true", help="Re-upscale even if asset_path exists")
     args = parser.parse_args()

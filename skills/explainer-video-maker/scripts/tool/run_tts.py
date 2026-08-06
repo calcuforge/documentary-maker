@@ -342,7 +342,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run TTS synthesis and calculate frames")
     parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
     parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
-    parser.add_argument("--workers", type=int, default=3, help="Concurrent TTS workers")
+    parser.add_argument("--workers", type=int, default=5, help="Concurrent TTS workers")
     parser.add_argument("--timeout", type=int, default=3600, help="Per-TTS subprocess timeout in seconds (default 1h)")
     parser.add_argument("--force", action="store_true", help="Re-generate even if audio exists")
     args = parser.parse_args()
