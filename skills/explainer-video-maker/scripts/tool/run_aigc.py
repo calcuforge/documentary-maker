@@ -192,7 +192,7 @@ def main() -> None:
     parser.add_argument("--project-config", required=True, help="Path to project_config.yaml (absolute)")
     parser.add_argument("--video-struct", required=True, help="Path to video_struct.yaml (absolute)")
     parser.add_argument("--video-tasks", required=True, help="Path to video_tasks.yaml (absolute)")
-    parser.add_argument("--workers", type=int, default=2, help="Concurrent tasks per group")
+    parser.add_argument("--workers", type=int, default=5, help="Concurrent tasks per group")
     parser.add_argument("--timeout", type=int, default=1800,
                         help="Per-task subprocess timeout in seconds (default 30min)")
     parser.add_argument("--total-timeout", type=int, default=7200,
